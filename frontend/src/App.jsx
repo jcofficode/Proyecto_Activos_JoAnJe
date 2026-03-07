@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/layout/Header'
 import Hero from './components/landing/Hero'
 import VideoDemo from './components/landing/VideoDemo'
@@ -12,74 +13,59 @@ import CTASeccion from './components/landing/CTASeccion'
 import Footer from './components/layout/Footer'
 import Login from './components/auth/Login'
 import Sistema from './components/sistema/Sistema'
+import InventoryPage from './pages/InventoryPage'
+import AlertsPage from './pages/AlertsPage'
+import ReportsPage from './pages/ReportsPage'
+import UsersPage from './pages/UsersPage'
 
 const App = () => {
-  // 'landing' | 'login' | 'sistema'
-  const [pagina_jc, setPagina_jc]   = useState('landing')
-  const [usuario_jc, setUsuario_jc] = useState(null)
-
-  // Restaurar sesión desde localStorage al iniciar
-  useEffect(() => {
+  const [usuario_jc, setUsuario_jc] = useState(() => {
     try {
       const raw = localStorage.getItem('joanje_user')
-      if (raw) {
-        const datos = JSON.parse(raw)
-        setUsuario_jc(datos)
-        setPagina_jc('sistema')
-      }
-    } catch (e) { /* ignore */ }
-  }, [])
+      return raw ? JSON.parse(raw) : null
+    } catch (e) { return null }
+  })
 
-  // ── Navega entre páginas ────────────────────────────────────────
-  const navegarA_jc = (destino_jc, datos_jc = null) => {
-    if (datos_jc) {
-      setUsuario_jc(datos_jc)
-      try { localStorage.setItem('joanje_user', JSON.stringify(datos_jc)) } catch (e) { }
-    }
-    setPagina_jc(destino_jc)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleLogin = (datos) => {
+    setUsuario_jc(datos)
+    try { localStorage.setItem('joanje_user', JSON.stringify(datos)) } catch (e) { }
   }
 
-  const cerrarSesion_jc = () => {
+  const handleLogout = () => {
     setUsuario_jc(null)
     try { localStorage.removeItem('joanje_user') } catch (e) { }
-    setPagina_jc('landing')
-  }
-
-  // ── Escucha el evento global 'navegar_jc' ───────────────────────
-  useEffect(() => {
-    const handler_jc = (e) => {
-      const { destino, datos } = e.detail || {}
-      if (destino) navegarA_jc(destino, datos || null)
-    }
-    window.addEventListener('navegar_jc', handler_jc)
-    return () => window.removeEventListener('navegar_jc', handler_jc)
-  }, [])
-
-  if (pagina_jc === 'login') {
-    return <Login navegarA_jc={navegarA_jc} />
-  }
-
-  if (pagina_jc === 'sistema') {
-    return <Sistema usuario_jc={usuario_jc} navegarA_jc={navegarA_jc} />
   }
 
   return (
-    <div className="app">
-      <Header usuario_jc={usuario_jc} onLogout={cerrarSesion_jc} />
-      <main>
-        <Hero />
-        <VideoDemo />
-        <ComoFunciona />
-        <Politicas />
-        <Testimonios />
-        <SobreNosotros />
-        <Equipo />
-        <ContactoUbicacion navegarA_jc={navegarA_jc} />
-        <CTASeccion />
-      </main>
-      <Footer />
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        <Header usuario_jc={usuario_jc} onLogout={handleLogout} />
+        <main>
+          <Routes>
+          <Route path="/" element={(
+            <>
+              <Hero />
+              <VideoDemo />
+              <ComoFunciona />
+              <Politicas />
+              <Testimonios />
+              <SobreNosotros />
+              <Equipo />
+              <ContactoUbicacion />
+              <CTASeccion />
+            </>
+          )} />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/sistema" element={usuario_jc ? <Sistema usuario_jc={usuario_jc} /> : <Navigate to="/login" />} />
+          <Route path="/sistema/inventario" element={usuario_jc ? <InventoryPage /> : <Navigate to="/login" />} />
+          <Route path="/sistema/alertas" element={usuario_jc ? <AlertsPage /> : <Navigate to="/login" />} />
+          <Route path="/sistema/reportes" element={usuario_jc ? <ReportsPage /> : <Navigate to="/login" />} />
+          <Route path="/sistema/usuarios" element={usuario_jc ? <UsersPage /> : <Navigate to="/login" />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
   )
 }
 

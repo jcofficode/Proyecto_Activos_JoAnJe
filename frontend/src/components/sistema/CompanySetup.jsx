@@ -28,6 +28,16 @@ export default function CompanySetup({ onSaved, onCancel }) {
     reader.readAsDataURL(f)
   }
 
+  const handleDrop = (e) => {
+    e.preventDefault()
+    const f = e.dataTransfer.files && e.dataTransfer.files[0]
+    if (f) {
+      const reader = new FileReader()
+      reader.onload = () => setLogoData(reader.result)
+      reader.readAsDataURL(f)
+    }
+  }
+
   const handleSave = () => {
     setSaving(true)
     const payload = { nombre: nombre.trim(), logo: logoData }
@@ -51,24 +61,46 @@ export default function CompanySetup({ onSaved, onCancel }) {
   }
 
   return (
-    <aside className="company-setup">
-      <h3>Configura tu Cuenta de Empresa</h3>
-      <p>Completa el nombre de tu empresa y sube un logo para personalizar tu panel.</p>
-      <div className="grupo-formulario">
-        <label>Nombre de la empresa</label>
-        <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: ACME C.A." />
-      </div>
-      <div className="grupo-formulario">
-        <label>Logo (PNG/JPG)</label>
-        <input type="file" accept="image/*" onChange={handleFile} />
-        {logoData && <div className="logo-preview"><img src={logoData} alt="Logo" style={{ height: 60 }} /></div>}
-      </div>
-      <div className="company-setup-actions">
-        <button onClick={handleSave} disabled={saving || !nombre.trim()} className="boton-enviar">
-          {saving ? 'Guardando...' : 'Guardar configuración'}
-        </button>
-        <button onClick={handleClear} className="boton-ligero">Restablecer</button>
-        <button onClick={() => { if (typeof onCancel === 'function') onCancel() }} className="boton-ligero">Cerrar</button>
+    <aside className="company-setup card">
+      <div className="company-setup-grid">
+        <div className="company-preview">
+          <div className="company-preview-inner">
+            <div className="company-preview-logo">
+              {logoData ? <img src={logoData} alt="Logo" /> : <div className="placeholder-logo">AC</div>}
+            </div>
+            <div className="company-preview-info">
+              <h4>{nombre || 'Nombre de tu empresa'}</h4>
+              <p className="muted">Este será el nombre público que verán tus usuarios.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="company-form">
+          <h3>Configura tu cuenta de empresa</h3>
+          <p className="muted">Personaliza el panel con el nombre y logo de tu empresa. Esto es solo front-end; el backend lo integrará luego.</p>
+
+          <div className="grupo-formulario">
+            <label>Nombre de la empresa</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: ACME C.A." />
+          </div>
+
+          <div className="grupo-formulario">
+            <label>Logo (PNG/JPG)</label>
+            <div className="logo-drop" onDrop={handleDrop} onDragOver={e => e.preventDefault()}>
+              <input type="file" accept="image/*" onChange={handleFile} />
+              <div className="logo-drop-help">Arrastra tu logo aquí o haz click para seleccionar</div>
+            </div>
+            {logoData && <div className="logo-preview"><img src={logoData} alt="Logo" /></div>}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleSave} disabled={saving || !nombre.trim()} className="boton-enviar">
+              {saving ? 'Guardando...' : 'Guardar configuración'}
+            </button>
+            <button onClick={handleClear} className="boton-ligero">Restablecer</button>
+            <button onClick={() => { if (typeof onCancel === 'function') onCancel() }} className="boton-ligero">Cerrar</button>
+          </div>
+        </div>
       </div>
     </aside>
   )

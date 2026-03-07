@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import imagenlogo_jja from '../../assets/JoanjeCoders.png'
 
-const irA_jc = (destino) =>
-  window.dispatchEvent(new CustomEvent('navegar_jc', { detail: { destino } }))
-
 const Header = ({ usuario_jc, onLogout }) => {
+  const navigate = useNavigate()
   const [scrolleado, setScrolleado] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false)
   const centinelaRef = useRef(null)
@@ -23,13 +22,13 @@ const Header = ({ usuario_jc, onLogout }) => {
     return () => { observador_jja.disconnect(); centinelaRef.current?.remove() }
   }, [])
 
-  const irAlSistema_jc = (e) => { e.preventDefault(); irA_jc('login') }
+  const irAlSistema_jc = (e) => { e.preventDefault(); navigate('/login') }
 
   return (
     <header className={`header ${scrolleado ? 'scrolleado' : ''}`}>
       <div className="contenedor header-contenido">
 
-        <a href="#inicio" className="logo logo-grande">
+        <a href="/" className="logo logo-grande" onClick={(e) => { e.preventDefault(); navigate('/') }}>
           <img src={imagenlogo_jja} alt="Logo JoAnJe Coders" />
         </a>
 
@@ -42,7 +41,7 @@ const Header = ({ usuario_jc, onLogout }) => {
         </button>
 
         <nav className={`navegacion ${menuAbierto ? 'abierta' : ''}`}>
-          {['#inicio', '#funcionalidades', '#politicas', '#testimonios', '#sobre-nosotros', '#contacto'].map((href, i) => (
+          {['/#inicio', '/#funcionalidades', '/#politicas', '/#testimonios', '/#sobre-nosotros', '/#contacto'].map((href, i) => (
             <a key={i} href={href} onMouseDown={() => setMenuAbierto(false)}>
               {['Inicio', 'Funcionalidades', 'Políticas', 'Testimonios', 'Sobre Nosotros', 'Contacto'][i]}
             </a>
@@ -51,7 +50,7 @@ const Header = ({ usuario_jc, onLogout }) => {
             <div className="user-menu" style={{ marginLeft: 8 }}>
               <button
                 className="boton-iniciar-sesion"
-                onClick={(e) => { e.preventDefault(); irA_jc('sistema') }}
+                onClick={(e) => { e.preventDefault(); navigate('/sistema') }}
                 title="Ir al panel"
               >
                 Ir al sistema
@@ -59,15 +58,15 @@ const Header = ({ usuario_jc, onLogout }) => {
               <div className="user-trigger">
                 <span className="header-user">{usuario_jc.nombre || usuario_jc.correo || 'Usuario'}</span>
                 <div className="user-dropdown">
-                  <button className="boton-ligero" onClick={(e) => { e.preventDefault(); onLogout && onLogout() }}>Cerrar sesión</button>
+                  <button className="boton-ligero" onClick={(e) => { e.preventDefault(); onLogout && onLogout(); navigate('/') }}>Cerrar sesión</button>
                 </div>
               </div>
             </div>
           ) : (
             <a
-              href="#sistema"
+              href="/login"
               className="boton-iniciar-sesion"
-              onMouseDown={irAlSistema_jc}
+              onClick={irAlSistema_jc}
             >
               Iniciar Sesión
             </a>

@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL_JC } from '../../api.config.js'
 import imagenlogo_jja from "../../assets/JoanjeCoders.png"
 
 const irA_jc = (destino, datos = null) =>
   window.dispatchEvent(new CustomEvent('navegar_jc', { detail: { destino, datos } }))
 
-const Login = ({ navegarA_jc }) => {
+const Login = ({ navegarA_jc, onLogin }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [formulario_jc, setFormulario_jc] = useState({ correo_jc: '', clave_jc: '' })
   const [estado_jc, setEstado_jc] = useState({ cargando: false, mensaje: '', tipo: '' })
 
@@ -32,7 +35,12 @@ const Login = ({ navegarA_jc }) => {
           setEstado_jc({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
           setTimeout(() => {
             const usuarioData = { nombre: data.nombre, correo: formulario_jc.correo_jc }
-            if (typeof navegarA_jc === 'function') {
+            if (typeof onLogin === 'function') {
+              onLogin(usuarioData)
+              const next = (location.state && location.state.next) || sessionStorage.getItem('joanje_next') || '/sistema'
+              sessionStorage.removeItem('joanje_next')
+              navigate(next)
+            } else if (typeof navegarA_jc === 'function') {
               navegarA_jc('sistema', usuarioData)
             } else {
               irA_jc('sistema', usuarioData)
