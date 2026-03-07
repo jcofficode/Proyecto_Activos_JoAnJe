@@ -18,11 +18,32 @@ const App = () => {
   const [pagina_jc, setPagina_jc]   = useState('landing')
   const [usuario_jc, setUsuario_jc] = useState(null)
 
+  // Restaurar sesión desde localStorage al iniciar
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('joanje_user')
+      if (raw) {
+        const datos = JSON.parse(raw)
+        setUsuario_jc(datos)
+        setPagina_jc('sistema')
+      }
+    } catch (e) { /* ignore */ }
+  }, [])
+
   // ── Navega entre páginas ────────────────────────────────────────
   const navegarA_jc = (destino_jc, datos_jc = null) => {
-    if (datos_jc) setUsuario_jc(datos_jc)
+    if (datos_jc) {
+      setUsuario_jc(datos_jc)
+      try { localStorage.setItem('joanje_user', JSON.stringify(datos_jc)) } catch (e) { }
+    }
     setPagina_jc(destino_jc)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cerrarSesion_jc = () => {
+    setUsuario_jc(null)
+    try { localStorage.removeItem('joanje_user') } catch (e) { }
+    setPagina_jc('landing')
   }
 
   // ── Escucha el evento global 'navegar_jc' ───────────────────────
@@ -45,7 +66,7 @@ const App = () => {
 
   return (
     <div className="app">
-      <Header />
+      <Header usuario_jc={usuario_jc} onLogout={cerrarSesion_jc} />
       <main>
         <Hero />
         <VideoDemo />

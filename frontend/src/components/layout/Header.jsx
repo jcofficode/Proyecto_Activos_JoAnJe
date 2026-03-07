@@ -4,7 +4,7 @@ import imagenlogo_jja from '../../assets/JoanjeCoders.png'
 const irA_jc = (destino) =>
   window.dispatchEvent(new CustomEvent('navegar_jc', { detail: { destino } }))
 
-const Header = () => {
+const Header = ({ usuario_jc, onLogout }) => {
   const [scrolleado, setScrolleado] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false)
   const centinelaRef = useRef(null)
@@ -47,13 +47,31 @@ const Header = () => {
               {['Inicio', 'Funcionalidades', 'Políticas', 'Testimonios', 'Sobre Nosotros', 'Contacto'][i]}
             </a>
           ))}
-          <a
-            href="#sistema"
-            className="boton-iniciar-sesion"
-            onMouseDown={irAlSistema_jc}
-          >
-            Iniciar Sesión
-          </a>
+          {usuario_jc ? (
+            <div className="user-menu" style={{ marginLeft: 8 }}>
+              <button
+                className="boton-iniciar-sesion"
+                onClick={(e) => { e.preventDefault(); irA_jc('sistema') }}
+                title="Ir al panel"
+              >
+                Ir al sistema
+              </button>
+              <div className="user-trigger">
+                <span className="header-user">{usuario_jc.nombre || usuario_jc.correo || 'Usuario'}</span>
+                <div className="user-dropdown">
+                  <button className="boton-ligero" onClick={(e) => { e.preventDefault(); onLogout && onLogout() }}>Cerrar sesión</button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <a
+              href="#sistema"
+              className="boton-iniciar-sesion"
+              onMouseDown={irAlSistema_jc}
+            >
+              Iniciar Sesión
+            </a>
+          )}
         </nav>
       </div>
     </header>

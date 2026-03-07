@@ -31,10 +31,11 @@ const Login = ({ navegarA_jc }) => {
         if (data.exito) {
           setEstado_jc({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
           setTimeout(() => {
+            const usuarioData = { nombre: data.nombre, correo: formulario_jc.correo_jc }
             if (typeof navegarA_jc === 'function') {
-              navegarA_jc('sistema', { nombre: data.nombre })
+              navegarA_jc('sistema', usuarioData)
             } else {
-              irA_jc('sistema', { nombre: data.nombre })
+              irA_jc('sistema', usuarioData)
             }
           }, 1200)
         } else {

@@ -340,6 +340,57 @@ button {
   display: none !important;
 }
 
+/* Botones ligeros y usuario en header */
+.boton-ligero {
+  background: transparent;
+  color: var(--color-texto);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(30,30,46,0.06);
+  font-weight: 600;
+}
+
+.boton-ligero:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+.header-user {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  color: var(--color-blanco);
+  font-weight: 600;
+}
+
+.header.scrolleado .header-user {
+  background: rgba(0,0,0,0.03);
+  color: var(--color-texto);
+}
+
+/* User dropdown */
+.user-menu { display: flex; gap: 8px; align-items: center; }
+.user-trigger { position: relative; display: inline-block; }
+.user-dropdown {
+  position: absolute; right: 0; top: 100%;
+  background: var(--color-blanco);
+  border-radius: 8px;
+  box-shadow: var(--sombra-media);
+  padding: 8px;
+  display: none;
+  min-width: 140px;
+  z-index: 60;
+}
+.user-menu:hover .user-dropdown,
+.user-menu:focus-within .user-dropdown {
+  display: block;
+}
+.user-dropdown .boton-ligero { display: block; width: 100%; text-align: left; background: transparent; color: var(--color-texto); border: none; padding: 8px; }
+.user-dropdown .boton-ligero:hover { background: rgba(0,0,0,0.04); }
+
+/* Ensure header-user is white on non-scrolled header */
+.header:not(.scrolleado) .header-user { color: #fff; }
+
 /* Hamburguesa móvil */
 .menu-toggle {
   display: none;
