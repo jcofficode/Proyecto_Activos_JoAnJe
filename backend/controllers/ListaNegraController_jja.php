@@ -1,0 +1,67 @@
+<?php
+// ============================================================
+// controllers/ListaNegraController_jja.php
+// GET /lista-negra            <- admin/encargado
+// GET /lista-negra/usuario/{id}
+// POST /lista-negra           <- admin
+// PATCH /lista-negra/{id}/levantar  <- admin
+// ============================================================
+
+class ListaNegraController_jja extends Controller_jja
+{
+    private ListaNegraModel_jja $modelo_jja;
+
+    public function __construct()
+    {
+        $this->modelo_jja = new ListaNegraModel_jja();
+    }
+
+    public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
+    {
+        $payload_jja = Middleware_jja::autenticar_jja();
+        $seg0_jja    = $segmentos_jja[0] ?? null;
+        $seg1_jja    = $segmentos_jja[1] ?? null;
+
+        switch ($metodo_jja) {
+            case 'GET':
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+                if ($seg0_jja === 'usuario' && $this->validarId_jja($seg1_jja)) {
+                    $this->responder_jja(true, $this->modelo_jja->listarPorUsuario_jja((int)$seg1_jja), 'Sanciones del usuario.');
+                } else {
+                    $this->responder_jja(true, $this->modelo_jja->listar_jja(), 'Lista negra completa.');
+                }
+                break;
+
+            case 'POST':
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                $body_jja  = $this->obtenerBody_jja();
+                $falta_jja = $this->campoFaltante_jja($body_jja, ['id_usuario', 'motivo']);
+                if ($falta_jja) $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
+                if (strlen($body_jja['motivo']) > 255)
+                    $this->responder_jja(false, null, 'El motivo no debe superar 255 caracteres.', 400);
+                $res_jja = $this->modelo_jja->crear_jja(
+                    (int)$body_jja['id_usuario'],
+                    trim($body_jja['motivo']),
+                    $body_jja['fecha_fin'] ?? null
+                );
+                $this->responder_jja(true, $res_jja, 'Sancion registrada.', 201);
+                break;
+
+            case 'PATCH':
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID invalido.', 400);
+                if ($seg1_jja !== 'levantar') $this->responder_jja(false, null, 'Sub-ruta no reconocida.', 404);
+                
+                $res_levantar_jja = $this->modelo_jja->levantarSancion_jja((int)$seg0_jja);
+                if (isset($res_levantar_jja['filas_afectadas']) && $res_levantar_jja['filas_afectadas'] == 0) {
+                    $this->responder_jja(false, null, "La sancion con ID {$seg0_jja} no existe o ya se encuentra levantada.", 404);
+                }
+                
+                $this->responder_jja(true, null, 'Sancion levantada correctamente.');
+                break;
+
+            default:
+                $this->responder_jja(false, null, 'Metodo HTTP no permitido.', 405);
+        }
+    }
+}

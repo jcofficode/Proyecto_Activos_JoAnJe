@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════
+# Variables de entorno (CONTRASEÑAS)
+# ═══════════════════════════════════════
+.env
+
+# ═══════════════════════════════════════
+# Dependencias de Composer (se regeneran con "composer install")
+# ═══════════════════════════════════════
+vendor/
+
+# ═══════════════════════════════════════
+# Archivos de sistema operativo
+# ═══════════════════════════════════════
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ═══════════════════════════════════════
+# Logs y archivos temporales
+# ═══════════════════════════════════════
+*.log
+*.cache
+*.tmp
+
+# ═══════════════════════════════════════
+# IDEs y editores de código
+# ═══════════════════════════════════════
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
