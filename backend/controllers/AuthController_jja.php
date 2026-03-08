@@ -6,17 +6,17 @@
 
 class AuthController_jja extends Controller_jja
 {
-    private AuthModel_jja    $authModel_jja;
-    private TokenModel_jja   $tokenModel_jja;
-    private JwtService_jja   $jwt_jja;
+    private AuthModel_jja $authModel_jja;
+    private TokenModel_jja $tokenModel_jja;
+    private JwtService_jja $jwt_jja;
     private CorreoService_jja $correo_jja;
 
     public function __construct()
     {
-        $this->authModel_jja  = new AuthModel_jja();
+        $this->authModel_jja = new AuthModel_jja();
         $this->tokenModel_jja = new TokenModel_jja();
-        $this->jwt_jja        = new JwtService_jja();
-        $this->correo_jja     = new CorreoService_jja();
+        $this->jwt_jja = new JwtService_jja();
+        $this->correo_jja = new CorreoService_jja();
     }
 
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
@@ -24,12 +24,13 @@ class AuthController_jja extends Controller_jja
         $accion_jja = $segmentos_jja[0] ?? '';
 
         match (true) {
-            $metodo_jja === 'POST' && $accion_jja === 'login'        => $this->login_jja(),
-            $metodo_jja === 'GET'  && $accion_jja === 'me'           => $this->me_jja(),
-            $metodo_jja === 'POST' && $accion_jja === 'logout'       => $this->logout_jja(),
-            $metodo_jja === 'POST' && $accion_jja === 'cambiar-clave'=> $this->cambiarClave_jja(),
-            default => $this->responder_jja(false, null, 'Ruta de autenticacion no encontrada.', 404),
-        };
+                $metodo_jja === 'POST' && $accion_jja === 'login' => $this->login_jja(),
+                $metodo_jja === 'POST' && $accion_jja === 'contacto' => $this->contacto_jja(),
+                $metodo_jja === 'GET' && $accion_jja === 'me' => $this->me_jja(),
+                $metodo_jja === 'POST' && $accion_jja === 'logout' => $this->logout_jja(),
+                $metodo_jja === 'POST' && $accion_jja === 'cambiar-clave' => $this->cambiarClave_jja(),
+                default => $this->responder_jja(false, null, 'Ruta de autenticacion no encontrada.', 404),
+            };
     }
 
     // ── POST /api/v1/auth/login ─────────────────────────────
@@ -37,20 +38,19 @@ class AuthController_jja extends Controller_jja
     {
         $body_jja = $this->obtenerBody_jja();
 
-        $falta_jja = $this->campoFaltante_jja($body_jja, ['cedula', 'contrasena']);
+        $falta_jja = $this->campoFaltante_jja($body_jja, ['correo', 'contrasena']);
         if ($falta_jja) {
             $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
         }
 
-        $cedula_jja     = trim($body_jja['cedula']);
+        $correo_jja = trim($body_jja['correo']);
         $contrasena_jja = $body_jja['contrasena'];
 
-        // Validacion estricta: cedula solo digitos, 6-10 caracteres
-        if (!ctype_digit($cedula_jja) || strlen($cedula_jja) < 6 || strlen($cedula_jja) > 10) {
-            $this->responder_jja(false, null, 'La cedula debe tener entre 6 y 10 digitos numericos.', 400);
+        if (!filter_var($correo_jja, FILTER_VALIDATE_EMAIL)) {
+            $this->responder_jja(false, null, 'El formato de correo no es válido.', 400);
         }
 
-        $usuario_jja = $this->authModel_jja->buscarPorCedula_jja($cedula_jja);
+        $usuario_jja = $this->authModel_jja->buscarPorCorreo_jja($correo_jja);
 
         if (!$usuario_jja) {
             $this->responder_jja(false, null, 'Credenciales incorrectas.', 401);
@@ -65,7 +65,7 @@ class AuthController_jja extends Controller_jja
 
         $token_jja = $this->jwt_jja->generar_jja(
             (int)$usuario_jja['id_usuario_jja'],
-            $cedula_jja,
+            $usuario_jja['cedula_jja'],
             $usuario_jja['correo_jja'],
             $nombreCompleto_jja,
             $usuario_jja['nombre_rol_jja'] ?? '',
@@ -73,13 +73,13 @@ class AuthController_jja extends Controller_jja
         );
 
         $datos_jja = [
-            'token'               => $token_jja,
-            'debe_cambiar_clave'  => $debeCambiar_jja,
-            'usuario'             => [
-                'id'     => $usuario_jja['id_usuario_jja'],
+            'token' => $token_jja,
+            'debe_cambiar_clave' => $debeCambiar_jja,
+            'usuario' => [
+                'id' => $usuario_jja['id_usuario_jja'],
                 'nombre' => $nombreCompleto_jja,
                 'correo' => $usuario_jja['correo_jja'],
-                'rol'    => $usuario_jja['nombre_rol_jja'] ?? '',
+                'rol' => $usuario_jja['nombre_rol_jja'] ?? '',
             ],
         ];
 
@@ -94,7 +94,7 @@ class AuthController_jja extends Controller_jja
     private function me_jja(): void
     {
         $payload_jja = Middleware_jja::autenticar_jja();
-        
+
         $usuario_jja = $this->authModel_jja->buscarPorCedula_jja($payload_jja->cedula);
         if (!$usuario_jja) {
             $this->responder_jja(false, null, 'Usuario no encontrado.', 404);
@@ -111,12 +111,12 @@ class AuthController_jja extends Controller_jja
     {
         $payload_jja = Middleware_jja::autenticar_jja();
 
-        $header_jja  = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $header_jja = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         preg_match('/^Bearer\s+(.+)$/i', $header_jja, $m_jja);
-        $token_jja   = $m_jja[1] ?? '';
+        $token_jja = $m_jja[1] ?? '';
 
         $hashToken_jja = hash('sha256', $token_jja);
-        $expira_jja    = date('Y-m-d H:i:s', $payload_jja->exp);
+        $expira_jja = date('Y-m-d H:i:s', $payload_jja->exp);
 
         $this->tokenModel_jja->invalidar_jja($hashToken_jja, (int)$payload_jja->id, $expira_jja);
 
@@ -127,14 +127,14 @@ class AuthController_jja extends Controller_jja
     private function cambiarClave_jja(): void
     {
         $payload_jja = Middleware_jja::autenticar_jja();
-        $body_jja    = $this->obtenerBody_jja();
+        $body_jja = $this->obtenerBody_jja();
 
         $falta_jja = $this->campoFaltante_jja($body_jja, ['nueva_contrasena', 'confirmar_contrasena']);
         if ($falta_jja) {
             $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
         }
 
-        $nueva_jja     = $body_jja['nueva_contrasena'];
+        $nueva_jja = $body_jja['nueva_contrasena'];
         $confirmar_jja = $body_jja['confirmar_contrasena'];
 
         // Validacion de fortaleza: min 8 chars, al menos 1 mayuscula, 1 numero
@@ -155,8 +155,8 @@ class AuthController_jja extends Controller_jja
         $this->authModel_jja->cambiarContrasena_jja((int)$payload_jja->id, $nuevoHash_jja);
 
         // Generar nuevo token sin el flag debe_cambiar_clave
-        $usuario_jja   = $this->authModel_jja->buscarPorCedula_jja($payload_jja->cedula);
-        $nombre_jja    = trim(($usuario_jja['nombre_jja'] ?? '') . ' ' . ($usuario_jja['apellido_jja'] ?? ''));
+        $usuario_jja = $this->authModel_jja->buscarPorCedula_jja($payload_jja->cedula);
+        $nombre_jja = trim(($usuario_jja['nombre_jja'] ?? '') . ' ' . ($usuario_jja['apellido_jja'] ?? ''));
         $nuevoToken_jja = $this->jwt_jja->generar_jja(
             (int)$payload_jja->id,
             $payload_jja->cedula,
@@ -167,5 +167,70 @@ class AuthController_jja extends Controller_jja
         );
 
         $this->responder_jja(true, ['token' => $nuevoToken_jja], 'Contrasena actualizada correctamente.', 200);
+    }
+
+    // ── POST /api/v1/auth/contacto ──────────────────────────
+    private function contacto_jja(): void
+    {
+        $body_jja = $this->obtenerBody_jja();
+
+        $falta_jja = $this->campoFaltante_jja($body_jja, ['nombre', 'correo']);
+        if ($falta_jja) {
+            $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
+        }
+
+        $correo_jja = trim($body_jja['correo']);
+        if (!filter_var($correo_jja, FILTER_VALIDATE_EMAIL)) {
+            $this->responder_jja(false, null, 'El formato de correo no es válido.', 400);
+        }
+
+        // Check if user already exists
+        $usuario_jja = $this->authModel_jja->buscarPorCorreo_jja($correo_jja);
+
+        // Generate temporary code
+        $chars_jja = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $codigo_jja = '';
+        for ($i = 0; $i < 8; $i++) {
+            $codigo_jja .= $chars_jja[random_int(0, strlen($chars_jja) - 1)];
+        }
+        $hash_jja = password_hash($codigo_jja, PASSWORD_BCRYPT, ['cost' => 12]);
+
+        $usuarioModel = new UsuarioModel_jja();
+
+        // If user doesn't exist, create a dummy account for them
+        if (!$usuario_jja) {
+            $cedula_demo = 'DEMO-' . random_int(10000, 99999);
+            try {
+                $usuarioModel->crear_jja(
+                    trim($body_jja['nombre']),
+                    'Demo', // Dummy lastname
+                    $cedula_demo,
+                    $correo_jja,
+                    $body_jja['telefono'] ?? null,
+                    $hash_jja,
+                    null, // No imagen
+                    3, // Rol usuario final
+                    1 // debe_cambiar_clave_jja
+                );
+            }
+            catch (Exception $e) {
+                $this->responder_jja(false, null, 'Error al registrar el contacto en la BD.', 500);
+            }
+        }
+        else {
+            // Modify existing temporary password and FORCE them to change the password again (Set 1 if SP supported it, but our SP SP_CAMBIAR_CONTRASENA sets 0.
+            // As this is a generic contact, we can let them login. But actually we need SP to force change here too. Let's do a fast query directly through AuthModel or modify SP.
+            // Wait, we can modify SP_CAMBIAR_CONTRASENA but it sets to 0. We'll use a direct UPDATE query if we need to force it.
+            $this->authModel_jja->forzarCambioClave_jja((int)$usuario_jja['id_usuario_jja'], $hash_jja);
+        }
+
+        // Enviar correo con la clave temporal
+        $envio_jja = $this->correo_jja->enviarClaveTemporal_jja(
+            $correo_jja,
+            trim($body_jja['nombre']),
+            $codigo_jja
+        );
+
+        $this->responder_jja(true, null, 'Has solicitado registro. Revisa tu correo electrónico para obtener el PIN de acceso.', 200);
     }
 }

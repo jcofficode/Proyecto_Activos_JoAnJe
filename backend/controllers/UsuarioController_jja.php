@@ -8,7 +8,7 @@
 
 class UsuarioController_jja extends Controller_jja
 {
-    private UsuarioModel_jja  $modelo_jja;
+    private UsuarioModel_jja $modelo_jja;
     private CorreoService_jja $correo_jja;
 
     public function __construct()
@@ -20,7 +20,7 @@ class UsuarioController_jja extends Controller_jja
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
     {
         $payload_jja = Middleware_jja::autenticar_jja();
-        $id_jja      = $segmentos_jja[0] ?? null;
+        $id_jja = $segmentos_jja[0] ?? null;
 
         switch ($metodo_jja) {
             case 'GET':
@@ -29,14 +29,23 @@ class UsuarioController_jja extends Controller_jja
                         $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
                     }
                     $this->mostrar_jja((int)$id_jja, $payload_jja);
-                } else {
+                }
+                else {
                     $this->listar_jja($payload_jja);
                 }
                 break;
 
             case 'POST':
-                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
-                $this->crear_jja();
+                if ($id_jja !== null && isset($segmentos_jja[1]) && $segmentos_jja[1] === 'imagen') {
+                    if (!$this->validarId_jja($id_jja)) {
+                        $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
+                    }
+                    $this->actualizarImagen_jja((int)$id_jja, $payload_jja);
+                }
+                else {
+                    Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                    $this->crear_jja();
+                }
                 break;
 
             case 'PUT':
@@ -94,8 +103,10 @@ class UsuarioController_jja extends Controller_jja
         }
 
         // Validaciones estrictas
-        if (strlen(trim($body_jja['nombre']))   > 80)  $this->responder_jja(false, null, 'El nombre no debe superar 80 caracteres.', 400);
-        if (strlen(trim($body_jja['apellido'])) > 80)  $this->responder_jja(false, null, 'El apellido no debe superar 80 caracteres.', 400);
+        if (strlen(trim($body_jja['nombre'])) > 80)
+            $this->responder_jja(false, null, 'El nombre no debe superar 80 caracteres.', 400);
+        if (strlen(trim($body_jja['apellido'])) > 80)
+            $this->responder_jja(false, null, 'El apellido no debe superar 80 caracteres.', 400);
         if (!ctype_digit($body_jja['cedula']) || strlen($body_jja['cedula']) < 6 || strlen($body_jja['cedula']) > 10)
             $this->responder_jja(false, null, 'La cedula debe tener entre 6 y 10 digitos.', 400);
         if (!filter_var($body_jja['correo'], FILTER_VALIDATE_EMAIL))
@@ -104,7 +115,7 @@ class UsuarioController_jja extends Controller_jja
             $this->responder_jja(false, null, 'El campo id_rol debe ser un numero entero positivo.', 400);
 
         // Generar codigo temporal alfanumerico (8 chars)
-        $chars_jja  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $chars_jja = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         $codigo_jja = '';
         for ($i = 0; $i < 8; $i++) {
             $codigo_jja .= $chars_jja[random_int(0, strlen($chars_jja) - 1)];
@@ -119,9 +130,11 @@ class UsuarioController_jja extends Controller_jja
                 trim($body_jja['correo']),
                 isset($body_jja['telefono']) ? trim($body_jja['telefono']) : null,
                 $hash_jja,
+                null,
                 (int)$body_jja['id_rol']
             );
-        } catch (PDOException $e_jja) {
+        }
+        catch (PDOException $e_jja) {
             $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage());
             $this->responder_jja(false, null, $msg_jja, 409);
         }
@@ -134,10 +147,61 @@ class UsuarioController_jja extends Controller_jja
         );
 
         $this->responder_jja(true, [
-            'id_usuario'      => $res_jja['id_usuario_jja'] ?? null,
-            'correo_enviado'  => $envio_jja['exito'],
-            'correo_mensaje'  => $envio_jja['mensaje'],
+            'id_usuario' => $res_jja['id_usuario_jja'] ?? null,
+            'correo_enviado' => $envio_jja['exito'],
+            'correo_mensaje' => $envio_jja['mensaje'],
         ], 'Usuario creado. Se envio la clave temporal al correo.', 201);
+    }
+
+    private function actualizarImagen_jja(int $id_jja, object $payload_jja): void
+    {
+        if ($payload_jja->rol !== Middleware_jja::ROL_ADMIN && (int)$payload_jja->id !== $id_jja) {
+            $this->responder_jja(false, null, 'No tienes permisos para actualizar esta imagen.', 403);
+        }
+
+        if (!isset($_FILES['imagen'])) {
+            $this->responder_jja(false, null, 'No se ha proporcionado ninguna imagen.', 400);
+        }
+
+        $archivo = $_FILES['imagen'];
+
+        if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            $this->responder_jja(false, null, 'Error al subir la imagen. Codigo: ' . $archivo['error'], 400);
+        }
+
+        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+        $permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($extension, $permitidas)) {
+            $this->responder_jja(false, null, 'Formato no permitido. Solo JPG, PNG, WEBP.', 400);
+        }
+
+        if ($archivo['size'] > 2 * 1024 * 1024) {
+            $this->responder_jja(false, null, 'La imagen no debe superar los 2MB.', 400);
+        }
+
+        $directorio = __DIR__ . '/../../frontend/public/uploads/perfiles/';
+        if (!is_dir($directorio)) {
+            mkdir($directorio, 0777, true);
+        }
+
+        $nombreArchivo = 'perfil_' . $id_jja . '_' . time() . '.' . $extension;
+        $rutaCompleta = $directorio . $nombreArchivo;
+
+        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
+            $rutaRelativa = '/uploads/perfiles/' . $nombreArchivo;
+            try {
+                $this->modelo_jja->actualizarImagen_jja($id_jja, $rutaRelativa);
+                $this->responder_jja(true, ['imagen' => $rutaRelativa], 'Imagen de perfil actualizada correctamente.', 200);
+            }
+            catch (PDOException $e_jja) {
+                $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage());
+                $this->responder_jja(false, null, $msg_jja, 409);
+            }
+        }
+        else {
+            $this->responder_jja(false, null, 'No se pudo guardar la imagen en el servidor.', 500);
+        }
     }
 
     private function actualizar_jja(int $id_jja): void
@@ -161,7 +225,8 @@ class UsuarioController_jja extends Controller_jja
                 isset($body_jja['telefono']) ? trim($body_jja['telefono']) : null,
                 (int)$body_jja['id_rol']
             );
-        } catch (PDOException $e_jja) {
+        }
+        catch (PDOException $e_jja) {
             $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage());
             $this->responder_jja(false, null, $msg_jja, 409);
         }

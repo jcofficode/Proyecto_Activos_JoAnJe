@@ -20,14 +20,14 @@ const Login = ({ navegarA_jc, onLogin }) => {
   const manejarEnvio_jc = (e) => {
     e.preventDefault()
     setEstado_jc({ cargando: true, mensaje: '', tipo: '' })
-    const params_jc = new URLSearchParams({
-      accion_jc: 'login',
-      correo_jc: formulario_jc.correo_jc,
-      clave_jc: formulario_jc.clave_jc,
-    })
-    fetch('http://localhost:8000/controller/UsuarioControlador_jc.php', {
+    const body_jc = {
+      correo: formulario_jc.correo_jc,
+      contrasena: formulario_jc.clave_jc
+    }
+    fetch(`${API_URL_JC}/auth/login`, {
       method: 'POST',
-      body: params_jc
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body_jc)
     })
       .then(res => res.json())
       .then(data => {

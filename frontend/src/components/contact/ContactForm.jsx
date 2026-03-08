@@ -20,15 +20,19 @@ export default function ContactForm({ navegarA_jc }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setEstado({ cargando: true, mensaje: '', tipo: '' })
-    const params = new URLSearchParams()
-    params.append('accion_jc', 'registrar')
-    params.append('nombre_jc', values.nombre_jc)
-    params.append('correo_jc', values.correo_jc)
-    params.append('telefono_jc', values.telefono_jc)
-    params.append('empresa_jc', values.empresa_jc)
+    const bodyJSON = {
+      nombre: values.nombre_jc,
+      correo: values.correo_jc,
+      telefono: values.telefono_jc,
+      empresa: values.empresa_jc
+    }
 
     try {
-      const res = await fetch(API_URL_JC, { method: 'POST', body: params })
+      const res = await fetch(`${API_URL_JC}/auth/contacto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyJSON)
+      })
       const data = await res.json()
       if (data.exito) {
         setEstado({ cargando: false, mensaje: '✅ ¡Registro exitoso! Revisa tu correo — te enviamos tu clave de acceso.', tipo: 'exito' })

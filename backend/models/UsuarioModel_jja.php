@@ -11,17 +11,20 @@ class UsuarioModel_jja extends Model_jja
      * Retorna ['id_usuario_jja' => int]
      */
     public function crear_jja(
-        string  $nombre_jja,
-        string  $apellido_jja,
-        string  $cedula_jja,
-        string  $correo_jja,
+        string $nombre_jja,
+        string $apellido_jja,
+        string $cedula_jja,
+        string $correo_jja,
         ?string $telefono_jja,
-        string  $hashContrasena_jja,
-        int     $idRol_jja
-    ): array {
+        string $hashContrasena_jja,
+        ?string $imagen_jja,
+        int $idRol_jja,
+        int $debeCambiar_jja = 0
+        ): array
+    {
         $res_jja = $this->ejecutarSPUno_jja('SP_CREAR_USUARIO_jja', [
             $nombre_jja, $apellido_jja, $cedula_jja, $correo_jja,
-            $telefono_jja, $hashContrasena_jja, $idRol_jja
+            $telefono_jja, $hashContrasena_jja, $imagen_jja, $idRol_jja, $debeCambiar_jja
         ]);
         return $res_jja ?? [];
     }
@@ -43,13 +46,14 @@ class UsuarioModel_jja extends Model_jja
      * SP_ACTUALIZAR_USUARIO_jja(id, nombre, apellido, correo, telefono, id_rol)
      */
     public function actualizar_jja(
-        int     $id_jja,
-        string  $nombre_jja,
-        string  $apellido_jja,
-        string  $correo_jja,
+        int $id_jja,
+        string $nombre_jja,
+        string $apellido_jja,
+        string $correo_jja,
         ?string $telefono_jja,
-        int     $idRol_jja
-    ): array {
+        int $idRol_jja
+        ): array
+    {
         $res_jja = $this->ejecutarSPUno_jja('SP_ACTUALIZAR_USUARIO_jja', [
             $id_jja, $nombre_jja, $apellido_jja, $correo_jja, $telefono_jja, $idRol_jja
         ]);
@@ -63,6 +67,16 @@ class UsuarioModel_jja extends Model_jja
     public function eliminar_jja(int $id_jja): array
     {
         $res_jja = $this->ejecutarSPUno_jja('SP_ELIMINAR_USUARIO_jja', [$id_jja]);
+        return $res_jja ?? ['filas_afectadas' => 0];
+    }
+
+    /**
+     * Actualiza la imagen de perfil del usuario.
+     * SP_ACTUALIZAR_IMAGEN_USUARIO_jja(id, imagen) -> ['filas_afectadas' => int]
+     */
+    public function actualizarImagen_jja(int $id_jja, ?string $imagen_jja): array
+    {
+        $res_jja = $this->ejecutarSPUno_jja('SP_ACTUALIZAR_IMAGEN_USUARIO_jja', [$id_jja, $imagen_jja]);
         return $res_jja ?? ['filas_afectadas' => 0];
     }
 }

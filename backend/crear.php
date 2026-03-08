@@ -36,24 +36,27 @@ $dotenv_jja = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv_jja->load();
 
 // ── Contadores de resumen ────────────────────────────────────
-$cnt_tablas_jja    = 0;
-$cnt_sp_jja        = 0;
-$cnt_triggers_jja  = 0;
-$cnt_indices_jja   = 0;
-$errores_jja       = 0;
+$cnt_tablas_jja = 0;
+$cnt_sp_jja = 0;
+$cnt_triggers_jja = 0;
+$cnt_indices_jja = 0;
+$errores_jja = 0;
 
 // ── Helper: imprime un mensaje con clase CSS ─────────────────
-function mostrar_jja(string $clase, string $icono, string $texto): void {
+function mostrar_jja(string $clase, string $icono, string $texto): void
+{
     echo "<div class='bloque'><div class='{$clase}'>{$icono} {$texto}</div></div>\n";
 }
 
 // ── Helper: ejecuta SQL y reporta resultado ──────────────────
-function ejecutar_jja(PDO $pdo, string $sql, string $descripcion, string &$contador_ref, int &$errores_ref): void {
+function ejecutar_jja(PDO $pdo, string $sql, string $descripcion, string&$contador_ref, int&$errores_ref): void
+{
     try {
         $pdo->exec($sql);
         mostrar_jja('ok', '✅', $descripcion);
         $contador_ref++;
-    } catch (PDOException $e) {
+    }
+    catch (PDOException $e) {
         mostrar_jja('err', '❌', "ERROR — {$descripcion}: " . $e->getMessage());
         $errores_ref++;
     }
@@ -64,17 +67,18 @@ function ejecutar_jja(PDO $pdo, string $sql, string $descripcion, string &$conta
 // ══════════════════════════════════════════════════════════════
 echo "<p class='seccion'>① CONEXIÓN Y CREACIÓN DE LA BASE DE DATOS</p>";
 
-$host_jja  = $_ENV['DB_HOST'];
-$port_jja  = $_ENV['DB_PORT'];
-$user_jja  = $_ENV['DB_USER'];
-$pass_jja  = $_ENV['DB_PASS'];
-$db_jja    = $_ENV['DB_NAME'];
+$host_jja = $_ENV['DB_HOST'];
+$port_jja = $_ENV['DB_PORT'];
+$user_jja = $_ENV['DB_USER'];
+$pass_jja = $_ENV['DB_PASS'];
+$db_jja = $_ENV['DB_NAME'];
 
 try {
     $pdo_jja = new PDO("mysql:host={$host_jja};port={$port_jja}", $user_jja, $pass_jja);
     $pdo_jja->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     mostrar_jja('ok', '✅', "Conexión al servidor MySQL establecida correctamente.");
-} catch (PDOException $e) {
+}
+catch (PDOException $e) {
     mostrar_jja('err', '❌', "No se pudo conectar al servidor MySQL: " . $e->getMessage());
     die();
 }
@@ -84,7 +88,8 @@ try {
     mostrar_jja('ok', '✅', "Base de datos <strong>{$db_jja}</strong> creada o ya existe.");
     $pdo_jja->exec("USE `{$db_jja}`");
     $pdo_jja->exec("SET time_zone = '-04:00'");
-} catch (PDOException $e) {
+}
+catch (PDOException $e) {
     mostrar_jja('err', '❌', "Error al crear/usar la BD: " . $e->getMessage());
     die();
 }
@@ -122,7 +127,9 @@ CREATE TABLE IF NOT EXISTS `usuarios_jja` (
     `correo_jja`            VARCHAR(150)    NOT NULL,
     `telefono_jja`          VARCHAR(20)     DEFAULT NULL,
     `contrasena_jja`        VARCHAR(255)    NOT NULL   COMMENT 'Hash bcrypt',
+    `imagen_jja`            VARCHAR(255)    DEFAULT NULL COMMENT 'Ruta de la imagen de perfil',
     `id_rol_jja`            INT UNSIGNED    NOT NULL,
+    `debe_cambiar_clave_jja` TINYINT(1)     NOT NULL DEFAULT 0,
     `estado_registro_jja`   TINYINT(1)      NOT NULL DEFAULT 1 COMMENT 'Soft delete: 1=activo, 0=eliminado',
     `creado_en_jja`         TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `actualizado_en_jja`    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -324,16 +331,16 @@ CREATE TABLE IF NOT EXISTS `tokens_invalidos_jja` (
 echo "<p class='seccion'>③ ÍNDICES DE RENDIMIENTO (búsquedas frecuentes)</p>";
 
 $indices_jja = [
-    ["CREATE INDEX `idx_activo_estado_jja`         ON `activos_jja`   (`estado_jja`)",             "Índice: activos_jja · estado_jja"],
-    ["CREATE INDEX `idx_prestamo_estado_jja`       ON `prestamos_jja` (`estado_prestamo_jja`)",    "Índice: prestamos_jja · estado_prestamo_jja"],
-    ["CREATE INDEX `idx_prestamo_fecha_limite_jja` ON `prestamos_jja` (`fecha_limite_jja`)",       "Índice: prestamos_jja · fecha_limite_jja"],
-    ["CREATE INDEX `idx_prestamo_usuario_jja`      ON `prestamos_jja` (`id_usuario_jja`)",         "Índice: prestamos_jja · id_usuario_jja"],
-    ["CREATE INDEX `idx_prestamo_activo_jja`       ON `prestamos_jja` (`id_activo_jja`)",          "Índice: prestamos_jja · id_activo_jja"],
+    ["CREATE INDEX `idx_activo_estado_jja`         ON `activos_jja`   (`estado_jja`)", "Índice: activos_jja · estado_jja"],
+    ["CREATE INDEX `idx_prestamo_estado_jja`       ON `prestamos_jja` (`estado_prestamo_jja`)", "Índice: prestamos_jja · estado_prestamo_jja"],
+    ["CREATE INDEX `idx_prestamo_fecha_limite_jja` ON `prestamos_jja` (`fecha_limite_jja`)", "Índice: prestamos_jja · fecha_limite_jja"],
+    ["CREATE INDEX `idx_prestamo_usuario_jja`      ON `prestamos_jja` (`id_usuario_jja`)", "Índice: prestamos_jja · id_usuario_jja"],
+    ["CREATE INDEX `idx_prestamo_activo_jja`       ON `prestamos_jja` (`id_activo_jja`)", "Índice: prestamos_jja · id_activo_jja"],
     ["CREATE INDEX `idx_historial_prestamo_jja`    ON `historial_prestamos_jja` (`id_prestamo_jja`)", "Índice: historial_prestamos_jja · id_prestamo_jja"],
     ["CREATE INDEX `idx_notif_usuario_leida_jja`   ON `notificaciones_jja` (`id_usuario_jja`, `leida_jja`)", "Índice compuesto: notificaciones_jja · usuario + leida"],
     ["CREATE INDEX `idx_lista_negra_usuario_jja`   ON `lista_negra_jja` (`id_usuario_jja`, `activa_jja`)", "Índice compuesto: lista_negra_jja · usuario + activa"],
-    ["CREATE INDEX `idx_auditoria_tabla_jja`       ON `auditoria_jja` (`tabla_afectada_jja`)",     "Índice: auditoria_jja · tabla_afectada_jja"],
-    ["CREATE INDEX `idx_auditoria_fecha_jja`       ON `auditoria_jja` (`fecha_accion_jja`)",       "Índice: auditoria_jja · fecha_accion_jja"],
+    ["CREATE INDEX `idx_auditoria_tabla_jja`       ON `auditoria_jja` (`tabla_afectada_jja`)", "Índice: auditoria_jja · tabla_afectada_jja"],
+    ["CREATE INDEX `idx_auditoria_fecha_jja`       ON `auditoria_jja` (`fecha_accion_jja`)", "Índice: auditoria_jja · fecha_accion_jja"],
     ["CREATE INDEX `idx_prestamo_usuario_estado_jja` ON `prestamos_jja` (`id_usuario_jja`, `estado_prestamo_jja`)", "Índice compuesto: prestamos_jja · usuario + estado"],
 ];
 
@@ -342,11 +349,13 @@ foreach ($indices_jja as $idx_jja) {
         $pdo_jja->exec($idx_jja[0]);
         mostrar_jja('ok', '✅', $idx_jja[1]);
         $cnt_indices_jja++;
-    } catch (PDOException $e) {
+    }
+    catch (PDOException $e) {
         if ($e->getCode() == '42000' || strpos($e->getMessage(), '1061') !== false) {
             mostrar_jja('ok', '✅', $idx_jja[1] . " (Ya existía)");
             $cnt_indices_jja++;
-        } else {
+        }
+        else {
             mostrar_jja('err', '❌', "ERROR — {$idx_jja[1]}: " . $e->getMessage());
             $errores_jja++;
         }
@@ -362,42 +371,46 @@ mostrar_jja('info', 'ℹ️', "Eliminando SPs existentes para garantizar idempot
 // ── DROP de todos los SPs ────────────────────────────────────
 $sps_a_eliminar_jja = [
     // Roles
-    'SP_CREAR_ROL_jja','SP_LEER_ROLES_jja','SP_LEER_ROL_ID_jja','SP_ACTUALIZAR_ROL_jja','SP_ELIMINAR_ROL_jja',
+    'SP_CREAR_ROL_jja', 'SP_LEER_ROLES_jja', 'SP_LEER_ROL_ID_jja', 'SP_ACTUALIZAR_ROL_jja', 'SP_ELIMINAR_ROL_jja',
     // Usuarios
-    'SP_CREAR_USUARIO_jja','SP_LEER_USUARIOS_jja','SP_LEER_USUARIO_ID_jja','SP_LEER_USUARIO_CEDULA_jja',
-    'SP_ACTUALIZAR_USUARIO_jja','SP_ELIMINAR_USUARIO_jja','SP_CAMBIAR_CONTRASENA_jja',
+    'SP_CREAR_USUARIO_jja', 'SP_LEER_USUARIOS_jja', 'SP_LEER_USUARIO_ID_jja', 'SP_LEER_USUARIO_CEDULA_jja',
+    'SP_ACTUALIZAR_USUARIO_jja', 'SP_ELIMINAR_USUARIO_jja', 'SP_CAMBIAR_CONTRASENA_jja', 'SP_ACTUALIZAR_IMAGEN_USUARIO_jja',
     // Tipos activos
-    'SP_CREAR_TIPO_ACTIVO_jja','SP_LEER_TIPOS_ACTIVOS_jja','SP_LEER_TIPO_ACTIVO_ID_jja',
-    'SP_ACTUALIZAR_TIPO_ACTIVO_jja','SP_ELIMINAR_TIPO_ACTIVO_jja',
+    'SP_CREAR_TIPO_ACTIVO_jja', 'SP_LEER_TIPOS_ACTIVOS_jja', 'SP_LEER_TIPO_ACTIVO_ID_jja',
+    'SP_ACTUALIZAR_TIPO_ACTIVO_jja', 'SP_ELIMINAR_TIPO_ACTIVO_jja',
     // Políticas
-    'SP_CREAR_POLITICA_jja','SP_LEER_POLITICAS_jja','SP_LEER_POLITICA_TIPO_jja',
-    'SP_ACTUALIZAR_POLITICA_jja','SP_ELIMINAR_POLITICA_jja',
+    'SP_CREAR_POLITICA_jja', 'SP_LEER_POLITICAS_jja', 'SP_LEER_POLITICA_TIPO_jja',
+    'SP_ACTUALIZAR_POLITICA_jja', 'SP_ELIMINAR_POLITICA_jja',
     // Activos
-    'SP_CREAR_ACTIVO_jja','SP_LEER_ACTIVOS_jja','SP_LEER_ACTIVO_ID_jja',
-    'SP_LEER_ACTIVO_QR_jja','SP_LEER_ACTIVO_NFC_jja','SP_ACTUALIZAR_ACTIVO_jja',
-    'SP_ACTUALIZAR_ESTADO_ACTIVO_jja','SP_ELIMINAR_ACTIVO_jja',
+    'SP_CREAR_ACTIVO_jja', 'SP_LEER_ACTIVOS_jja', 'SP_LEER_ACTIVO_ID_jja',
+    'SP_LEER_ACTIVO_QR_jja', 'SP_LEER_ACTIVO_NFC_jja', 'SP_ACTUALIZAR_ACTIVO_jja',
+    'SP_ACTUALIZAR_ESTADO_ACTIVO_jja', 'SP_ELIMINAR_ACTIVO_jja',
     // Préstamos
-    'SP_REGISTRAR_PRESTAMO_jja','SP_REGISTRAR_DEVOLUCION_jja','SP_LEER_PRESTAMOS_jja',
-    'SP_LEER_PRESTAMO_ID_jja','SP_LEER_PRESTAMOS_USUARIO_jja','SP_LEER_PRESTAMOS_ACTIVOS_jja',
-    'SP_LEER_PRESTAMOS_VENCIDOS_jja','SP_MARCAR_PRESTAMO_PERDIDO_jja','SP_ACTUALIZAR_VENCIDOS_jja',
+    'SP_REGISTRAR_PRESTAMO_jja', 'SP_REGISTRAR_DEVOLUCION_jja', 'SP_LEER_PRESTAMOS_jja',
+    'SP_LEER_PRESTAMO_ID_jja', 'SP_LEER_PRESTAMOS_USUARIO_jja', 'SP_LEER_PRESTAMOS_ACTIVOS_jja',
+    'SP_LEER_PRESTAMOS_VENCIDOS_jja', 'SP_MARCAR_PRESTAMO_PERDIDO_jja', 'SP_ACTUALIZAR_VENCIDOS_jja',
     // Notificaciones
-    'SP_CREAR_NOTIFICACION_jja','SP_LEER_NOTIFICACIONES_USUARIO_jja',
-    'SP_MARCAR_NOTIFICACION_LEIDA_jja','SP_MARCAR_TODAS_LEIDAS_jja','SP_ELIMINAR_NOTIFICACION_jja',
+    'SP_CREAR_NOTIFICACION_jja', 'SP_LEER_NOTIFICACIONES_USUARIO_jja',
+    'SP_MARCAR_NOTIFICACION_LEIDA_jja', 'SP_MARCAR_TODAS_LEIDAS_jja', 'SP_ELIMINAR_NOTIFICACION_jja',
     // Lista negra
-    'SP_CREAR_SANCION_jja','SP_LEER_SANCIONES_jja','SP_LEER_SANCIONES_USUARIO_jja',
-    'SP_LEVANTAR_SANCION_jja','SP_VERIFICAR_SANCION_jja',
+    'SP_CREAR_SANCION_jja', 'SP_LEER_SANCIONES_jja', 'SP_LEER_SANCIONES_USUARIO_jja',
+    'SP_LEVANTAR_SANCION_jja', 'SP_VERIFICAR_SANCION_jja',
     // Auditoría
-    'SP_LEER_AUDITORIA_jja','SP_LEER_AUDITORIA_TABLA_jja','SP_LEER_AUDITORIA_USUARIO_jja',
+    'SP_LEER_AUDITORIA_jja', 'SP_LEER_AUDITORIA_TABLA_jja', 'SP_LEER_AUDITORIA_USUARIO_jja',
     'SP_REGISTRAR_AUDITORIA_jja',
     // Tokens
-    'SP_INVALIDAR_TOKEN_jja','SP_VERIFICAR_TOKEN_INVALIDO_jja','SP_LIMPIAR_TOKENS_jja',
+    'SP_INVALIDAR_TOKEN_jja', 'SP_VERIFICAR_TOKEN_INVALIDO_jja', 'SP_LIMPIAR_TOKENS_jja',
     // Reportes
-    'SP_REPORTE_PRESTAMOS_jja','SP_REPORTE_ACTIVOS_MAS_PRESTADOS_jja',
-    'SP_REPORTE_USUARIOS_ACTIVOS_jja','SP_REPORTE_TASA_DEVOLUCION_jja',
+    'SP_REPORTE_PRESTAMOS_jja', 'SP_REPORTE_ACTIVOS_MAS_PRESTADOS_jja',
+    'SP_REPORTE_USUARIOS_ACTIVOS_jja', 'SP_REPORTE_TASA_DEVOLUCION_jja',
 ];
 
 foreach ($sps_a_eliminar_jja as $sp_jja) {
-    try { $pdo_jja->exec("DROP PROCEDURE IF EXISTS `{$sp_jja}`"); } catch (PDOException $e) {}
+    try {
+        $pdo_jja->exec("DROP PROCEDURE IF EXISTS `{$sp_jja}`");
+    }
+    catch (PDOException $e) {
+    }
 }
 mostrar_jja('ok', '✅', "SPs existentes eliminados correctamente.");
 
@@ -468,7 +481,9 @@ CREATE PROCEDURE `SP_CREAR_USUARIO_jja`(
     IN p_correo_jja      VARCHAR(150),
     IN p_telefono_jja    VARCHAR(20),
     IN p_contrasena_jja  VARCHAR(255),
-    IN p_id_rol_jja      INT UNSIGNED
+    IN p_imagen_jja      VARCHAR(255),
+    IN p_id_rol_jja      INT UNSIGNED,
+    IN p_debe_cambiar_jja TINYINT(1)
 )
 BEGIN
     DECLARE v_existe_cedula INT DEFAULT 0;
@@ -480,8 +495,8 @@ BEGIN
     ELSEIF v_existe_correo > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El correo ya está registrado en el sistema.';
     ELSE
-        INSERT INTO `usuarios_jja` (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
-        VALUES (p_nombre_jja, p_apellido_jja, p_cedula_jja, p_correo_jja, p_telefono_jja, p_contrasena_jja, p_id_rol_jja);
+        INSERT INTO `usuarios_jja` (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `imagen_jja`, `id_rol_jja`, `debe_cambiar_clave_jja`)
+        VALUES (p_nombre_jja, p_apellido_jja, p_cedula_jja, p_correo_jja, p_telefono_jja, p_contrasena_jja, p_imagen_jja, p_id_rol_jja, p_debe_cambiar_jja);
         SELECT LAST_INSERT_ID() AS `id_usuario_jja`;
     END IF;
 END
@@ -491,8 +506,8 @@ ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_USUARIOS_jja`()
 BEGIN
     SELECT usu.`id_usuario_jja`, usu.`nombre_jja`, usu.`apellido_jja`, usu.`cedula_jja`,
-           usu.`correo_jja`, usu.`telefono_jja`, usu.`id_rol_jja`,
-           rol.`nombre_rol_jja`, usu.`estado_registro_jja`, usu.`creado_en_jja`
+           usu.`correo_jja`, usu.`telefono_jja`, usu.`imagen_jja`, usu.`id_rol_jja`,
+           rol.`nombre_rol_jja`, usu.`estado_registro_jja`, usu.`creado_en_jja`, usu.`debe_cambiar_clave_jja`
     FROM `usuarios_jja` usu
     INNER JOIN `roles_jja` rol ON usu.`id_rol_jja` = rol.`id_rol_jja`
     WHERE usu.`estado_registro_jja` = 1
@@ -504,8 +519,8 @@ ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_USUARIO_ID_jja`(IN p_id_jja INT UNSIGNED)
 BEGIN
     SELECT usu.`id_usuario_jja`, usu.`nombre_jja`, usu.`apellido_jja`, usu.`cedula_jja`,
-           usu.`correo_jja`, usu.`telefono_jja`, usu.`id_rol_jja`, rol.`nombre_rol_jja`,
-           usu.`estado_registro_jja`, usu.`creado_en_jja`
+           usu.`correo_jja`, usu.`telefono_jja`, usu.`imagen_jja`, usu.`id_rol_jja`, rol.`nombre_rol_jja`,
+           usu.`estado_registro_jja`, usu.`creado_en_jja`, usu.`debe_cambiar_clave_jja`
     FROM `usuarios_jja` usu
     INNER JOIN `roles_jja` rol ON usu.`id_rol_jja` = rol.`id_rol_jja`
     WHERE usu.`id_usuario_jja` = p_id_jja AND usu.`estado_registro_jja` = 1;
@@ -516,13 +531,25 @@ ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_USUARIO_CEDULA_jja`(IN p_cedula_jja VARCHAR(20))
 BEGIN
     SELECT usu.`id_usuario_jja`, usu.`nombre_jja`, usu.`apellido_jja`, usu.`cedula_jja`,
-           usu.`correo_jja`, usu.`telefono_jja`, usu.`contrasena_jja`,
-           usu.`id_rol_jja`, rol.`nombre_rol_jja`, usu.`estado_registro_jja`
+           usu.`correo_jja`, usu.`telefono_jja`, usu.`contrasena_jja`, usu.`imagen_jja`,
+           usu.`id_rol_jja`, rol.`nombre_rol_jja`, usu.`estado_registro_jja`, usu.`debe_cambiar_clave_jja`
     FROM `usuarios_jja` usu
     INNER JOIN `roles_jja` rol ON usu.`id_rol_jja` = rol.`id_rol_jja`
     WHERE usu.`cedula_jja` = p_cedula_jja AND usu.`estado_registro_jja` = 1;
 END
 ", "SP: SP_LEER_USUARIO_CEDULA_jja (login)", $cnt_sp_jja, $errores_jja);
+
+ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_LEER_USUARIO_CORREO_jja`(IN p_correo_jja VARCHAR(150))
+BEGIN
+    SELECT usu.`id_usuario_jja`, usu.`nombre_jja`, usu.`apellido_jja`, usu.`cedula_jja`,
+           usu.`correo_jja`, usu.`telefono_jja`, usu.`contrasena_jja`, usu.`imagen_jja`,
+           usu.`id_rol_jja`, rol.`nombre_rol_jja`, usu.`estado_registro_jja`, usu.`debe_cambiar_clave_jja`
+    FROM `usuarios_jja` usu
+    INNER JOIN `roles_jja` rol ON usu.`id_rol_jja` = rol.`id_rol_jja`
+    WHERE usu.`correo_jja` = p_correo_jja AND usu.`estado_registro_jja` = 1;
+END
+", "SP: SP_LEER_USUARIO_CORREO_jja (login por correo)", $cnt_sp_jja, $errores_jja);
 
 ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_ACTUALIZAR_USUARIO_jja`(
@@ -571,11 +598,23 @@ CREATE PROCEDURE `SP_CAMBIAR_CONTRASENA_jja`(
     IN p_nueva_hash_jja  VARCHAR(255)
 )
 BEGIN
-    UPDATE `usuarios_jja` SET `contrasena_jja` = p_nueva_hash_jja
+    UPDATE `usuarios_jja` SET `contrasena_jja` = p_nueva_hash_jja, `debe_cambiar_clave_jja` = 0
     WHERE `id_usuario_jja` = p_id_jja AND `estado_registro_jja` = 1;
     SELECT ROW_COUNT() AS `filas_afectadas`;
 END
 ", "SP: SP_CAMBIAR_CONTRASENA_jja", $cnt_sp_jja, $errores_jja);
+
+ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_ACTUALIZAR_IMAGEN_USUARIO_jja`(
+    IN p_id_jja          INT UNSIGNED,
+    IN p_imagen_jja      VARCHAR(255)
+)
+BEGIN
+    UPDATE `usuarios_jja` SET `imagen_jja` = p_imagen_jja
+    WHERE `id_usuario_jja` = p_id_jja AND `estado_registro_jja` = 1;
+    SELECT ROW_COUNT() AS `filas_afectadas`;
+END
+", "SP: SP_ACTUALIZAR_IMAGEN_USUARIO_jja", $cnt_sp_jja, $errores_jja);
 
 // ═══════════════════════
 // STORED PROCEDURES TIPOS ACTIVOS
@@ -1411,7 +1450,11 @@ $triggers_drop_jja = [
     'TR_HISTORIAL_PRESTAMO_DEVOLUCION_jja',
 ];
 foreach ($triggers_drop_jja as $trig_jja) {
-    try { $pdo_jja->exec("DROP TRIGGER IF EXISTS `{$trig_jja}`"); } catch (PDOException $ex_jja) {}
+    try {
+        $pdo_jja->exec("DROP TRIGGER IF EXISTS `{$trig_jja}`");
+    }
+    catch (PDOException $ex_jja) {
+    }
 }
 mostrar_jja('ok', '✅', "Triggers existentes eliminados.");
 
@@ -1508,7 +1551,10 @@ try {
         ('usuario_final', 'Solicita préstamos, consulta historial y recibe notificaciones.')
     ");
     mostrar_jja('ok', '✅', "Roles insertados: <strong>administrador, encargado, usuario_final</strong>.");
-} catch (PDOException $ex_jja) { mostrar_jja('err','❌','Error al insertar roles: '.$ex_jja->getMessage()); }
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error al insertar roles: ' . $ex_jja->getMessage());
+}
 
 // Tipos de activos
 try {
@@ -1526,7 +1572,10 @@ try {
         ('Otro',             'Activo que no encaja en las categorías anteriores')
     ");
     mostrar_jja('ok', '✅', "Tipos de activos insertados (10 tipos).");
-} catch (PDOException $ex_jja) { mostrar_jja('err','❌','Error al insertar tipos: '.$ex_jja->getMessage()); }
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error al insertar tipos: ' . $ex_jja->getMessage());
+}
 
 // Políticas de préstamo por tipo
 try {
@@ -1551,7 +1600,10 @@ try {
         )
     ");
     mostrar_jja('ok', '✅', "Políticas de préstamo configuradas por tipo de activo.");
-} catch (PDOException $ex_jja) { mostrar_jja('err','❌','Error políticas: '.$ex_jja->getMessage()); }
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error políticas: ' . $ex_jja->getMessage());
+}
 
 // Usuario administrador inicial
 try {
@@ -1566,14 +1618,17 @@ try {
     ");
     $stmt_admin_jja->execute([':hash' => $hash_admin_jja]);
     mostrar_jja('ok', '✅', "Usuario <strong>administrador</strong> creado. Cédula: <code>29518292</code> | Contraseña: <code>JoAnJe2026!</code> — <em>¡Cambia la contraseña en producción!</em>");
-} catch (PDOException $ex_jja) { mostrar_jja('err','❌','Error al crear admin: '.$ex_jja->getMessage()); }
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error al crear admin: ' . $ex_jja->getMessage());
+}
 
 // ══════════════════════════════════════════════════════════════
 // RESUMEN FINAL
 // ══════════════════════════════════════════════════════════════
 echo "<hr>";
 $estado_final_jja = ($errores_jja === 0) ? 'ok' : 'err';
-$icono_final_jja  = ($errores_jja === 0) ? '🎉' : '⚠️';
+$icono_final_jja = ($errores_jja === 0) ? '🎉' : '⚠️';
 
 echo "<div class='resumen'>
     <p>{$icono_final_jja} <strong>Inicialización completada</strong></p>
