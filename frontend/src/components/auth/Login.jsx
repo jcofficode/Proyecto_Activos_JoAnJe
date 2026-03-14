@@ -9,7 +9,10 @@ const irA_jc = (destino, datos = null) =>
 const Login = ({ navegarA_jc, onLogin }) => {
   const navigate = useNavigate()
   const location = useLocation()
-  const [formulario_jc, setFormulario_jc] = useState({ correo_jc: '', clave_jc: '' })
+  const [formulario_jc, setFormulario_jc] = useState({ 
+    correo_jc: 'admin@activoscontroljoanje.com', 
+    clave_jc: 'JoAnJe2026!' 
+  })
   const [estado_jc, setEstado_jc] = useState({ cargando: false, mensaje: '', tipo: '' })
 
   const manejarCambio_jc = (e) => {
@@ -29,21 +32,41 @@ const Login = ({ navegarA_jc, onLogin }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body_jc)
     })
-      .then(res => res.json())
+      .then(res => {
+        console.log('🌐 LOGIN: Respuesta HTTP - Status:', res.status)
+        console.log('🌐 LOGIN: Headers de respuesta:', Object.fromEntries(res.headers.entries()))
+        return res.json()
+      })
       .then(data => {
+        console.log('📨 LOGIN: Respuesta del servidor:', data)
         if (data.exito) {
+          console.log('💾 LOGIN: Guardando token en sessionStorage...')
+          // Guardar token JWT en sessionStorage (se pierde al cerrar navegador)
+          const tokenGuardar = data.datos && data.datos.token ? data.datos.token : data.token
+          sessionStorage.setItem('token_jja', tokenGuardar)
+          console.log('✅ LOGIN: Token guardado, verificando:', sessionStorage.getItem('token_jja') ? 'OK' : 'ERROR')
           setEstado_jc({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
           setTimeout(() => {
-            const usuarioData = { nombre: data.nombre, correo: formulario_jc.correo_jc }
+            const usuarioData = { 
+              nombre: data.datos.usuario.nombre, 
+              correo: data.datos.usuario.correo,
+              rol: data.datos.usuario.rol
+            }
+            console.log('👤 LOGIN: Datos del usuario a configurar:', usuarioData)
             if (typeof onLogin === 'function') {
               onLogin(usuarioData)
-              const next = (location.state && location.state.next) || sessionStorage.getItem('joanje_next') || '/sistema'
+              // Determinar ruta destino por rol
+              const defaultNext = (usuarioData.rol === 'cliente') ? '/marketplace' : '/sistema'
+              const next = (location.state && location.state.next) || sessionStorage.getItem('joanje_next') || defaultNext
               sessionStorage.removeItem('joanje_next')
               navigate(next)
             } else if (typeof navegarA_jc === 'function') {
-              navegarA_jc('sistema', usuarioData)
+              // si no hay onLogin, indicar destino según rol
+              const destino = (usuarioData.rol === 'cliente') ? 'marketplace' : 'sistema'
+              navegarA_jc(destino, usuarioData)
             } else {
-              irA_jc('sistema', usuarioData)
+              const destino = (usuarioData.rol === 'cliente') ? 'marketplace' : 'sistema'
+              irA_jc(destino, usuarioData)
             }
           }, 1200)
         } else {

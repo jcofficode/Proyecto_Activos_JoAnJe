@@ -2145,7 +2145,7 @@ button {
 .login-input-mono {
   font-family: monospace;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */ /* Removido para permitir minúsculas en contraseñas */
 }
 
 .login-mensaje {

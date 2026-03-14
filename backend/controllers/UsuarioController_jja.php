@@ -49,11 +49,17 @@ class UsuarioController_jja extends Controller_jja
                 break;
 
             case 'PUT':
-                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                // Admin puede actualizar cualquier usuario. Usuario final puede actualizar su propio perfil.
                 if (!$this->validarId_jja($id_jja)) {
                     $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
                 }
-                $this->actualizar_jja((int)$id_jja);
+                if ($payload_jja->rol === Middleware_jja::ROL_ADMIN) {
+                    $this->actualizar_jja((int)$id_jja);
+                } elseif (Middleware_jja::esRolUsuario($payload_jja->rol) && (int)$payload_jja->id === (int)$id_jja) {
+                    $this->actualizar_jja((int)$id_jja);
+                } else {
+                    $this->responder_jja(false, null, 'No tienes permisos para actualizar este perfil.', 403);
+                }
                 break;
 
             case 'DELETE':
@@ -72,7 +78,7 @@ class UsuarioController_jja extends Controller_jja
     private function listar_jja(object $payload_jja): void
     {
         // Encargado y usuario_final solo ven su propio perfil
-        if ($payload_jja->rol === Middleware_jja::ROL_USUARIO) {
+        if ($payload_jja->rol === Middleware_jja::ROL_ENCARGADO || Middleware_jja::esRolUsuario($payload_jja->rol)) {
             $usuario_jja = $this->modelo_jja->buscarPorId_jja((int)$payload_jja->id);
             $this->responder_jja(true, $usuario_jja, 'Perfil de usuario.');
         }
@@ -82,8 +88,8 @@ class UsuarioController_jja extends Controller_jja
 
     private function mostrar_jja(int $id_jja, object $payload_jja): void
     {
-        // Usuario final solo puede ver su propio perfil
-        if ($payload_jja->rol === Middleware_jja::ROL_USUARIO && $payload_jja->id !== $id_jja) {
+        // Usuario final / cliente o encargado solo pueden ver su propio perfil
+        if ((Middleware_jja::esRolUsuario($payload_jja->rol) || $payload_jja->rol === Middleware_jja::ROL_ENCARGADO) && $payload_jja->id !== $id_jja) {
             $this->responder_jja(false, null, 'No tienes permisos para ver este perfil.', 403);
         }
         $usuario_jja = $this->modelo_jja->buscarPorId_jja($id_jja);

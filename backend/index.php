@@ -15,7 +15,7 @@ $dotenv_jja->load();
 require_once __DIR__ . '/Core/Autoloader_jja.php';
 
 // ── 4. CORS ──────────────────────────────────────────────────
-$corsOrigin_jja = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5174';
+$corsOrigin_jja = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
 $originHeader_jja = $_SERVER['HTTP_ORIGIN'] ?? $corsOrigin_jja;
 
 header("Access-Control-Allow-Origin: {$originHeader_jja}");
@@ -36,32 +36,15 @@ $uri_jja = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $metodo_jja = $_SERVER['REQUEST_METHOD'];
 $partes_jja = array_values(array_filter(explode('/', trim($uri_jja, '/'))));
 
-// Verificar prefijo /api/v1/
-if (($partes_jja[0] ?? '') !== 'api' || ($partes_jja[1] ?? '') !== 'v1') {
-    http_response_code(200);
-    echo json_encode([
-        'sistema' => 'API REST - Sistema de Gestion de Activos JoAnJe Coders',
-        'version' => '1.0.0',
-        'estado' => 'activo',
-        'base_url' => '/api/v1',
-        'endpoints' => [
-            'auth' => '/api/v1/auth/login | /api/v1/auth/logout | /api/v1/auth/cambiar-clave',
-            'usuarios' => '/api/v1/usuarios',
-            'roles' => '/api/v1/roles',
-            'tipos-activos' => '/api/v1/tipos-activos',
-            'politicas' => '/api/v1/politicas',
-            'activos' => '/api/v1/activos | /api/v1/activos/qr/{codigo} | /api/v1/activos/nfc/{codigo}',
-            'prestamos' => '/api/v1/prestamos | /api/v1/prestamos/{id}/devolver',
-            'notificaciones' => '/api/v1/notificaciones/usuario/{id}',
-            'lista-negra' => '/api/v1/lista-negra',
-            'auditoria' => '/api/v1/auditoria',
-            'reportes' => '/api/v1/reportes/prestamos | activos-mas-prestados | usuarios-activos | tasa-devolucion',
-        ],
-    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    exit;
+// Para desarrollo con php -S, permitir requests sin /api/v1
+if (($partes_jja[0] ?? '') === 'api' && ($partes_jja[1] ?? '') === 'v1') {
+    $recurso_jja = $partes_jja[2] ?? null;
+    $segmentos_jja = array_slice($partes_jja, 3);
+} else {
+    // Asumir que es desarrollo local sin prefijo
+    $recurso_jja = $partes_jja[0] ?? null;
+    $segmentos_jja = array_slice($partes_jja, 1);
 }
-
-$recurso_jja = $partes_jja[2] ?? null; // ej: 'usuarios', 'activos', 'auth'
 $segmentos_jja = array_slice($partes_jja, 3); // resto para el controlador
 
 if (!$recurso_jja) {
@@ -84,6 +67,14 @@ $mapa_jja = [
     'sanciones' => 'ListaNegraController_jja',
     'auditoria' => 'AuditoriaController_jja',
     'reportes' => 'ReporteController_jja',
+    'productos' => 'ProductoController_jja',
+    'solicitudes-prestamo' => 'SolicitudPrestamoController_jja',
+    'prestamos-productos' => 'PrestamoProductoController_jja',
+    'prestamos-productos' => 'PrestamoProductoController_jja',
+    'solicitudes-devolucion-productos' => 'SolicitudDevolucionProductoController_jja',
+    'solicitudes-devolucion' => 'SolicitudDevolucionController_jja',
+    'ofertas' => 'OfertaController_jja',
+    'transacciones' => 'TransaccionController_jja',
 ];
 
 $clase_jja = $mapa_jja[$recurso_jja] ?? null;

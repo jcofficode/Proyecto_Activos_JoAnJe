@@ -31,8 +31,8 @@ class NotificacionController_jja extends Controller_jja
                 // GET /notificaciones/usuario/{id}
                 elseif ($seg0_jja === 'usuario' && $this->validarId_jja($seg1_jja)) {
                     $idUsu_jja = (int)$seg1_jja;
-                    // Un usuario solo puede ver sus propias notificaciones
-                    if ($payload_jja->rol === Middleware_jja::ROL_USUARIO && $payload_jja->id !== $idUsu_jja) {
+                    // Un usuario (cliente/usuario_final) solo puede ver sus propias notificaciones
+                    if (Middleware_jja::esRolUsuario($payload_jja->rol) && $payload_jja->id !== $idUsu_jja) {
                         $this->responder_jja(false, null, 'No tienes permiso para ver estas notificaciones.', 403);
                     }
                     $this->responder_jja(true, $this->modelo_jja->listarPorUsuario_jja($idUsu_jja), 'Notificaciones del usuario.');

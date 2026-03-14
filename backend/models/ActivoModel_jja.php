@@ -75,4 +75,24 @@ class ActivoModel_jja extends Model_jja
         $res_jja = $this->ejecutarSPUno_jja('SP_ELIMINAR_ACTIVO_jja', [$id_jja]);
         return $res_jja ?? ['filas_afectadas' => 0];
     }
+
+    /** Actualiza el array JSON de 'imagenes_jja' (agrega una ruta). */
+    public function actualizarImagenes_jja(int $id_jja, string $ruta_jja): array
+    {
+        $sql = "SELECT imagenes_jja FROM activos_jja WHERE id_activo_jja = :id AND estado_registro_jja = 1";
+        $stmt = $this->db_jja->prepare($sql);
+        $stmt->execute([':id' => $id_jja]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $imagenes = [];
+        if ($row && !empty($row['imagenes_jja'])) {
+            $decoded = json_decode($row['imagenes_jja'], true);
+            if (is_array($decoded)) $imagenes = $decoded;
+        }
+        $imagenes[] = $ruta_jja;
+
+        $sql2 = "UPDATE activos_jja SET imagenes_jja = :imagenes, actualizado_en_jja = CURRENT_TIMESTAMP WHERE id_activo_jja = :id";
+        $stmt2 = $this->db_jja->prepare($sql2);
+        $stmt2->execute([':imagenes' => json_encode($imagenes, JSON_UNESCAPED_UNICODE), ':id' => $id_jja]);
+        return ['filas_afectadas' => $stmt2->rowCount()];
+    }
 }

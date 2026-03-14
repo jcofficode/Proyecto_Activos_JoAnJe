@@ -4,8 +4,23 @@
 // Sistema de Gestión de Activos - JoAnJe Coders
 // ============================================================
 
-// Ruta al autoload de Composer
-require_once __DIR__ . '/libs/vendor/autoload.php';
+// Ruta al autoload de Composer — soportar diferentes ubicaciones (libs/vendor o vendor)
+$autoloadCandidates = [
+    __DIR__ . '/libs/vendor/autoload.php',
+    __DIR__ . '/vendor/autoload.php',
+    __DIR__ . '/../vendor/autoload.php'
+];
+$autoloadFound = false;
+foreach ($autoloadCandidates as $candidate) {
+    if (file_exists($candidate)) {
+        require_once $candidate;
+        $autoloadFound = true;
+        break;
+    }
+}
+if (!$autoloadFound) {
+    // No autoload available — continuar sin dependencias de Composer
+}
 
 // Cargar variables de entorno desde .env solo si existe localmente
 if (file_exists(__DIR__ . '/.env')) {

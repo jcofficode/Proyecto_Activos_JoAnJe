@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `prestamos_jja` (
     `id_encargado_jja`      INT UNSIGNED    NOT NULL COMMENT 'Quien procesó el préstamo',
     `fecha_prestamo_jja`    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `fecha_limite_jja`      TIMESTAMP       NOT NULL,
-    `fecha_devolucion_jja`  TIMESTAMP       DEFAULT NULL,
+    `fecha_devolucion_jja`  DATETIME       DEFAULT NULL,
     `estado_prestamo_jja`   ENUM('activo','devuelto','vencido','perdido')
                                             NOT NULL DEFAULT 'activo',
     `observaciones_jja`     TEXT            DEFAULT NULL,
@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS `lista_negra_jja` (
     `id_prestamo_jja`           INT UNSIGNED    DEFAULT NULL,
     `motivo_jja`                TEXT            NOT NULL,
     `fecha_inicio_sancion_jja`  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `fecha_fin_sancion_jja`     TIMESTAMP       DEFAULT NULL COMMENT 'NULL = sanción indefinida',
+    `fecha_fin_sancion_jja`     DATETIME       DEFAULT NULL COMMENT 'NULL = sanción indefinida',
     `activa_jja`                TINYINT(1)      NOT NULL DEFAULT 1,
     `creado_por_jja`            INT UNSIGNED    NOT NULL COMMENT 'ID del admin que aplicó la sanción',
     `estado_registro_jja`       TINYINT(1)      NOT NULL DEFAULT 1,
@@ -329,6 +329,142 @@ CREATE TABLE IF NOT EXISTS `tokens_invalidos_jja` (
 // 3. ÍNDICES DE RENDIMIENTO
 // ══════════════════════════════════════════════════════════════
 echo "<p class='seccion'>③ ÍNDICES DE RENDIMIENTO (búsquedas frecuentes)</p>";
+
+// ═════════════════════════════════════════════════════════════=
+// TABLAS MARKETPLACE (productos, categorías, solicitudes, ofertas, transacciones)
+// ═════════════════════════════════════════════════════════════=
+echo "<p class='seccion'>②.b TABLAS MARKETPLACE</p>";
+
+// categorias_jja
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `categorias_jja` (
+        `id_categoria_jja`     INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+        `nombre_categoria_jja` VARCHAR(120)    NOT NULL,
+        `descripcion_jja`      VARCHAR(255)    DEFAULT NULL,
+        `estado_registro_jja`  TINYINT(1)      NOT NULL DEFAULT 1,
+        `creado_en_jja`        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id_categoria_jja`),
+        UNIQUE KEY `uq_nombre_categoria_jja` (`nombre_categoria_jja`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Categorías para productos del marketplace';
+", "Tabla <strong>categorias_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// productos_jja
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `productos_jja` (
+        `id_producto_jja`     INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+        `id_empresa_jja`      INT UNSIGNED    NOT NULL COMMENT 'Usuario tipo empresa',
+        `id_categoria_jja`    INT UNSIGNED    DEFAULT NULL,
+        `nombre_jja`          VARCHAR(200)    NOT NULL,
+        `descripcion_jja`     TEXT            DEFAULT NULL,
+        `precio_jja`          DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
+        `stock_jja`           INT UNSIGNED    NOT NULL DEFAULT 0,
+        `imagenes_jja`        JSON            DEFAULT NULL,
+        `estado_jja`          TINYINT(1)      NOT NULL DEFAULT 1,
+        `creado_en_jja`       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `actualizado_en_jja`  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id_producto_jja`),
+        CONSTRAINT `fk_producto_empresa_jja` FOREIGN KEY (`id_empresa_jja`) REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT `fk_producto_categoria_jja` FOREIGN KEY (`id_categoria_jja`) REFERENCES `categorias_jja` (`id_categoria_jja`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Productos publicados por empresas en el marketplace';
+", "Tabla <strong>productos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// solicitudes_prestamo_jja (requests from clients)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `solicitudes_prestamo_jja` (
+        `id_solicitud_jja`    INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+        `id_producto_jja`     INT UNSIGNED    NOT NULL,
+        `id_cliente_jja`      INT UNSIGNED    NOT NULL,
+        `cantidad_jja`        INT UNSIGNED    NOT NULL DEFAULT 1,
+        `fecha_solicitud_jja` TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `estado_jja`          ENUM('pendiente','aprobada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+        `fecha_respuesta_jja` DATETIME        DEFAULT NULL,
+        `observaciones_jja`   TEXT            DEFAULT NULL,
+        PRIMARY KEY (`id_solicitud_jja`),
+        CONSTRAINT `fk_solicitud_producto_jja` FOREIGN KEY (`id_producto_jja`) REFERENCES `productos_jja` (`id_producto_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT `fk_solicitud_cliente_jja` FOREIGN KEY (`id_cliente_jja`) REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Solicitudes de préstamo/uso de producto por parte de clientes';
+", "Tabla <strong>solicitudes_prestamo_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// ofertas_jja (empresa responde con oferta/contrapropuesta)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `ofertas_jja` (
+        `id_oferta_jja`       INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+        `id_solicitud_jja`    INT UNSIGNED    NOT NULL,
+        `id_empresa_jja`      INT UNSIGNED    NOT NULL,
+        `precio_oferta_jja`   DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
+        `mensaje_jja`         TEXT            DEFAULT NULL,
+        `estado_jja`          ENUM('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `creado_en_jja`       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id_oferta_jja`),
+        CONSTRAINT `fk_oferta_solicitud_jja` FOREIGN KEY (`id_solicitud_jja`) REFERENCES `solicitudes_prestamo_jja` (`id_solicitud_jja`) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT `fk_oferta_empresa_jja` FOREIGN KEY (`id_empresa_jja`) REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Ofertas/contrapropuestas hechas por la empresa para una solicitud';
+", "Tabla <strong>ofertas_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// transacciones_jja (pagos asociados a solicitudes/ofertas)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `transacciones_jja` (
+        `id_transaccion_jja`  INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+        `id_solicitud_jja`    INT UNSIGNED    NOT NULL,
+        `id_cliente_jja`      INT UNSIGNED    NOT NULL,
+        `monto_jja`           DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
+        `metodo_pago_jja`     VARCHAR(100)    DEFAULT NULL,
+        `referencia_jja`      VARCHAR(255)    DEFAULT NULL,
+        `estado_jja`          ENUM('pendiente','completado','fallido','reembolsado') NOT NULL DEFAULT 'pendiente',
+        `creado_en_jja`       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id_transaccion_jja`),
+        CONSTRAINT `fk_transaccion_solicitud_jja` FOREIGN KEY (`id_solicitud_jja`) REFERENCES `solicitudes_prestamo_jja` (`id_solicitud_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT `fk_transaccion_cliente_jja` FOREIGN KEY (`id_cliente_jja`) REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Transacciones monetarias relacionadas a solicitudes/ofertas';
+", "Tabla <strong>transacciones_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// prestamos_productos_jja (préstamos generados desde marketplace)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `prestamos_productos_jja` (
+    `id_prestamo_producto_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_producto_jja`         INT UNSIGNED NOT NULL,
+    `id_cliente_jja`          INT UNSIGNED NOT NULL,
+    `id_empresa_jja`          INT UNSIGNED NOT NULL,
+    `fecha_prestamo_jja`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `fecha_devolucion_jja`    DATETIME DEFAULT NULL,
+    `estado_jja`              ENUM('activo','devuelto','vencido') NOT NULL DEFAULT 'activo',
+    `observaciones_jja`       TEXT DEFAULT NULL,
+    PRIMARY KEY (`id_prestamo_producto_jja`),
+    CONSTRAINT `fk_prestprod_producto_jja` FOREIGN KEY (`id_producto_jja`)
+        REFERENCES `productos_jja` (`id_producto_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_prestprod_cliente_jja` FOREIGN KEY (`id_cliente_jja`)
+        REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_prestprod_empresa_jja` FOREIGN KEY (`id_empresa_jja`)
+        REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Registros de préstamos generados a partir de solicitudes de productos (marketplace)';
+", "Tabla <strong>prestamos_productos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// solicitudes_devolucion_productos_jja (devoluciones de préstamos marketplace)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_productos_jja` (
+        `id_solicitud_devolucion_producto_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `id_prestamo_producto_jja`             INT UNSIGNED NOT NULL,
+        `id_usuario_solicitante_jja`           INT UNSIGNED NOT NULL,
+        `estado_jja`                           ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `observaciones_jja`                    TEXT DEFAULT NULL,
+        `creado_en_jja`                        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `fecha_respuesta_jja`                  DATETIME DEFAULT NULL,
+        `respondido_por_jja`                   INT UNSIGNED DEFAULT NULL,
+        PRIMARY KEY (`id_solicitud_devolucion_producto_jja`),
+        CONSTRAINT `fk_soldevprod_prestamo_jja` FOREIGN KEY (`id_prestamo_producto_jja`)
+                REFERENCES `prestamos_productos_jja` (`id_prestamo_producto_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+        CONSTRAINT `fk_soldevprod_usuario_jja` FOREIGN KEY (`id_usuario_solicitante_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Solicitudes de devolución para préstamos generados desde marketplace';
+", "Tabla <strong>solicitudes_devolucion_productos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
 
 $indices_jja = [
     ["CREATE INDEX `idx_activo_estado_jja`         ON `activos_jja`   (`estado_jja`)", "Índice: activos_jja · estado_jja"],
@@ -1556,6 +1692,18 @@ catch (PDOException $ex_jja) {
     mostrar_jja('err', '❌', 'Error al insertar roles: ' . $ex_jja->getMessage());
 }
 
+// Añadir roles marketplace (empresa/cliente) si aún no existen
+try {
+    $pdo_jja->exec("INSERT IGNORE INTO `roles_jja` (`nombre_rol_jja`, `descripcion_jja`) VALUES
+        ('empresa', 'Cuenta tipo empresa vendedora en el marketplace.'),
+        ('cliente', 'Cuenta tipo cliente que solicita préstamos o arrendamientos.')
+    ");
+    mostrar_jja('ok', '✅', "Roles marketplace insertados (empresa, cliente) si no existían.");
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error al insertar roles marketplace: ' . $ex_jja->getMessage());
+}
+
 // Tipos de activos
 try {
     $pdo_jja->exec("
@@ -1621,6 +1769,42 @@ try {
 }
 catch (PDOException $ex_jja) {
     mostrar_jja('err', '❌', 'Error al crear admin: ' . $ex_jja->getMessage());
+}
+
+// Usuarios de prueba: empresa, cliente, encargado
+try {
+    $hash_empresa = password_hash('Empresa2026!', PASSWORD_BCRYPT, ['cost' => 12]);
+    $stmt_e = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
+        (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
+        SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'empresa' LIMIT 1)
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+    $stmt_e->execute([
+        ':nombre' => 'Empresa', ':apellido' => 'Demo', ':cedula' => '90000001', ':correo' => 'empresa@demo.com', ':telefono' => '+58-412-1111111', ':hash' => $hash_empresa
+    ]);
+    mostrar_jja('ok', '✅', "Usuario <strong>empresa</strong> creado (empresa@demo.com / Empresa2026!).");
+
+    $hash_cliente = password_hash('Cliente2026!', PASSWORD_BCRYPT, ['cost' => 12]);
+    $stmt_c = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
+        (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
+        SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'cliente' LIMIT 1)
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+    $stmt_c->execute([
+        ':nombre' => 'Cliente', ':apellido' => 'Demo', ':cedula' => '80000001', ':correo' => 'cliente@demo.com', ':telefono' => '+58-412-2222222', ':hash' => $hash_cliente
+    ]);
+    mostrar_jja('ok', '✅', "Usuario <strong>cliente</strong> creado (cliente@demo.com / Cliente2026!).");
+
+    $hash_encargado = password_hash('Encargado2026!', PASSWORD_BCRYPT, ['cost' => 12]);
+    $stmt_enc = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
+        (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
+        SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'encargado' LIMIT 1)
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+    $stmt_enc->execute([
+        ':nombre' => 'Encargado', ':apellido' => 'Demo', ':cedula' => '70000001', ':correo' => 'encargado@demo.com', ':telefono' => '+58-412-3333333', ':hash' => $hash_encargado
+    ]);
+    mostrar_jja('ok', '✅', "Usuario <strong>encargado</strong> creado (encargado@demo.com / Encargado2026!).");
+}
+catch (PDOException $ex_jja) {
+    mostrar_jja('err', '❌', 'Error al crear users demo: ' . $ex_jja->getMessage());
 }
 
 // ══════════════════════════════════════════════════════════════

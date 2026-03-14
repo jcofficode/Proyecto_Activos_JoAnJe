@@ -146,6 +146,59 @@ CREATE TABLE IF NOT EXISTS `notificaciones_jja` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Centro de notificaciones del sistema';;
 
+CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_jja` (
+        `id_solicitud_devolucion_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `id_prestamo_jja`             INT UNSIGNED NOT NULL,
+        `id_usuario_solicitante_jja`  INT UNSIGNED NOT NULL,
+        `estado_jja`                  ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `observaciones_jja`           TEXT DEFAULT NULL,
+        `creado_en_jja`               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `fecha_respuesta_jja`         TIMESTAMP DEFAULT NULL,
+        `respondido_por_jja`          INT UNSIGNED DEFAULT NULL,
+        PRIMARY KEY (`id_solicitud_devolucion_jja`),
+        CONSTRAINT `fk_soldev_prestamo_jja` FOREIGN KEY (`id_prestamo_jja`)
+                REFERENCES `prestamos_jja` (`id_prestamo_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+        CONSTRAINT `fk_soldev_usuario_jja` FOREIGN KEY (`id_usuario_solicitante_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Solicitudes generadas por clientes para solicitar la devolución de un préstamo';;
+
+CREATE TABLE IF NOT EXISTS `prestamos_productos_jja` (
+        `id_prestamo_producto_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `id_producto_jja`         INT UNSIGNED NOT NULL,
+        `id_cliente_jja`          INT UNSIGNED NOT NULL,
+        `id_empresa_jja`          INT UNSIGNED NOT NULL,
+        `fecha_prestamo_jja`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `fecha_devolucion_jja`    TIMESTAMP DEFAULT NULL,
+        `estado_jja`              ENUM('activo','devuelto','vencido') NOT NULL DEFAULT 'activo',
+        `observaciones_jja`       TEXT DEFAULT NULL,
+        PRIMARY KEY (`id_prestamo_producto_jja`),
+        CONSTRAINT `fk_prestprod_producto_jja` FOREIGN KEY (`id_producto_jja`)
+                REFERENCES `productos_jja` (`id_producto_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT `fk_prestprod_cliente_jja` FOREIGN KEY (`id_cliente_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT `fk_prestprod_empresa_jja` FOREIGN KEY (`id_empresa_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Registros de préstamos generados a partir de solicitudes de productos (marketplace)';;
+
+CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_productos_jja` (
+        `id_solicitud_devolucion_producto_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `id_prestamo_producto_jja`             INT UNSIGNED NOT NULL,
+        `id_usuario_solicitante_jja`           INT UNSIGNED NOT NULL,
+        `estado_jja`                           ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `observaciones_jja`                    TEXT DEFAULT NULL,
+        `creado_en_jja`                        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `fecha_respuesta_jja`                  TIMESTAMP DEFAULT NULL,
+        `respondido_por_jja`                   INT UNSIGNED DEFAULT NULL,
+        PRIMARY KEY (`id_solicitud_devolucion_producto_jja`),
+        CONSTRAINT `fk_soldevprod_prestamo_jja` FOREIGN KEY (`id_prestamo_producto_jja`)
+                REFERENCES `prestamos_productos_jja` (`id_prestamo_producto_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+        CONSTRAINT `fk_soldevprod_usuario_jja` FOREIGN KEY (`id_usuario_solicitante_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Solicitudes de devolución para préstamos generados desde marketplace';;
+
 CREATE TABLE IF NOT EXISTS `lista_negra_jja` (
     `id_sancion_jja`            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
     `id_usuario_jja`            INT UNSIGNED    NOT NULL,

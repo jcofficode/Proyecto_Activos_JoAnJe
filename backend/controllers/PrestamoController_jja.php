@@ -38,6 +38,18 @@ class PrestamoController_jja extends Controller_jja
 
     private function manejarGet_jja(object $p_jja, ?string $seg0_jja, ?string $seg1_jja): void
     {
+        // Permitir que un usuario final vea SOLO sus propios prestamos a traves de /prestamos/usuario/{id}
+        if ($seg0_jja === 'usuario' && $seg1_jja) {
+            $payloadRole = $p_jja->rol ?? null;
+            if (Middleware_jja::esRolUsuario($payloadRole)) {
+                // el usuario puede solicitar solo su propio id
+                if (!$this->validarId_jja($seg1_jja)) $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
+                if ((int)$seg1_jja !== (int)$p_jja->id) $this->responder_jja(false, null, 'No tienes permiso para ver otros préstamos.', 403);
+                $this->responder_jja(true, $this->modelo_jja->listarPorUsuario_jja((int)$seg1_jja), 'Prestamos del usuario.');
+                return;
+            }
+        }
+
         Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
 
         if ($seg0_jja === 'activos') {
@@ -75,6 +87,15 @@ class PrestamoController_jja extends Controller_jja
             Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
             if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de prestamo invalido.', 400);
             $this->registrarDevolucion_jja((int)$seg0_jja, (int)$p_jja->id);
+        }
+
+        // POST /prestamos/{id}/solicitud-devolucion <- solicitado por el usuario (cliente)
+        if ($seg1_jja === 'solicitud-devolucion') {
+            // cualquier usuario autenticado puede solicitar la devolución de su propio préstamo
+            if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de prestamo invalido.', 400);
+            $idPrestamo = (int)$seg0_jja;
+            $this->crearSolicitudDevolucion_jja($idPrestamo, (int)$p_jja->id);
+            return;
         }
 
         // POST /prestamos/{id}/perdido
@@ -164,5 +185,39 @@ class PrestamoController_jja extends Controller_jja
             $body_jja['motivo'] ?? 'Activo reportado como perdido.'
         );
         $this->responder_jja(true, $res_jja, 'Activo marcado como perdido. Se genero sancion al usuario.');
+    }
+
+    // ── POST /prestamos/{id}/solicitud-devolucion (cliente) ─────────────────
+    private function crearSolicitudDevolucion_jja(int $idPrestamo_jja, int $idUsuarioSolicitante_jja): void
+    {
+        // Verificar que el prestamo existe y pertenece al solicitante
+        $prestamo = $this->modelo_jja->buscarPorId_jja($idPrestamo_jja);
+        if (!$prestamo) $this->responder_jja(false, null, 'Prestamo no encontrado.', 404);
+
+        if ((int)$prestamo['id_usuario_jja'] !== $idUsuarioSolicitante_jja) {
+            $this->responder_jja(false, null, 'Solo el usuario titular del prestamo puede solicitar la devolucion.', 403);
+        }
+
+        // Crear la solicitud en modelo nuevo
+        $body = $this->obtenerBody_jja();
+        $obs = $body['observaciones'] ?? null;
+
+        $solModel = new SolicitudDevolucionModel_jja();
+        try {
+            $sol = $solModel->crear_jja($idPrestamo_jja, $idUsuarioSolicitante_jja, $obs);
+        } catch (PDOException $e) {
+            $this->responder_jja(false, null, 'Error al crear la solicitud de devolucion: ' . $e->getMessage(), 500);
+        }
+
+        // Notificar al encargado que procesó el prestamo (si existe)
+        $idEncargado = $prestamo['id_encargado_jja'] ?? null;
+        if ($idEncargado) {
+            $notModel = new NotificacionModel_jja();
+            $titulo = 'Solicitud de devolución';
+            $mensaje = "El usuario {$prestamo['id_usuario_jja']} solicita la devolución del préstamo #{$idPrestamo_jja}.";
+            $notModel->crear_jja($idEncargado, 'informativo', $mensaje, $idPrestamo_jja);
+        }
+
+        $this->responder_jja(true, $sol, 'Solicitud de devolución creada.', 201);
     }
 }
