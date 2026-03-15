@@ -3,7 +3,7 @@ import {apiRequest} from '../utils/api'
 import Card from '../components/ui/Card'
 
 export default function RequestsPage(){
-  const [reqs,setReqs] = useState({ solicitudes: [], devoluciones_productos: [] })
+  const [reqs,setReqs] = useState({ solicitudes: [], devoluciones_productos: [], devoluciones_prestamos: [] })
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState('')
 
@@ -13,7 +13,12 @@ export default function RequestsPage(){
     try{
       const data = await apiRequest('/solicitudes-prestamo')
       const devols = await apiRequest('/solicitudes-devolucion-productos')
-      setReqs({ solicitudes: (data && data.datos) || [], devoluciones_productos: (devols && devols.datos) || [] })
+      const devolPrest = await apiRequest('/solicitudes-devolucion')
+      setReqs({
+        solicitudes: (data && data.datos) || [],
+        devoluciones_productos: (devols && devols.datos) || [],
+        devoluciones_prestamos: (devolPrest && devolPrest.datos) || devolPrest || []
+      })
     }catch(err){ setError(err.message) }
     finally{ setLoading(false) }
   }
@@ -72,6 +77,22 @@ export default function RequestsPage(){
               </div>
             </Card>
           ))}
+
+          {(reqs.devoluciones_prestamos || []).map(d=> (
+            <Card key={d.id_solicitud_devolucion_jja}>
+              <strong>Devolución préstamo #{d.id_prestamo_jja}</strong>
+              <div className="muted">Solicitante: {d.solicitante_nombre || d.id_usuario_solicitante_jja}</div>
+              <div className="muted">Estado: {d.estado_jja}</div>
+              <div style={{marginTop:8}}>
+                {d.estado_jja==='pendiente' && (
+                  <>
+                    <button className="btn" onClick={()=>cambiarEstadoDevolPrestamo(d.id_solicitud_devolucion_jja,'aprobada')}>Aprobar</button>
+                    <button className="btn btn-ghost" onClick={()=>cambiarEstadoDevolPrestamo(d.id_solicitud_devolucion_jja,'rechazada')}>Rechazar</button>
+                  </>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
       </div>
     </div>
@@ -81,6 +102,14 @@ export default function RequestsPage(){
 async function cambiarEstadoDevolProd(id, estado){
   try{
     await apiRequest(`/solicitudes-devolucion-productos/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) })
+    alert('Estado actualizado')
+    window.location.reload()
+  }catch(err){ alert('Error: '+err.message) }
+}
+
+async function cambiarEstadoDevolPrestamo(id, estado){
+  try{
+    await apiRequest(`/solicitudes-devolucion/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) })
     alert('Estado actualizado')
     window.location.reload()
   }catch(err){ alert('Error: '+err.message) }

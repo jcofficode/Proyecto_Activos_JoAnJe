@@ -46,8 +46,19 @@ class ActivoController_jja extends Controller_jja
                     break;
                 }
 
-                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
-                $this->crear_jja();
+                // Crear activo (solo admin/encargado)
+                if ($seg1_jja === null) {
+                    Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+                    $this->crear_jja();
+                    break;
+                }
+
+                // POST /activos/{id}/solicitudes => permitir a usuarios autenticados solicitar préstamo
+                if ($seg1_jja === 'solicitudes' && $seg0_jja !== null) {
+                    // cualquier usuario autenticado puede solicitar
+                    $this->crearSolicitudActivo_jja((int)$seg0_jja, $payload_jja);
+                    break;
+                }
                 break;
 
             case 'PUT':
@@ -57,11 +68,16 @@ class ActivoController_jja extends Controller_jja
                 break;
 
             case 'PATCH':
-                // PATCH /activos/{id}/estado
+                // PATCH /activos/{id}/estado  OR  PATCH /activos/{id}/publicar
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                 if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
-                if ($seg1_jja !== 'estado') $this->responder_jja(false, null, 'Sub-ruta no reconocida. Usa /activos/{id}/estado', 404);
-                $this->actualizarEstado_jja((int)$seg0_jja);
+                if ($seg1_jja === 'estado') {
+                    $this->actualizarEstado_jja((int)$seg0_jja);
+                } elseif ($seg1_jja === 'publicar') {
+                    $this->publicar_jja((int)$seg0_jja);
+                } else {
+                    $this->responder_jja(false, null, 'Sub-ruta no reconocida. Usa /activos/{id}/estado o /activos/{id}/publicar', 404);
+                }
                 break;
 
             case 'DELETE':
@@ -190,6 +206,28 @@ class ActivoController_jja extends Controller_jja
         $this->responder_jja(true, null, "Estado del activo actualizado a '{$estado_jja}'.");
     }
 
+    // POST /activos/{id}/solicitudes (cliente solicita préstamo de un activo)
+    private function crearSolicitudActivo_jja(int $id_activo_jja, object $payload_jja): void
+    {
+        // cualquier usuario autenticado puede crear la solicitud
+        $id_cliente = $payload_jja->id ?? null;
+        if (!$id_cliente) $this->responder_jja(false, null, 'Token inválido o id de usuario no disponible.', 400);
+
+        $body = $this->obtenerBody_jja();
+        $observaciones = $body['observaciones'] ?? null;
+
+        $model = new SolicitudPrestamoActivoModel_jja();
+        try {
+            $sol = $model->crear_jja($id_activo_jja, (int)$id_cliente, $observaciones);
+        } catch (PDOException $e) {
+            $this->responder_jja(false, null, 'Error al crear la solicitud: ' . $e->getMessage(), 500);
+            return;
+        }
+
+        // notificar al encargado si es posible podría añadirse aquí
+        $this->responder_jja(true, $sol, 'Solicitud de préstamo creada.', 201);
+    }
+
     /** POST /activos/{id}/imagen => subir imagen del activo */
     private function subirImagen_jja(int $id_jja): void
     {
@@ -246,6 +284,20 @@ class ActivoController_jja extends Controller_jja
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
                 ? $m_jja[1] : 'No se puede eliminar el activo.';
             $this->responder_jja(false, null, $msg_jja, 409);
+        }
+    }
+
+    /** PATCH /activos/{id}/publicar => { publicado: 0|1 } */
+    private function publicar_jja(int $id_jja): void
+    {
+        $body_jja = $this->obtenerBody_jja();
+        if (!isset($body_jja['publicado'])) $this->responder_jja(false, null, "El campo 'publicado' es obligatorio.", 400);
+        $val = (int)$body_jja['publicado'] === 1 ? 1 : 0;
+        try {
+            $res = $this->modelo_jja->publicar_jja($id_jja, $val);
+            $this->responder_jja(true, $res, $val ? 'Activo publicado.' : 'Activo despublicado.');
+        } catch (PDOException $e) {
+            $this->responder_jja(false, null, 'Error al cambiar publicación del activo.', 500);
         }
     }
 }

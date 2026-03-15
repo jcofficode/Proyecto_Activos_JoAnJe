@@ -5,18 +5,60 @@ import Card from '../ui/Card'
 import Button from '../ui/Button'
 import { apiRequest, API_URL_JC } from '../../utils/api'
 
-function ProductRow({ p, onLoan }){
+function ProductRow({ p, onLoan, onEdit, onDelete, onPublish }){
+  // extraer imagen principal si existe
+  let imagenSrc = null
+  try {
+    if (p.imagenes_jja) {
+      if (Array.isArray(p.imagenes_jja) && p.imagenes_jja.length>0) imagenSrc = p.imagenes_jja[0]
+      else if (typeof p.imagenes_jja === 'string') {
+        const parsed = JSON.parse(p.imagenes_jja)
+        if (Array.isArray(parsed) && parsed.length>0) imagenSrc = parsed[0]
+      }
+    }
+  } catch(e) { imagenSrc = null }
+
+  // ajustar ruta si es relativa (por ejemplo '/uploads/...') — en dev Vite sirve desde public/
+  if (imagenSrc && imagenSrc.startsWith('/')) {
+    // Asegurar URL absoluta para evitar ambigüedades entre backend/frontend origin
+    try {
+      const origin = window?.location?.origin || ''
+      if (origin) imagenSrc = origin.replace(/\/$/, '') + imagenSrc
+    } catch(e) { /* ignore */ }
+  } else if (imagenSrc && !imagenSrc.startsWith('http')) {
+    // fallback: prefijar con API_URL_JC
+    imagenSrc = API_URL_JC.replace(/\/$/, '') + imagenSrc
+  }
+
   return (
     <Card className="product-row">
-      <div className="product-meta">
-        <strong>{p.nombre_jja}</strong>
-        <div className="muted">QR: {p.codigo_qr_jja} • Estado: {p.estado_jja}</div>
-        <div className="muted">Tipo: {p.nombre_tipo || 'N/A'}</div>
-      </div>
-      <div className="product-actions">
-        <img src={qrImageUrl(p.codigo_qr_jja, 160)} alt="QR" style={{width:80,height:80}} />
-        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-          {p.estado_jja === 'disponible' && <Button variant="ghost" onClick={()=>onLoan(p)}>Prestar</Button>}
+      <div style={{display:'flex',alignItems:'center',gap:12,width:'100%'}}>
+        <div style={{width:88,height:88,flex:'0 0 88px'}}>
+          {imagenSrc ? (
+            <img src={imagenSrc} alt={p.nombre_jja} style={{width:88,height:88,objectFit:'cover',borderRadius:6}} />
+          ) : (
+            <div style={{width:88,height:88,background:'#f3f3f3',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:6}}>No image</div>
+          )}
+        </div>
+
+        <div style={{flex:1}}>
+          <strong>{p.nombre_jja}</strong>
+          <div className="muted">Tipo: {p.nombre_tipo_jja || p.nombre_tipo || 'N/A'}</div>
+          <div className="muted">Estado: {p.estado_jja}</div>
+          <div className="muted">QR: {p.codigo_qr_jja}</div>
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
+          <img src={qrImageUrl(p.codigo_qr_jja, 120)} alt="QR" style={{width:64,height:64}} />
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              {p.estado_jja === 'disponible' && <Button variant="ghost" onClick={()=>onLoan(p)}>Prestar</Button>}
+              <Button variant="light" onClick={()=>onEdit(p)}>Editar</Button>
+              <Button variant="ghost" onClick={()=>onDelete(p)}>Eliminar</Button>
+              {/* Toggle publicar/despublicar */}
+              <Button variant="primary" onClick={()=>onPublish(p)}>
+                {p.publicado_jja && Number(p.publicado_jja) === 1 ? 'Despublicar' : 'Publicar'}
+              </Button>
+            </div>
         </div>
       </div>
     </Card>
@@ -28,6 +70,7 @@ export default function Inventory(){
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editarProducto, setEditarProducto] = useState(null)
 
   useEffect(() => {
     console.log('🔄 INVENTORY: useEffect ejecutado')
@@ -108,12 +151,37 @@ export default function Inventory(){
 
   function handleSave(product){
     // Recargar la lista después de guardar
+    setEditarProducto(null)
     loadProductos()
+  }
+
+  function handleEdit(product){
+    setEditarProducto(product)
+  }
+
+  async function handleDelete(product){
+    if (!confirm(`Eliminar activo '${product.nombre_jja}'? Esta acción no se puede deshacer.`)) return
+    try{
+      await apiRequest(`/activos/${product.id_activo_jja}`, { method: 'DELETE' })
+      await loadProductos()
+      alert('Activo eliminado')
+    }catch(err){ alert('Error al eliminar: '+err.message) }
   }
 
   function handleLoan(product){
     // Por ahora, solo alert
     alert(`Producto ${product.nombre_jja} listo para prestar.`)
+  }
+
+  async function handlePublish(product){
+    const id = product.id_activo_jja
+    const nuevo = (product.publicado_jja && Number(product.publicado_jja) === 1) ? 0 : 1
+    if (!confirm(`${nuevo===1 ? 'Publicar' : 'Despublicar'} activo '${product.nombre_jja}'?`)) return
+    try{
+      await apiRequest(`/activos/${id}/publicar`, { method: 'PATCH', body: JSON.stringify({ publicado: nuevo }) })
+      alert(nuevo===1 ? 'Activo publicado.' : 'Activo despublicado.')
+      await loadProductos()
+    }catch(err){ alert('Error al cambiar publicación: '+err.message) }
   }
 
   if (loading) return <div>Cargando inventario...</div>
@@ -122,13 +190,13 @@ export default function Inventory(){
   return (
     <div className="inventory-inner">
       <aside style={{width:360}}>
-        <ProductForm onSave={handleSave} />
+        <ProductForm onSave={handleSave} initial={editarProducto} onCancel={()=>setEditarProducto(null)} />
       </aside>
       <section>
         <h3>Inventario</h3>
         {productos.length===0 && <Card className="p-16 muted">No hay activos. Agrega el primero usando el formulario.</Card>}
         <div style={{display:'grid',gap:12,marginTop:12}}>
-          {productos.map(p=> <ProductRow key={p.id_activo_jja} p={p} onLoan={handleLoan} />)}
+          {productos.map(p=> <ProductRow key={p.id_activo_jja} p={p} onLoan={handleLoan} onEdit={handleEdit} onDelete={handleDelete} onPublish={handlePublish} />)}
         </div>
       </section>
     </div>

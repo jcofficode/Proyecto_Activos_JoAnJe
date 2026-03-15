@@ -11,12 +11,16 @@ export default function MarketplacePage(){
 
   async function load(){
     try{
-      const data = await apiRequest('/productos')
+      const data = await apiRequest('/activos')
       // Normalizar formas de respuesta: our API puede devolver { datos: [...] } o directamente un array
-      if (Array.isArray(data)) setProductos(data)
-      else if (Array.isArray(data.datos)) setProductos(data.datos)
-      else if (Array.isArray(data.productos)) setProductos(data.productos)
-      else setProductos([])
+      let list = []
+      if (Array.isArray(data)) list = data
+      else if (Array.isArray(data.datos)) list = data.datos
+      else if (Array.isArray(data.activos)) list = data.activos
+      else list = []
+      // Filtrar solo activos publicados
+      list = list.filter(p => (p.publicado_jja || p.publicado_jja === 1));
+      setProductos(list)
     }catch(err){ setError(err.message) }
     finally{ setLoading(false) }
   }
@@ -34,17 +38,46 @@ export default function MarketplacePage(){
       </div>
 
       <div className="page-content">
-        <div style={{display:'grid',gap:12}}>
-          {productos.map(p=> (
-            <Card key={p.id_producto_jja} className="product-card">
-              <strong>{p.nombre_jja}</strong>
-              <div className="muted">{p.descripcion_jja}</div>
-              <div className="muted">Precio: {p.precio_jja} • Stock: {p.stock_jja}</div>
-              <div style={{marginTop:8}}>
-                <a href="#" onClick={async(e)=>{e.preventDefault(); await solicitar(p.id_producto_jja)}} className="btn btn-primary">Solicitar</a>
-              </div>
-            </Card>
-          ))}
+        <div className="product-grid">
+          {productos.map(p=> {
+            // extraer imagen principal
+            let imagenSrc = null
+            try {
+              if (p.imagenes_jja) {
+                if (Array.isArray(p.imagenes_jja) && p.imagenes_jja.length>0) imagenSrc = p.imagenes_jja[0]
+                else if (typeof p.imagenes_jja === 'string') {
+                  const parsed = JSON.parse(p.imagenes_jja)
+                  if (Array.isArray(parsed) && parsed.length>0) imagenSrc = parsed[0]
+                }
+              }
+            } catch(e) { imagenSrc = null }
+            if (imagenSrc && imagenSrc.startsWith('/')) {
+              try { imagenSrc = window.location.origin.replace(/\/$/, '') + imagenSrc } catch(e){}
+            } else if (imagenSrc && !imagenSrc.startsWith('http')) {
+              imagenSrc = imagenSrc
+            }
+
+            return (
+              <Card key={p.id_activo_jja} className="product-card">
+                <div className="product-media">
+                  {imagenSrc ? (
+                    <img src={imagenSrc} alt={p.nombre_jja} />
+                  ) : (
+                    <div className="product-placeholder">No image</div>
+                  )}
+                </div>
+
+                <div className="product-body">
+                  <strong className="product-title">{p.nombre_jja}</strong>
+                  <div className="muted product-desc">{p.descripcion_jja}</div>
+                  <div className="product-meta">Tipo: <strong>{p.nombre_tipo_jja || p.nombre_tipo || 'N/A'}</strong> · Estado: <strong>{p.estado_jja}</strong></div>
+                  <div style={{marginTop:8}}>
+                    <a href="#" onClick={async(e)=>{e.preventDefault(); await solicitar(p.id_activo_jja)}} className="btn btn-primary">Solicitar</a>
+                  </div>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -52,8 +85,7 @@ export default function MarketplacePage(){
 
   async function solicitar(id){
     try{
-      const cantidad = 1
-      await apiRequest(`/productos/${id}/solicitudes`, { method: 'POST', body: JSON.stringify({ cantidad }) })
+      await apiRequest(`/activos/${id}/solicitudes`, { method: 'POST', body: JSON.stringify({ observaciones: 'Solicitud desde marketplace' }) })
       alert('Solicitud creada')
     }catch(err){ alert('Error: '+err.message) }
   }

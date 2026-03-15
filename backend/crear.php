@@ -185,6 +185,8 @@ CREATE TABLE IF NOT EXISTS `activos_jja` (
     `id_tipo_jja`           INT UNSIGNED    NOT NULL,
     `ubicacion_jja`         VARCHAR(150)    DEFAULT NULL,
     `descripcion_jja`       TEXT            DEFAULT NULL,
+    `imagenes_jja`          JSON            DEFAULT NULL,
+    `publicado_jja`         TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Publicado en marketplace: 1=si, 0=no',
     `estado_jja`            ENUM('disponible','prestado','mantenimiento','dañado','perdido')
                                             NOT NULL DEFAULT 'disponible',
     `estado_registro_jja`   TINYINT(1)      NOT NULL DEFAULT 1,
@@ -242,7 +244,23 @@ CREATE TABLE IF NOT EXISTS `historial_prestamos_jja` (
         REFERENCES `prestamos_jja` (`id_prestamo_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Log inmutable de movimientos de activos';
-", "Tabla <strong>historial_prestamos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+" , "Tabla <strong>historial_prestamos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
+// solicitudes_prestamo_activos_jja
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `solicitudes_prestamo_activos_jja` (
+                `id_solicitud_activo_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `id_activo_jja`          INT UNSIGNED NOT NULL,
+                `id_cliente_jja`         INT UNSIGNED NOT NULL,
+                `fecha_solicitud_jja`    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `estado_jja`             ENUM('pendiente','aprobada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+                `observaciones_jja`      TEXT          DEFAULT NULL,
+                PRIMARY KEY (`id_solicitud_activo_jja`),
+                CONSTRAINT `fk_solicitud_activo_activo_jja` FOREIGN KEY (`id_activo_jja`) REFERENCES `activos_jja` (`id_activo_jja`) ON DELETE RESTRICT ON UPDATE CASCADE,
+                CONSTRAINT `fk_solicitud_activo_cliente_jja` FOREIGN KEY (`id_cliente_jja`) REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        COMMENT='Solicitudes de préstamo para activos (clientes)';;
+", "Tabla <strong>solicitudes_prestamo_activos_jja</strong>", $cnt_tablas_jja, $errores_jja);
 
 // ── 2.8 notificaciones_jja ───────────────────────────────────
 ejecutar_jja($pdo_jja, "
@@ -1166,10 +1184,10 @@ END
 ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_PRESTAMO_ID_jja`(IN p_id_jja INT UNSIGNED)
 BEGIN
-    SELECT prest.`id_prestamo_jja`, actv.`nombre_jja` AS `activo_nombre_jja`,
-           actv.`codigo_qr_jja`, actv.`codigo_nfc_jja`,
-           CONCAT(usu.`nombre_jja`, ' ', usu.`apellido_jja`) AS `usuario_nombre_jja`,
-           usu.`cedula_jja`, usu.`correo_jja`,
+        SELECT prest.`id_prestamo_jja`, prest.`id_usuario_jja`, actv.`nombre_jja` AS `activo_nombre_jja`,
+            actv.`codigo_qr_jja`, actv.`codigo_nfc_jja`,
+            CONCAT(usu.`nombre_jja`, ' ', usu.`apellido_jja`) AS `usuario_nombre_jja`,
+            usu.`cedula_jja`, usu.`correo_jja`,
            prest.`fecha_prestamo_jja`, prest.`fecha_limite_jja`,
            prest.`fecha_devolucion_jja`, prest.`estado_prestamo_jja`, prest.`observaciones_jja`
     FROM `prestamos_jja` prest
@@ -1182,10 +1200,10 @@ END
 ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_PRESTAMOS_USUARIO_jja`(IN p_id_usuario_jja INT UNSIGNED)
 BEGIN
-    SELECT prest.`id_prestamo_jja`, actv.`nombre_jja` AS `activo_nombre_jja`,
-           tipo.`nombre_tipo_jja`, actv.`codigo_qr_jja`,
-           prest.`fecha_prestamo_jja`, prest.`fecha_limite_jja`,
-           prest.`fecha_devolucion_jja`, prest.`estado_prestamo_jja`
+        SELECT prest.`id_prestamo_jja`, prest.`id_activo_jja`, actv.`nombre_jja` AS `activo_nombre_jja`,
+            tipo.`nombre_tipo_jja`, actv.`codigo_qr_jja`,
+            prest.`fecha_prestamo_jja`, prest.`fecha_limite_jja`,
+            prest.`fecha_devolucion_jja`, prest.`estado_prestamo_jja`
     FROM `prestamos_jja` prest
     INNER JOIN `activos_jja`      actv ON prest.`id_activo_jja` = actv.`id_activo_jja`
     INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`   = tipo.`id_tipo_jja`

@@ -96,12 +96,28 @@ const Header = ({ usuario_jc, onLogout }) => {
                 </>
               )}
 
-              <div className="user-trigger" style={{display:'flex',flexDirection:'column',alignItems:'flex-end'}}>
-                <span className="header-user">{usuario_jc.nombre || usuario_jc.correo || 'Usuario'}</span>
-                <div className="user-dropdown">
-                  <button className="boton-ligero" onClick={(e) => { e.preventDefault(); onLogout && onLogout(); navigate('/') }}>Cerrar sesión</button>
-                </div>
-              </div>
+              {/* Mostrar solo la inicial en el hero para evitar nombres largos */}
+              {(() => {
+                const raw = usuario_jc.nombre?.trim() || usuario_jc.correo || ''
+                let inicial = 'U'
+                if (raw) {
+                  if (raw.includes('@')) {
+                    inicial = raw.charAt(0).toUpperCase()
+                  } else {
+                    const parts = raw.split(/\s+/)
+                    inicial = (parts[0] && parts[0].charAt(0)) ? parts[0].charAt(0).toUpperCase() : raw.charAt(0).toUpperCase()
+                  }
+                }
+                return (
+                  <div className="user-trigger" style={{display:'flex',flexDirection:'column',alignItems:'flex-end'}}>
+                    <span className="header-user" title={raw} style={{width:36,height:36,display:'inline-flex',alignItems:'center',justifyContent:'center',borderRadius:18}}>{inicial}</span>
+                    <div className="user-dropdown">
+                      <button className="boton-ligero" onClick={(e) => { e.preventDefault(); onLogout && onLogout(); navigate('/') }}>Cerrar sesión</button>
+                    </div>
+                  </div>
+                )
+              })()}
+              
             </div>
           ) : (
             <a
