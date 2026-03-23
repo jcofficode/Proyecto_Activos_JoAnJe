@@ -80,6 +80,7 @@ class PrestamoController_jja extends Controller_jja
             Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN]);
             $res_jja = $this->modelo_jja->actualizarVencidos_jja();
             $this->responder_jja(true, $res_jja, 'Prestamos vencidos actualizados.');
+            return;
         }
 
         // POST /prestamos/{id}/devolver
@@ -87,6 +88,7 @@ class PrestamoController_jja extends Controller_jja
             Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
             if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de prestamo invalido.', 400);
             $this->registrarDevolucion_jja((int)$seg0_jja, (int)$p_jja->id);
+            return;
         }
 
         // POST /prestamos/{id}/solicitud-devolucion <- solicitado por el usuario (cliente)
@@ -103,9 +105,10 @@ class PrestamoController_jja extends Controller_jja
             Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
             if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de prestamo invalido.', 400);
             $this->marcarPerdido_jja((int)$seg0_jja, (int)$p_jja->id);
+            return;
         }
 
-        // POST /prestamos (nuevo prestamo)
+        // POST /prestamos (nuevo prestamo) — solo si no hay sub-ruta
         Middleware_jja::autorizar_jja($p_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
         $this->registrarPrestamo_jja((int)$p_jja->id);
     }
@@ -198,11 +201,27 @@ class PrestamoController_jja extends Controller_jja
             $this->responder_jja(false, null, 'Solo el usuario titular del prestamo puede solicitar la devolucion.', 403);
         }
 
+        // ── Validación: el préstamo debe estar activo o vencido ──
+        $estadoPrestamo = $prestamo['estado_prestamo_jja'] ?? '';
+        if (!in_array($estadoPrestamo, ['activo', 'vencido'], true)) {
+            $this->responder_jja(false, null, "El préstamo no está en estado válido para devolución (estado actual: {$estadoPrestamo}).", 409);
+            return;
+        }
+
+        // ── Validación: no debe existir solicitud de devolución pendiente para este préstamo ──
+        $solModel = new SolicitudDevolucionModel_jja();
+        $solicitudesPendientes = $solModel->listarPendientes_jja();
+        foreach ($solicitudesPendientes as $sp) {
+            if ((int)$sp['id_prestamo_jja'] === $idPrestamo_jja) {
+                $this->responder_jja(false, null, 'Ya existe una solicitud de devolución pendiente para este préstamo.', 409);
+                return;
+            }
+        }
+
         // Crear la solicitud en modelo nuevo
         $body = $this->obtenerBody_jja();
         $obs = $body['observaciones'] ?? null;
 
-        $solModel = new SolicitudDevolucionModel_jja();
         try {
             $sol = $solModel->crear_jja($idPrestamo_jja, $idUsuarioSolicitante_jja, $obs);
         } catch (PDOException $e) {

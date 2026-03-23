@@ -140,6 +140,10 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' ha sido aprobada.";
                     $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
                 } else {
+                    // Rechazada o cancelada: revertir estado del activo a 'disponible'
+                    $activoModel = new ActivoModel_jja();
+                    $activoModel->actualizarEstado_jja((int)$solAct['id_activo_jja'], 'disponible');
+
                     $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' fue {$estado}.";
                     $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
                 }

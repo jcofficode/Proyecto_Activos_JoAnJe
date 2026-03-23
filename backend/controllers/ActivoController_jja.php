@@ -11,7 +11,7 @@ class ActivoController_jja extends Controller_jja
     private ActivoModel_jja $modelo_jja;
 
     // Estados validos del activo
-    private const ESTADOS_VALIDOS = ['disponible', 'en_reparacion', 'perdido'];
+    private const ESTADOS_VALIDOS = ['disponible', 'en_proceso_prestamo', 'en_reparacion', 'perdido'];
 
     public function __construct()
     {
@@ -213,10 +213,37 @@ class ActivoController_jja extends Controller_jja
         $id_cliente = $payload_jja->id ?? null;
         if (!$id_cliente) $this->responder_jja(false, null, 'Token inválido o id de usuario no disponible.', 400);
 
+        // ── Validación 1: verificar que el activo existe y está disponible ──
+        $activo = $this->modelo_jja->buscarPorId_jja($id_activo_jja);
+        if (!$activo) {
+            $this->responder_jja(false, null, 'El activo no existe o fue eliminado.', 404);
+            return;
+        }
+        if (($activo['estado_jja'] ?? '') !== 'disponible') {
+            $this->responder_jja(false, null, 'El activo no está disponible para préstamo (estado actual: ' . ($activo['estado_jja'] ?? 'desconocido') . ').', 409);
+            return;
+        }
+
+        // ── Validación 2: verificar que el usuario no tiene sanción activa ──
+        $resSancion = (new ListaNegraModel_jja())->verificarSancion_jja((int)$id_cliente);
+        if ($resSancion && ((int)($resSancion['tiene_sancion_activa'] ?? 0)) > 0) {
+            $this->responder_jja(false, null, 'Tienes una sanción activa y no puedes solicitar préstamos.', 403);
+            return;
+        }
+
+        // ── Validación 3: verificar que no exista una solicitud pendiente duplicada ──
+        $model = new SolicitudPrestamoActivoModel_jja();
+        $solExistentes = $model->listarPorCliente_jja((int)$id_cliente);
+        foreach ($solExistentes as $sol) {
+            if ((int)$sol['id_activo_jja'] === $id_activo_jja && ($sol['estado_jja'] ?? '') === 'pendiente') {
+                $this->responder_jja(false, null, 'Ya tienes una solicitud pendiente para este activo.', 409);
+                return;
+            }
+        }
+
         $body = $this->obtenerBody_jja();
         $observaciones = $body['observaciones'] ?? null;
 
-        $model = new SolicitudPrestamoActivoModel_jja();
         try {
             $sol = $model->crear_jja($id_activo_jja, (int)$id_cliente, $observaciones);
         } catch (PDOException $e) {
@@ -224,8 +251,10 @@ class ActivoController_jja extends Controller_jja
             return;
         }
 
-        // notificar al encargado si es posible podría añadirse aquí
-        $this->responder_jja(true, $sol, 'Solicitud de préstamo creada.', 201);
+        // Cambiar estado del activo a 'en_proceso_prestamo' para reservarlo
+        $this->modelo_jja->actualizarEstado_jja($id_activo_jja, 'en_proceso_prestamo');
+
+        $this->responder_jja(true, $sol, 'Solicitud de préstamo creada. El activo ha sido reservado.', 201);
     }
 
     /** POST /activos/{id}/imagen => subir imagen del activo */

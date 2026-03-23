@@ -55,10 +55,7 @@ class PrestamoModel_jja extends Model_jja
 
     public function listarPorActivo_jja(int $idActivo_jja): array
     {
-        // El SP original no soporta busqueda por ID de activo, asi que buscaremos historial de prestamos 
-        // a traves de la tabla. Si hay un SP especifico en el futuro, se usara. 
-        // Pero el que se llama SP_LEER_PRESTAMOS_ACTIVOS_jja no recibe parametros.
-        return []; // placeholder
+        return $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_POR_ACTIVO_jja', [$idActivo_jja]);
     }
 
     public function listarActivos_jja(): array

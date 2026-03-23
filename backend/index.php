@@ -16,7 +16,12 @@ require_once __DIR__ . '/Core/Autoloader_jja.php';
 
 // ── 4. CORS ──────────────────────────────────────────────────
 $corsOrigin_jja = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
-$originHeader_jja = $_SERVER['HTTP_ORIGIN'] ?? $corsOrigin_jja;
+// Validar que el origen de la petición sea uno de los permitidos
+$origenesPerm_jja = array_map('trim', explode(',', $corsOrigin_jja));
+$originHeader_jja = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (!in_array($originHeader_jja, $origenesPerm_jja, true)) {
+    $originHeader_jja = $origenesPerm_jja[0]; // fallback al primer origen configurado
+}
 
 header("Access-Control-Allow-Origin: {$originHeader_jja}");
 
@@ -77,7 +82,6 @@ $mapa_jja = [
     'reportes' => 'ReporteController_jja',
     'productos' => 'ProductoController_jja',
     'solicitudes-prestamo' => 'SolicitudPrestamoController_jja',
-    'prestamos-productos' => 'PrestamoProductoController_jja',
     'prestamos-productos' => 'PrestamoProductoController_jja',
     'solicitudes-devolucion-productos' => 'SolicitudDevolucionProductoController_jja',
     'solicitudes-devolucion' => 'SolicitudDevolucionController_jja',

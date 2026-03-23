@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `activos_jja` (
     `descripcion_jja`       TEXT            DEFAULT NULL,
     `imagenes_jja`          JSON            DEFAULT NULL,
     `publicado_jja`         TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Publicado en marketplace: 1=si, 0=no',
-    `estado_jja`            ENUM('disponible','prestado','mantenimiento','dañado','perdido')
+    `estado_jja`            ENUM('disponible','prestado','en_proceso_prestamo','mantenimiento','dañado','perdido')
                                             NOT NULL DEFAULT 'disponible',
     `estado_registro_jja`   TINYINT(1)      NOT NULL DEFAULT 1,
     `creado_en_jja`         TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -562,7 +562,7 @@ $sps_a_eliminar_jja = [
     // Préstamos
     'SP_REGISTRAR_PRESTAMO_jja', 'SP_REGISTRAR_DEVOLUCION_jja', 'SP_LEER_PRESTAMOS_jja',
     'SP_LEER_PRESTAMO_ID_jja', 'SP_LEER_PRESTAMOS_USUARIO_jja', 'SP_LEER_PRESTAMOS_ACTIVOS_jja',
-    'SP_LEER_PRESTAMOS_VENCIDOS_jja', 'SP_MARCAR_PRESTAMO_PERDIDO_jja', 'SP_ACTUALIZAR_VENCIDOS_jja',
+    'SP_LEER_PRESTAMOS_POR_ACTIVO_jja', 'SP_LEER_PRESTAMOS_VENCIDOS_jja', 'SP_MARCAR_PRESTAMO_PERDIDO_jja', 'SP_ACTUALIZAR_VENCIDOS_jja',
     // Notificaciones
     'SP_CREAR_NOTIFICACION_jja', 'SP_LEER_NOTIFICACIONES_USUARIO_jja',
     'SP_MARCAR_NOTIFICACION_LEIDA_jja', 'SP_MARCAR_TODAS_LEIDAS_jja', 'SP_ELIMINAR_NOTIFICACION_jja',
@@ -1006,7 +1006,7 @@ END
 ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_ACTUALIZAR_ESTADO_ACTIVO_jja`(
     IN p_id_jja     INT UNSIGNED,
-    IN p_estado_jja ENUM('disponible','prestado','mantenimiento','dañado','perdido')
+    IN p_estado_jja ENUM('disponible','prestado','en_proceso_prestamo','mantenimiento','dañado','perdido')
 )
 BEGIN
     UPDATE `activos_jja`
@@ -1070,7 +1070,7 @@ BEGIN
     IF v_estado_activo IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El activo no existe o fue eliminado.';
     END IF;
-    IF v_estado_activo <> 'disponible' THEN
+    IF v_estado_activo NOT IN ('disponible', 'en_proceso_prestamo') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El activo no está disponible para préstamo.';
     END IF;
 
@@ -1248,6 +1248,25 @@ BEGIN
     ORDER BY prest.`fecha_limite_jja` ASC;
 END
 ", "SP: SP_LEER_PRESTAMOS_ACTIVOS_jja", $cnt_sp_jja, $errores_jja);
+
+ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_LEER_PRESTAMOS_POR_ACTIVO_jja`(IN p_id_activo_jja INT UNSIGNED)
+BEGIN
+    SELECT prest.`id_prestamo_jja`, prest.`id_activo_jja`, actv.`nombre_jja` AS `activo_nombre_jja`,
+           actv.`codigo_qr_jja`,
+           CONCAT(usu.`nombre_jja`, ' ', usu.`apellido_jja`) AS `usuario_nombre_jja`,
+           usu.`cedula_jja`, usu.`correo_jja`,
+           CONCAT(enc.`nombre_jja`, ' ', enc.`apellido_jja`) AS `encargado_nombre_jja`,
+           prest.`fecha_prestamo_jja`, prest.`fecha_limite_jja`,
+           prest.`fecha_devolucion_jja`, prest.`estado_prestamo_jja`, prest.`observaciones_jja`
+    FROM `prestamos_jja` prest
+    INNER JOIN `activos_jja`  actv ON prest.`id_activo_jja`    = actv.`id_activo_jja`
+    INNER JOIN `usuarios_jja` usu  ON prest.`id_usuario_jja`   = usu.`id_usuario_jja`
+    INNER JOIN `usuarios_jja` enc  ON prest.`id_encargado_jja`  = enc.`id_usuario_jja`
+    WHERE prest.`id_activo_jja` = p_id_activo_jja AND prest.`estado_registro_jja` = 1
+    ORDER BY prest.`fecha_prestamo_jja` DESC;
+END
+", "SP: SP_LEER_PRESTAMOS_POR_ACTIVO_jja (historial de préstamos por activo)", $cnt_sp_jja, $errores_jja);
 
 ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_PRESTAMOS_VENCIDOS_jja`()
