@@ -34,18 +34,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ── 5. Parsear URI: /api/v1/{recurso}/{seg0}/{seg1?} ──────────
 $uri_jja = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $metodo_jja = $_SERVER['REQUEST_METHOD'];
-$partes_jja = array_values(array_filter(explode('/', trim($uri_jja, '/'))));
 
-// Para desarrollo con php -S, permitir requests sin /api/v1
-if (($partes_jja[0] ?? '') === 'api' && ($partes_jja[1] ?? '') === 'v1') {
-    $recurso_jja = $partes_jja[2] ?? null;
-    $segmentos_jja = array_slice($partes_jja, 3);
-} else {
-    // Asumir que es desarrollo local sin prefijo
-    $recurso_jja = $partes_jja[0] ?? null;
-    $segmentos_jja = array_slice($partes_jja, 1);
+// Eliminar prefijos de sub-carpeta (Laragon: /Proyecto_Activos_JoAnJe/backend)
+// y también el prefijo /api/v1 si viene del frontend
+$uri_limpia_jja = $uri_jja;
+foreach (['/Proyecto_Activos_JoAnJe/backend', '/api/v1'] as $prefijo_jja) {
+    if (str_starts_with($uri_limpia_jja, $prefijo_jja)) {
+        $uri_limpia_jja = substr($uri_limpia_jja, strlen($prefijo_jja));
+        break;
+    }
 }
-$segmentos_jja = array_slice($partes_jja, 3); // resto para el controlador
+
+$partes_jja = array_values(array_filter(explode('/', trim($uri_limpia_jja, '/'))));
+
+// Si aún queda el prefijo api/v1 (doble prefijo), quitarlo
+if (($partes_jja[0] ?? '') === 'api' && ($partes_jja[1] ?? '') === 'v1') {
+    $partes_jja = array_slice($partes_jja, 2);
+}
+
+$recurso_jja   = $partes_jja[0] ?? null;
+$segmentos_jja = array_slice($partes_jja, 1);
 
 if (!$recurso_jja) {
     http_response_code(400);

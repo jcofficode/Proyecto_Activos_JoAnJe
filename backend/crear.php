@@ -463,6 +463,26 @@ CREATE TABLE IF NOT EXISTS `prestamos_productos_jja` (
     COMMENT='Registros de préstamos generados a partir de solicitudes de productos (marketplace)';
 ", "Tabla <strong>prestamos_productos_jja</strong>", $cnt_tablas_jja, $errores_jja);
 
+// solicitudes_devolucion_jja (solicitudes de devolución de préstamos de activos)
+ejecutar_jja($pdo_jja, "
+CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_jja` (
+        `id_solicitud_devolucion_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `id_prestamo_jja`             INT UNSIGNED NOT NULL,
+        `id_usuario_solicitante_jja`  INT UNSIGNED NOT NULL,
+        `estado_jja`                  ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `observaciones_jja`           TEXT DEFAULT NULL,
+        `creado_en_jja`               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `fecha_respuesta_jja`         TIMESTAMP NULL DEFAULT NULL,
+        `respondido_por_jja`          INT UNSIGNED DEFAULT NULL,
+        PRIMARY KEY (`id_solicitud_devolucion_jja`),
+        CONSTRAINT `fk_soldev_prestamo_jja` FOREIGN KEY (`id_prestamo_jja`)
+                REFERENCES `prestamos_jja` (`id_prestamo_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+        CONSTRAINT `fk_soldev_usuario_jja` FOREIGN KEY (`id_usuario_solicitante_jja`)
+                REFERENCES `usuarios_jja` (`id_usuario_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Solicitudes generadas por clientes para solicitar la devolución de un préstamo';
+", "Tabla <strong>solicitudes_devolucion_jja</strong>", $cnt_tablas_jja, $errores_jja);
+
 // solicitudes_devolucion_productos_jja (devoluciones de préstamos marketplace)
 ejecutar_jja($pdo_jja, "
 CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_productos_jja` (
@@ -1795,9 +1815,9 @@ try {
     $stmt_e = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
         (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
         SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'empresa' LIMIT 1)
-        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo2)");
     $stmt_e->execute([
-        ':nombre' => 'Empresa', ':apellido' => 'Demo', ':cedula' => '90000001', ':correo' => 'empresa@demo.com', ':telefono' => '+58-412-1111111', ':hash' => $hash_empresa
+        ':nombre' => 'Empresa', ':apellido' => 'Demo', ':cedula' => '90000001', ':correo' => 'empresa@demo.com', ':correo2' => 'empresa@demo.com', ':telefono' => '+58-412-1111111', ':hash' => $hash_empresa
     ]);
     mostrar_jja('ok', '✅', "Usuario <strong>empresa</strong> creado (empresa@demo.com / Empresa2026!).");
 
@@ -1805,9 +1825,9 @@ try {
     $stmt_c = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
         (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
         SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'cliente' LIMIT 1)
-        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo2)");
     $stmt_c->execute([
-        ':nombre' => 'Cliente', ':apellido' => 'Demo', ':cedula' => '80000001', ':correo' => 'cliente@demo.com', ':telefono' => '+58-412-2222222', ':hash' => $hash_cliente
+        ':nombre' => 'Cliente', ':apellido' => 'Demo', ':cedula' => '80000001', ':correo' => 'cliente@demo.com', ':correo2' => 'cliente@demo.com', ':telefono' => '+58-412-2222222', ':hash' => $hash_cliente
     ]);
     mostrar_jja('ok', '✅', "Usuario <strong>cliente</strong> creado (cliente@demo.com / Cliente2026!).");
 
@@ -1815,9 +1835,9 @@ try {
     $stmt_enc = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
         (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
         SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'encargado' LIMIT 1)
-        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo)");
+        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo2)");
     $stmt_enc->execute([
-        ':nombre' => 'Encargado', ':apellido' => 'Demo', ':cedula' => '70000001', ':correo' => 'encargado@demo.com', ':telefono' => '+58-412-3333333', ':hash' => $hash_encargado
+        ':nombre' => 'Encargado', ':apellido' => 'Demo', ':cedula' => '70000001', ':correo' => 'encargado@demo.com', ':correo2' => 'encargado@demo.com', ':telefono' => '+58-412-3333333', ':hash' => $hash_encargado
     ]);
     mostrar_jja('ok', '✅', "Usuario <strong>encargado</strong> creado (encargado@demo.com / Encargado2026!).");
 }
