@@ -4,8 +4,9 @@ export const API_URL_JC = 'http://localhost:8000/api/v1'
 export const apiRequest = async (endpoint, options = {}) => {
   const token = sessionStorage.getItem('token_jja')
   console.log('API Request:', endpoint, 'Token exists:', !!token)
+  const isFormData = options.body instanceof FormData
   const headers = {
-    'Content-Type': 'application/json',
+    ...(!isFormData && { 'Content-Type': 'application/json' }),
     ...options.headers
   }
   if (token) {

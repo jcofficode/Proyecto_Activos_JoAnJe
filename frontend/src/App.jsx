@@ -1,5 +1,16 @@
+// ============================================================
+// App.jsx — Punto de entrada de la aplicación
+// Sistema JoAnJe Coders — Actualizado con roles Encargado/Cliente
+// ============================================================
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider_jja, AuthContext_jja } from './context/AuthContext_jja'
+import { ThemeProvider_jja } from './context/ThemeContext_jja'
+import { ToastProvider_jja } from './context/ToastContext_jja'
+import ProtectedRoute_jja from './components/auth_jja/ProtectedRoute_jja'
+import LayoutSistema_jja from './components/layout_jja/LayoutSistema_jja'
+
+// ── Landing y Login ──────────────────────────────────────────
 import Header from './components/layout/Header'
 import Hero from './components/landing/Hero'
 import VideoDemo from './components/landing/VideoDemo'
@@ -12,148 +23,196 @@ import ContactoUbicacion from './components/landing/ContactoUbicacion'
 import CTASeccion from './components/landing/CTASeccion'
 import Footer from './components/layout/Footer'
 import Login from './components/auth/Login'
-import Sistema from './components/sistema/Sistema'
-import InventoryPage from './pages/InventoryPage'
-import AlertsPage from './pages/AlertsPage'
-import ReportsPage from './pages/ReportsPage'
-import UsersPage from './pages/UsersPage'
-import MarketplacePage from './pages/MarketplacePage'
-import MyLoansPage from './pages/MyLoansPage'
-import MyRequestsPage from './pages/MyRequestsPage'
-import RequestsPage from './pages/RequestsPage'
-import ProfilePage from './pages/ProfilePage'
-import { apiRequest, API_URL_JC } from './utils/api'
 
-const App = () => {
-  const [usuario_jc, setUsuario_jc] = useState(null)
-  const [loading, setLoading] = useState(true)
+// ── Páginas Admin ────────────────────────────────────────────
+import Dashboard_jja from './pages/admin/Dashboard_jja'
+import InventarioPage_jja from './pages/admin/InventarioPage_jja'
+import UsuariosPage_jja from './pages/admin/UsuariosPage_jja'
+import SolicitudesPage_jja from './pages/admin/SolicitudesPage_jja'
+import ReportesPage_jja from './pages/admin/ReportesPage_jja'
+import AlertasPage_jja from './pages/admin/AlertasPage_jja'
+import ConfiguracionPage_jja from './pages/admin/ConfiguracionPage_jja'
+import PersonalizacionPage_jja from './pages/admin/PersonalizacionPage_jja'
+import AuditoriaPage_jja from './pages/admin/AuditoriaPage_jja'
 
-  // Verificar autenticación al inicio
-  useEffect(() => {
-    console.log('🚀 APP: Iniciando aplicación')
-    const token = sessionStorage.getItem('token_jja')
-    console.log('🔑 APP: Token en sessionStorage:', token ? 'PRESENTE' : 'AUSENTE')
-    
-    if (token) {
-      console.log('🔍 APP: Verificando token con /auth/me...')
-      // Verificar token
-      fetch(`${API_URL_JC}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(res => {
-        console.log('📡 APP: Respuesta de /auth/me - Status:', res.status)
-        return res.json()
-      })
-      .then(data => {
-        console.log('📋 APP: Datos de /auth/me:', data)
-        if (data.exito && data.datos) {
-          console.log('✅ APP: Token válido, configurando usuario:', data.datos.nombre_jja)
-          setUsuario_jc({
-            nombre: data.datos.nombre_jja,
-            correo: data.datos.correo_jja,
-            rol: data.datos.nombre_rol_jja
-          })
-        } else {
-          console.log('❌ APP: Datos inválidos, limpiando token')
-          sessionStorage.removeItem('token_jja')
-        }
-      })
-      .catch(error => {
-        console.log('💥 APP: Error al verificar token:', error.message)
-        sessionStorage.removeItem('token_jja')
-      })
-      .finally(() => {
-        console.log('🏁 APP: Finalizando verificación, setting loading=false')
-        setLoading(false)
-      })
-    } else {
-      console.log('🚫 APP: No hay token, setting loading=false')
-      setLoading(false)
-    }
-  }, [])
+// ── Página Encargado ─────────────────────────────────────────
+import DashboardEncargado_jja from './pages/encargado/DashboardEncargado_jja'
+
+// ── Páginas Cliente ──────────────────────────────────────────
+import MarketplacePage_jja from './pages/cliente/MarketplacePage_jja'
+import MisSolicitudesPage_jja from './pages/cliente/MisSolicitudesPage_jja'
+import MisPrestamosPage_jja from './pages/cliente/MisPrestamosPage_jja'
+
+// ── Páginas Compartidas ──────────────────────────────────────
+import PerfilCompartidoPage_jja from './pages/compartido/PerfilCompartidoPage_jja'
+import NotificacionesPage_jja from './pages/compartido/NotificacionesPage_jja'
+
+// ══════════════════════════════════════════════════════════════
+// Landing Page (pública)
+// ══════════════════════════════════════════════════════════════
+const LandingPage_jja = () => (
+  <>
+    <Hero />
+    <VideoDemo />
+    <ComoFunciona />
+    <Politicas />
+    <Testimonios />
+    <SobreNosotros />
+    <Equipo />
+    <ContactoUbicacion />
+    <CTASeccion />
+  </>
+)
+
+// ══════════════════════════════════════════════════════════════
+// Dashboard Selector — renderiza según rol
+// ══════════════════════════════════════════════════════════════
+const DashboardSelector_jja = () => {
+  const auth = React.useContext(AuthContext_jja)
+  if (auth?.esAdmin) return <Dashboard_jja />
+  return <DashboardEncargado_jja />
+}
+
+// ══════════════════════════════════════════════════════════════
+// Rutas de la aplicación
+// ══════════════════════════════════════════════════════════════
+const AppRoutes_jja = () => {
+  const auth = React.useContext(AuthContext_jja)
 
   const handleLogin = (datos) => {
-    setUsuario_jc(datos)
-    setLoading(false)
+    const tokenGuardado = sessionStorage.getItem('token_jja')
+    if (tokenGuardado && auth?.login) {
+      auth.login(tokenGuardado, {
+        nombre: datos.nombre,
+        apellido: datos.apellido || '',
+        correo: datos.correo,
+        rol: datos.rol,
+      })
+    }
   }
 
-  const handleLogout = () => {
-    setUsuario_jc(null)
-    sessionStorage.removeItem('token_jja')
-    localStorage.removeItem('auth_verified_jja')
-  }
+  const handleLogout = () => { auth?.logout() }
 
-  // Mostrar loading solo durante la verificación inicial
-  if (loading) {
+  // Loading global
+  if (auth?.cargando) {
     return (
-      <div className="app">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div>Verificando sesión...</div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'Inter, Poppins, sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTop: '3px solid #4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Verificando sesión...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     )
   }
 
   return (
-    <BrowserRouter>
-      <div className="app">
-        {console.log('🎨 APP: Render - usuario_jc:', usuario_jc, 'loading:', loading)}
-        <Header usuario_jc={usuario_jc} onLogout={handleLogout} />
-        <main>
-          <Routes>
-          <Route path="/" element={(
-            <>
-              <Hero />
-              <VideoDemo />
-              <ComoFunciona />
-              <Politicas />
-              <Testimonios />
-              <SobreNosotros />
-              <Equipo />
-              <ContactoUbicacion />
-              <CTASeccion />
-            </>
-          )} />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/sistema" element={
-            usuario_jc ? (usuario_jc.rol !== 'cliente' ? <Sistema usuario_jc={usuario_jc} /> : <Navigate to="/marketplace" />) : <Navigate to="/login" />
-          } />
-          <Route path="/sistema/inventario" element={
-            usuario_jc ? (usuario_jc.rol !== 'cliente' ? <InventoryPage /> : <Navigate to="/marketplace" />) : <Navigate to="/login" />
-          } />
-          <Route path="/marketplace" element={
-            usuario_jc ? <MarketplacePage /> : <Navigate to="/login" />
-          } />
-          <Route path="/mis-prestamos" element={
-            usuario_jc ? <MyLoansPage /> : <Navigate to="/login" />
-          } />
-          <Route path="/mis-solicitudes" element={
-            usuario_jc ? <MyRequestsPage /> : <Navigate to="/login" />
-          } />
-          <Route path="/sistema/alertas" element={
-            usuario_jc ? (usuario_jc.rol !== 'cliente' ? <AlertsPage /> : <Navigate to="/marketplace" />) : <Navigate to="/login" />
-          } />
-          <Route path="/sistema/reportes" element={
-            usuario_jc ? (usuario_jc.rol !== 'cliente' ? <ReportsPage /> : <Navigate to="/marketplace" />) : <Navigate to="/login" />
-          } />
-          <Route path="/sistema/usuarios" element={
-            usuario_jc ? ((usuario_jc.rol === 'administrador') ? <UsersPage /> : <Navigate to="/sistema" />) : <Navigate to="/login" />
-          } />
-          <Route path="/sistema/solicitudes" element={
-            usuario_jc ? (usuario_jc.rol !== 'cliente' ? <RequestsPage /> : <Navigate to="/marketplace" />) : <Navigate to="/login" />
-          } />
-          <Route path="/perfil" element={
-            usuario_jc ? <ProfilePage /> : <Navigate to="/login" />
-          } />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </BrowserRouter>
+    <Routes>
+      {/* ── Rutas públicas ───────────────────────────────── */}
+      <Route path="/" element={
+        <div className="app" style={{ paddingTop: 'var(--header-height)' }}>
+          <Header usuario_jc={auth?.usuario ? { nombre: auth.usuario.nombre, correo: auth.usuario.correo, rol: auth.usuario.rol } : null} onLogout={handleLogout} />
+          <main><LandingPage_jja /></main>
+          <Footer />
+        </div>
+      } />
+
+      <Route path="/login" element={
+        auth?.estaAutenticado ? (
+          <Navigate to={auth.esCliente ? '/marketplace' : '/sistema/dashboard'} replace />
+        ) : (
+          <div className="app">
+            <main><Login onLogin={handleLogin} /></main>
+          </div>
+        )
+      } />
+
+      {/* ── Rutas del Sistema (Admin + Encargado) ────────── */}
+      <Route path="/sistema" element={
+        <ProtectedRoute_jja rolesPermitidos={['administrador', 'encargado']}>
+          <LayoutSistema_jja />
+        </ProtectedRoute_jja>
+      }>
+        <Route index element={<Navigate to="/sistema/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardSelector_jja />} />
+        <Route path="inventario" element={<InventarioPage_jja />} />
+        <Route path="usuarios" element={
+          <ProtectedRoute_jja rolesPermitidos={['administrador']}>
+            <UsuariosPage_jja />
+          </ProtectedRoute_jja>
+        } />
+        <Route path="solicitudes" element={<SolicitudesPage_jja />} />
+        <Route path="reportes" element={<ReportesPage_jja />} />
+        <Route path="alertas" element={<AlertasPage_jja />} />
+        <Route path="configuracion" element={
+          <ProtectedRoute_jja rolesPermitidos={['administrador']}>
+            <ConfiguracionPage_jja />
+          </ProtectedRoute_jja>
+        } />
+        <Route path="personalizacion" element={
+          <ProtectedRoute_jja rolesPermitidos={['administrador']}>
+            <PersonalizacionPage_jja />
+          </ProtectedRoute_jja>
+        } />
+        <Route path="auditoria" element={
+          <ProtectedRoute_jja rolesPermitidos={['administrador']}>
+            <AuditoriaPage_jja />
+          </ProtectedRoute_jja>
+        } />
+        <Route path="perfil" element={<PerfilCompartidoPage_jja />} />
+        <Route path="notificaciones" element={<NotificacionesPage_jja />} />
+      </Route>
+
+      {/* ── Rutas del Cliente ──────────────────────────────── */}
+      <Route path="/marketplace" element={
+        <ProtectedRoute_jja><LayoutSistema_jja /></ProtectedRoute_jja>
+      }>
+        <Route index element={<MarketplacePage_jja />} />
+      </Route>
+
+      <Route path="/mis-solicitudes" element={
+        <ProtectedRoute_jja><LayoutSistema_jja /></ProtectedRoute_jja>
+      }>
+        <Route index element={<MisSolicitudesPage_jja />} />
+      </Route>
+
+      <Route path="/mis-prestamos" element={
+        <ProtectedRoute_jja><LayoutSistema_jja /></ProtectedRoute_jja>
+      }>
+        <Route index element={<MisPrestamosPage_jja />} />
+      </Route>
+
+      <Route path="/perfil" element={
+        <ProtectedRoute_jja><LayoutSistema_jja /></ProtectedRoute_jja>
+      }>
+        <Route index element={<PerfilCompartidoPage_jja />} />
+      </Route>
+
+      <Route path="/notificaciones" element={
+        <ProtectedRoute_jja><LayoutSistema_jja /></ProtectedRoute_jja>
+      }>
+        <Route index element={<NotificacionesPage_jja />} />
+      </Route>
+
+      {/* ── Catch-all ─────────────────────────────────────── */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
+
+// ══════════════════════════════════════════════════════════════
+// App Root
+// ══════════════════════════════════════════════════════════════
+const App = () => (
+  <BrowserRouter>
+    <AuthProvider_jja>
+      <ThemeProvider_jja>
+        <ToastProvider_jja>
+          <AppRoutes_jja />
+        </ToastProvider_jja>
+      </ThemeProvider_jja>
+    </AuthProvider_jja>
+  </BrowserRouter>
+)
 
 export default App

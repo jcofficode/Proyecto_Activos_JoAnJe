@@ -147,6 +147,11 @@ class ActivoController_jja extends Controller_jja
                 isset($body_jja['ubicacion'])   ? trim($body_jja['ubicacion'])   : null,
                 isset($body_jja['descripcion'])  ? trim($body_jja['descripcion']) : null
             );
+            
+            // Actualizar estado 'publicado' si fue proporcionado
+            if (isset($res_jja['id_activo_jja']) && isset($body_jja['publicado'])) {
+                $this->modelo_jja->publicar_jja((int)$res_jja['id_activo_jja'], (int)$body_jja['publicado']);
+            }
         } catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
                 ? $m_jja[1] : 'Error al registrar el activo.';
@@ -188,6 +193,12 @@ class ActivoController_jja extends Controller_jja
             isset($body_jja['ubicacion'])  ? trim($body_jja['ubicacion'])  : null,
             isset($body_jja['descripcion'])? trim($body_jja['descripcion']): null
         );
+        
+        // Actualizar estado 'publicado' si fue proporcionado
+        if (isset($body_jja['publicado'])) {
+            $this->modelo_jja->publicar_jja($id_jja, (int)$body_jja['publicado']);
+        }
+        
         $this->responder_jja(true, null, 'Activo actualizado correctamente.');
     }
 

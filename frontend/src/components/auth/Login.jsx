@@ -1,87 +1,87 @@
+// ============================================================
+// Login.jsx — Página de acceso al sistema
+// Sistema JoAnJe Coders — Sufijo: _jja
+// ============================================================
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL_JC } from '../../api.config.js'
 import imagenlogo_jja from "../../assets/JoanjeCoders.png"
 
-const irA_jc = (destino, datos = null) =>
-  window.dispatchEvent(new CustomEvent('navegar_jc', { detail: { destino, datos } }))
+// ── Mapa de errores DB → mensajes amigables ─────────────────
+const traducirError_jja = (mensaje) => {
+  if (!mensaje) return 'Ocurrió un error inesperado. Intenta de nuevo.'
+  const msg = mensaje.toLowerCase()
+  if (msg.includes('credenciales') || msg.includes('contraseña') || msg.includes('password'))
+    return 'El correo o la contraseña son incorrectos. Verifica tus datos.'
+  if (msg.includes('no encontr') || msg.includes('not found'))
+    return 'No se encontró una cuenta con ese correo electrónico.'
+  if (msg.includes('inactiv') || msg.includes('bloqueado') || msg.includes('desactivad'))
+    return 'Tu cuenta está desactivada. Contacta al administrador.'
+  if (msg.includes('token') || msg.includes('expirad'))
+    return 'Tu sesión ha expirado. Inicia sesión nuevamente.'
+  if (msg.includes('conexi') || msg.includes('connection') || msg.includes('timeout'))
+    return 'No se pudo conectar con el servidor. Verifica tu conexión.'
+  if (msg.includes('sqlstate') || msg.includes('pdo') || msg.includes('mysql'))
+    return 'Error interno del sistema. Por favor intenta más tarde.'
+  if (msg.includes('sancion') || msg.includes('lista negra'))
+    return 'Tu cuenta tiene una sanción activa. Contacta al administrador.'
+  return mensaje
+}
 
-const Login = ({ navegarA_jc, onLogin }) => {
+const Login = ({ onLogin }) => {
   const navigate = useNavigate()
   const location = useLocation()
-  const [formulario_jc, setFormulario_jc] = useState({ 
-    correo_jc: 'admin@activoscontroljoanje.com', 
-    clave_jc: 'JoAnJe2026!' 
+  const [formulario_jja, setFormulario_jja] = useState({
+    correo_jja: 'admin@activoscontroljoanje.com',
+    clave_jja: 'JoAnJe2026!'
   })
-  const [estado_jc, setEstado_jc] = useState({ cargando: false, mensaje: '', tipo: '' })
+  const [estado_jja, setEstado_jja] = useState({ cargando: false, mensaje: '', tipo: '' })
 
-  const manejarCambio_jc = (e) => {
+  const manejarCambio_jja = (e) => {
     const { name, value } = e.target
-    setFormulario_jc(prev => ({ ...prev, [name]: value }))
+    setFormulario_jja(prev => ({ ...prev, [name]: value }))
   }
 
-  const manejarEnvio_jc = (e) => {
+  const manejarEnvio_jja = (e) => {
     e.preventDefault()
-    setEstado_jc({ cargando: true, mensaje: '', tipo: '' })
-    const body_jc = {
-      correo: formulario_jc.correo_jc,
-      contrasena: formulario_jc.clave_jc
+    setEstado_jja({ cargando: true, mensaje: '', tipo: '' })
+    const body_jja = {
+      correo: formulario_jja.correo_jja,
+      contrasena: formulario_jja.clave_jja
     }
     fetch(`${API_URL_JC}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body_jc)
+      body: JSON.stringify(body_jja)
     })
-      .then(res => {
-        console.log('🌐 LOGIN: Respuesta HTTP - Status:', res.status)
-        console.log('🌐 LOGIN: Headers de respuesta:', Object.fromEntries(res.headers.entries()))
-        return res.json()
-      })
+      .then(res => res.json())
       .then(data => {
-        console.log('📨 LOGIN: Respuesta del servidor:', data)
         if (data.exito) {
-          console.log('💾 LOGIN: Guardando token en sessionStorage...')
-          // Guardar token JWT en sessionStorage (se pierde al cerrar navegador)
-          const tokenGuardar = data.datos && data.datos.token ? data.datos.token : data.token
+          const tokenGuardar = data.datos?.token || data.token
           sessionStorage.setItem('token_jja', tokenGuardar)
-          console.log('✅ LOGIN: Token guardado, verificando:', sessionStorage.getItem('token_jja') ? 'OK' : 'ERROR')
-          setEstado_jc({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
+          setEstado_jja({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
           setTimeout(() => {
-            const usuarioData = { 
-              nombre: data.datos.usuario.nombre, 
+            const usuarioData = {
+              nombre: data.datos.usuario.nombre,
               correo: data.datos.usuario.correo,
               rol: data.datos.usuario.rol
             }
-            console.log('👤 LOGIN: Datos del usuario a configurar:', usuarioData)
             if (typeof onLogin === 'function') {
               onLogin(usuarioData)
-              // Determinar ruta destino por rol
               const defaultNext = (usuarioData.rol === 'cliente') ? '/marketplace' : '/sistema'
-              const next = (location.state && location.state.next) || sessionStorage.getItem('joanje_next') || defaultNext
+              const next = location.state?.next || sessionStorage.getItem('joanje_next') || defaultNext
               sessionStorage.removeItem('joanje_next')
               navigate(next)
-            } else if (typeof navegarA_jc === 'function') {
-              // si no hay onLogin, indicar destino según rol
-              const destino = (usuarioData.rol === 'cliente') ? 'marketplace' : 'sistema'
-              navegarA_jc(destino, usuarioData)
-            } else {
-              const destino = (usuarioData.rol === 'cliente') ? 'marketplace' : 'sistema'
-              irA_jc(destino, usuarioData)
             }
           }, 1200)
         } else {
-          setEstado_jc({ cargando: false, mensaje: '❌ ' + data.mensaje, tipo: 'error' })
+          const mensajeAmigable_jja = traducirError_jja(data.mensaje)
+          setEstado_jja({ cargando: false, mensaje: mensajeAmigable_jja, tipo: 'error' })
         }
       })
       .catch(() => {
-        setEstado_jc({ cargando: false, mensaje: '❌ Error de conexión con el servidor.', tipo: 'error' })
+        setEstado_jja({ cargando: false, mensaje: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.', tipo: 'error' })
       })
-  }
-
-  const volverALanding_jc = (e) => {
-    e.preventDefault()
-    if (typeof navegarA_jc === 'function') navegarA_jc('landing')
-    else irA_jc('landing')
   }
 
   return (
@@ -97,48 +97,52 @@ const Login = ({ navegarA_jc, onLogin }) => {
           <img src={imagenlogo_jja} alt="JoAnJe Coders" style={{ height: '70px', objectFit: 'contain' }} />
         </div>
 
-        <h2 className="login-titulo">Acceso al Demo</h2>
-        <p className="login-subtitulo">Ingresa con tu correo y la clave temporal recibida</p>
+        <h2 className="login-titulo">Acceso al Sistema</h2>
+        <p className="login-subtitulo">Ingresa con tu correo y contraseña</p>
 
-        <form onSubmit={manejarEnvio_jc}>
+        <form onSubmit={manejarEnvio_jja}>
 
           <div className="login-grupo">
             <label className="login-label">Correo electrónico</label>
             <input
-              type="email" name="correo_jc" value={formulario_jc.correo_jc}
-              onChange={manejarCambio_jc} placeholder="tu@email.com"
-              required disabled={estado_jc.cargando}
+              type="email" name="correo_jja" value={formulario_jja.correo_jja}
+              onChange={manejarCambio_jja} placeholder="tu@email.com"
+              required disabled={estado_jja.cargando}
               className="login-input"
             />
           </div>
 
           <div className="login-grupo">
-            <label className="login-label">Clave temporal</label>
+            <label className="login-label">Contraseña</label>
             <input
-              type="text" name="clave_jc" value={formulario_jc.clave_jc}
-              onChange={manejarCambio_jc} placeholder="Ej: AB3X9KMN"
-              required disabled={estado_jc.cargando}
-              className="login-input login-input-mono"
+              type="password" name="clave_jja" value={formulario_jja.clave_jja}
+              onChange={manejarCambio_jja} placeholder="••••••••"
+              required disabled={estado_jja.cargando}
+              className="login-input"
             />
           </div>
 
-          {estado_jc.mensaje && (
-            <div className={`login-mensaje login-msg-${estado_jc.tipo}`}>
-              {estado_jc.mensaje}
+          {estado_jja.mensaje && (
+            <div className={`login-mensaje login-msg-${estado_jja.tipo}`}>
+              {estado_jja.mensaje}
             </div>
           )}
 
           <button
-            type="submit" disabled={estado_jc.cargando}
+            type="submit" disabled={estado_jja.cargando}
             className="login-boton"
           >
-            {estado_jc.cargando ? 'Verificando...' : 'Entrar al Demo'}
+            {estado_jja.cargando ? 'Verificando...' : 'Iniciar Sesión'}
           </button>
         </form>
 
         <div className="login-footer">
-          <a href="#landing" onMouseDown={volverALanding_jc} className="login-volver">
-            ← Volver a la landing
+          <a
+            href="/"
+            onClick={(e) => { e.preventDefault(); navigate('/') }}
+            className="login-volver"
+          >
+            ← Ir a Inicio
           </a>
         </div>
       </div>

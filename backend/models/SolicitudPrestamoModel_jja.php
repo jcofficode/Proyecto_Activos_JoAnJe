@@ -12,9 +12,9 @@ class SolicitudPrestamoModel_jja extends Model_jja
         $stmt = $this->db_jja->prepare($sql);
         $stmt->execute([
             ':producto' => $id_producto_jja,
-            ':cliente'  => $id_cliente_jja,
+            ':cliente' => $id_cliente_jja,
             ':cantidad' => $cantidad_jja,
-            ':obs'      => $observaciones_jja,
+            ':obs' => $observaciones_jja,
         ]);
         $id = (int)$this->db_jja->lastInsertId();
         return $this->buscarPorId_jja($id) ?? ['id_solicitud_jja' => $id];

@@ -31,8 +31,7 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     $idCliente = $segmentos_jja[1];
                     if (!$this->validarId_jja($idCliente)) $this->responder_jja(false, null, 'ID invalido.', 400);
 
-                    // Obtener solicitudes de productos y de activos del cliente y combinarlas
-                    $prodList = $this->modelo_jja->listarPorCliente_jja((int)$idCliente);
+                    // Obtener solicitudes de activos y devoluciones del cliente y combinarlas
                     $actModel = new SolicitudPrestamoActivoModel_jja();
                     $actList = $actModel->listarPorCliente_jja((int)$idCliente);
                     $mappedAct = array_map(function($a){
@@ -45,12 +44,32 @@ class SolicitudPrestamoController_jja extends Controller_jja
                             'fecha_solicitud_jja' => $a['fecha_solicitud_jja'],
                             'estado_jja' => $a['estado_jja'],
                             'tipo_jja' => 'activo',
+                            'tipo_solicitud' => 'Préstamo de Activo',
                             'id_activo_jja' => (int)$a['id_activo_jja'],
                             'observaciones_jja' => $a['observaciones_jja'] ?? null
                         ];
                     }, $actList);
 
-                    $combined = array_merge(is_array($prodList) ? $prodList : [], $mappedAct);
+                    $devModel = new SolicitudDevolucionModel_jja();
+                    $devList = $devModel->listarPorCliente_jja((int)$idCliente);
+                    $mappedDev = array_map(function($d){
+                        return [
+                            'id_solicitud_jja' => (int)$d['id_solicitud_devolucion_jja'],
+                            'producto_nombre' => $d['activo_nombre'],
+                            'cantidad_jja' => 1,
+                            'cliente_nombre' => '',
+                            'cliente_correo' => '',
+                            'fecha_solicitud_jja' => $d['creado_en_jja'],
+                            'estado_jja' => $d['estado_jja'],
+                            'tipo_jja' => 'devolucion',
+                            'tipo_solicitud' => 'Devolución de Activo',
+                            'id_activo_jja' => (int)$d['id_activo_jja'],
+                            'observaciones_jja' => $d['observaciones_jja'] ?? null,
+                            'fecha_respuesta_jja' => $d['fecha_respuesta_jja'] ?? null
+                        ];
+                    }, $devList);
+
+                    $combined = array_merge($mappedAct, $mappedDev);
 
                     // Si es cliente, solo puede ver su propio id
                     if (Middleware_jja::esRolUsuario($payload->rol ?? '')) {
@@ -71,9 +90,7 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     $res = $this->modelo_jja->buscarPorId_jja((int)$id);
                     $res ? $this->responder_jja(true, $res, 'Solicitud encontrada.') : $this->responder_jja(false, null, 'No encontrada.', 404);
                 } else {
-                        // listar todas a través del modelo (productos) y también incluir solicitudes de activos
-                        $resProductos = $this->modelo_jja->listarTodas_jja();
-                        // cargar solicitudes de activos y mapear a forma común
+                        // Cargar solicitudes de activos y mapear a forma común
                         $actModel = new SolicitudPrestamoActivoModel_jja();
                         $resActivos = $actModel->listarTodas_jja();
                         $mappedAct = array_map(function($a){
@@ -91,8 +108,7 @@ class SolicitudPrestamoController_jja extends Controller_jja
                             ];
                         }, $resActivos);
 
-                        $combined = array_merge(is_array($resProductos) ? $resProductos : [], $mappedAct);
-                        $this->responder_jja(true, $combined, 'Solicitudes de producto y activos.');
+                        $this->responder_jja(true, $mappedAct, 'Solicitudes de activos.');
                 }
                 break;
 
@@ -103,28 +119,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 $body = $this->obtenerBody_jja();
                 if (empty($body['estado'])) $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
                 $estado = strtolower(trim($body['estado']));
-                if (!in_array($estado, ['aprobada','rechazada','cancelada'], true)) $this->responder_jja(false, null, 'Estado invalido.', 400);
+                if (!in_array($estado, ['en_proceso','aprobada','rechazada','cancelada'], true)) $this->responder_jja(false, null, 'Estado invalido.', 400);
 
-                // Obtener la solicitud (primero producto)
-                $sol = $this->modelo_jja->buscarPorId_jja((int)$id);
-                if ($sol) {
-                    // manejo existente para producto
-                    if ($estado === 'aprobada') {
-                        $this->producto_jja->disminuirStock_jja((int)$sol['id_producto_jja'], (int)$sol['cantidad_jja']);
-                        $ppModel = new PrestamoProductoModel_jja();
-                        $prestamoProd = $ppModel->crear_jja((int)$sol['id_producto_jja'], (int)$sol['id_cliente_jja'], (int)$payload->id, $body['observaciones'] ?? null);
-                        $mensaje = "Tu solicitud para el producto '{$sol['producto_nombre']}' ha sido aprobada.";
-                        $this->notificacion_jja->crear_jja((int)$sol['id_cliente_jja'], 'informativo', $mensaje, null);
-                    } else {
-                        $mensaje = "Tu solicitud para el producto '{$sol['producto_nombre']}' fue {$estado}.";
-                        $this->notificacion_jja->crear_jja((int)$sol['id_cliente_jja'], 'informativo', $mensaje, null);
-                    }
-                    $this->modelo_jja->actualizarEstado_jja((int)$id, $estado);
-                    $this->responder_jja(true, null, 'Estado actualizado.');
-                    return;
-                }
+                $tipo = strtolower(trim($body['tipo'] ?? 'activo'));
 
-                // Si no es producto, intentar solicitud de activo
+                // Procesar solicitud de activo
                 $actModel = new SolicitudPrestamoActivoModel_jja();
                 $solAct = $actModel->buscarPorId_jja((int)$id);
                 if (!$solAct) {
@@ -133,11 +132,8 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 }
 
                 // Procesar solicitud de activo
-                if ($estado === 'aprobada') {
-                    // Registrar prestamo de activo
-                    $prestamoModel = new PrestamoModel_jja();
-                    $prestamo = $prestamoModel->registrar_jja((int)$solAct['id_activo_jja'], (int)$solAct['id_cliente_jja'], (int)$payload->id, $body['observaciones'] ?? null);
-                    $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' ha sido aprobada.";
+                if ($estado === 'en_proceso' || $estado === 'aprobada') {
+                    $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' ha sido aprobada. Puedes pasar a retirarlo.";
                     $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
                 } else {
                     // Rechazada o cancelada: revertir estado del activo a 'disponible'

@@ -32,8 +32,8 @@ class SolicitudDevolucionController_jja extends Controller_jja
                     $res = $this->modelo_jja->buscarPorId_jja((int)$id);
                     $res ? $this->responder_jja(true, $res, 'Solicitud encontrada.') : $this->responder_jja(false, null, 'No encontrada.', 404);
                 } else {
-                    $res = $this->modelo_jja->listarPendientes_jja();
-                    $this->responder_jja(true, $res, 'Solicitudes de devolución pendientes.');
+                    $res = $this->modelo_jja->listarTodas_jja();
+                    $this->responder_jja(true, $res, 'Todas las solicitudes de devolución.');
                 }
                 break;
 
@@ -46,19 +46,16 @@ class SolicitudDevolucionController_jja extends Controller_jja
                 $body = $this->obtenerBody_jja();
                 if (empty($body['estado'])) $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
                 $estado = strtolower(trim($body['estado']));
-                if (!in_array($estado, ['aprobada','rechazada'], true)) $this->responder_jja(false, null, 'Estado invalido.', 400);
+                if (!in_array($estado, ['en_proceso','aprobada','rechazada'], true)) $this->responder_jja(false, null, 'Estado invalido.', 400);
 
                 // Actualizar solicitud
                 $this->modelo_jja->actualizarEstado_jja((int)$id, $estado, (int)$payload->id);
 
                 // Si fue aprobada, registrar devolucion (check-in) del prestamo
                 $sol = $this->modelo_jja->buscarPorId_jja((int)$id);
-                if ($estado === 'aprobada' && $sol) {
+                if (($estado === 'en_proceso' || $estado === 'aprobada') && $sol) {
                     $idPrestamo = (int)$sol['id_prestamo_jja'];
-                    // usar el id del encargado que responde para registrar la devolución
-                    $this->prestamo_jja->registrarDevolucion_jja($idPrestamo, (int)$payload->id, $body['observaciones'] ?? null);
-                    // Notificar al solicitante
-                    $mensaje = "Tu solicitud de devolución para el préstamo #{$idPrestamo} fue aprobada.";
+                    $mensaje = "Tu solicitud de devolución para el préstamo #{$idPrestamo} fue aprobada. Por favor, realiza la entrega física del activo.";
                     $this->notificacion_jja->crear_jja((int)$sol['id_usuario_solicitante_jja'], 'devolucion_confirmada', $mensaje, $idPrestamo);
                 } else if ($estado === 'rechazada' && $sol) {
                     $mensaje = "Tu solicitud de devolución para el préstamo #{$sol['id_prestamo_jja']} fue rechazada.";

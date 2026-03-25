@@ -1,0 +1,157 @@
+// ============================================================
+// Sidebar_jja.jsx — Menú lateral del sistema
+// Sistema JoAnJe Coders — Sufijo: _jja
+// ============================================================
+import React, { useContext } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { ThemeContext_jja } from '../../context/ThemeContext_jja'
+import useAuth_jja from '../../hooks/useAuth_jja'
+import logoDefault from '../../assets/JoanjeCoders.png'
+import {
+  IconoDashboard_jja, IconoInventario_jja, IconoUsuarios_jja,
+  IconoSolicitudes_jja, IconoReportes_jja, IconoAlertas_jja,
+  IconoConfiguracion_jja, IconoPersonalizacion_jja, IconoAuditoria_jja,
+  IconoPerfil_jja, IconoLogout_jja, IconoMarketplace_jja, IconoPrestamo_jja,
+  IconoNotificacion_jja,
+} from '../ui_jja/Iconos_jja'
+
+// ── Definición de menú por rol ───────────────────────────────
+const MENU_ADMIN_JJA = [
+  { seccion: 'Menú Principal' },
+  { ruta: '/sistema/dashboard', icono: <IconoDashboard_jja />, label: 'Dashboard' },
+  { ruta: '/sistema/inventario', icono: <IconoInventario_jja />, label: 'Inventario' },
+  { ruta: '/sistema/usuarios', icono: <IconoUsuarios_jja />, label: 'Usuarios' },
+  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
+  { ruta: '/sistema/reportes', icono: <IconoReportes_jja />, label: 'Reportes' },
+  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { separador: true },
+  { seccion: 'Configuración' },
+  { ruta: '/sistema/configuracion', icono: <IconoConfiguracion_jja />, label: 'Configuración' },
+  { ruta: '/sistema/personalizacion', icono: <IconoPersonalizacion_jja />, label: 'Personalización' },
+  { ruta: '/sistema/auditoria', icono: <IconoAuditoria_jja />, label: 'Auditoría' },
+]
+
+const MENU_ENCARGADO_JJA = [
+  { seccion: 'Menú Principal' },
+  { ruta: '/sistema/dashboard', icono: <IconoDashboard_jja />, label: 'Dashboard' },
+  { ruta: '/sistema/inventario', icono: <IconoInventario_jja />, label: 'Inventario' },
+  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
+  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones' },
+  { separador: true },
+  { seccion: 'Marketplace' },
+  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
+  { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
+  { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
+]
+
+const MENU_CLIENTE_JJA = [
+  { seccion: 'Menú Principal' },
+  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
+  { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
+  { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
+  { ruta: '/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones' },
+]
+
+const Sidebar_jja = ({ abierto = false, onCerrar }) => {
+  const { usuario, logout, esAdmin, esEncargado } = useAuth_jja()
+  const { tema } = useContext(ThemeContext_jja)
+  const navigate = useNavigate()
+
+  // Seleccionar menú según rol
+  const menuItems = esAdmin ? MENU_ADMIN_JJA : esEncargado ? MENU_ENCARGADO_JJA : MENU_CLIENTE_JJA
+
+  // Iniciales del usuario para el avatar
+  const iniciales = usuario
+    ? `${(usuario.nombre || '')[0] || ''}${(usuario.apellido || '')[0] || ''}`.toUpperCase()
+    : 'U'
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  return (
+    <>
+      {/* Overlay para móvil */}
+      <div
+        className={`sidebar-overlay-jja ${abierto ? 'visible-jja' : ''}`}
+        onClick={onCerrar}
+      />
+
+      <aside className={`sidebar-jja ${abierto ? 'abierto-jja' : ''}`}>
+        {/* Brand / Logo */}
+        <div className="sidebar-brand-jja">
+          <img
+            src={tema.logoUrl || logoDefault}
+            alt={tema.nombreEmpresa}
+            className="sidebar-brand-logo-jja"
+          />
+          <div className="sidebar-brand-info-jja">
+            <div className="sidebar-brand-nombre-jja">{tema.nombreEmpresa}</div>
+            <div className="sidebar-brand-subtitulo-jja">{tema.subtitulo}</div>
+          </div>
+        </div>
+
+        {/* Navegación */}
+        <nav className="sidebar-nav-jja">
+          {menuItems.map((item, i) => {
+            if (item.separador) {
+              return <div key={`sep-${i}`} className="sidebar-separador-jja" />
+            }
+            if (item.seccion) {
+              return (
+                <div key={`sec-${i}`} className="sidebar-seccion-jja">
+                  <div className="sidebar-seccion-titulo-jja">{item.seccion}</div>
+                </div>
+              )
+            }
+            return (
+              <NavLink
+                key={item.ruta}
+                to={item.ruta}
+                className={({ isActive }) => `sidebar-item-jja ${isActive ? 'activo-jja' : ''}`}
+                onClick={onCerrar}
+              >
+                <span className="sidebar-item-icono-jja">{item.icono}</span>
+                <span>{item.label}</span>
+                {item.badge && <span className="sidebar-item-badge-jja">{item.badge}</span>}
+              </NavLink>
+            )
+          })}
+        </nav>
+
+        {/* Separador antes del footer */}
+        <div className="sidebar-separador-jja" />
+
+        {/* Perfil en footer */}
+        <div className="sidebar-footer-jja">
+          <NavLink
+            to={esAdmin || esEncargado ? '/sistema/perfil' : '/perfil'}
+            className={({ isActive }) => `sidebar-item-jja ${isActive ? 'activo-jja' : ''}`}
+            onClick={onCerrar}
+          >
+            <span className="sidebar-item-icono-jja"><IconoPerfil_jja /></span>
+            <span>Mi Perfil</span>
+          </NavLink>
+
+          <button className="sidebar-item-jja" onClick={handleLogout} style={{ marginTop: 2 }}>
+            <span className="sidebar-item-icono-jja"><IconoLogout_jja /></span>
+            <span>Cerrar Sesión</span>
+          </button>
+
+          {/* Info usuario */}
+          <div className="sidebar-usuario-jja">
+            <div className="sidebar-avatar-jja">{iniciales}</div>
+            <div className="sidebar-usuario-info-jja">
+              <div className="sidebar-usuario-nombre-jja">{usuario?.nombre} {usuario?.apellido}</div>
+              <div className="sidebar-usuario-rol-jja">{usuario?.rol}</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}
+
+export default Sidebar_jja

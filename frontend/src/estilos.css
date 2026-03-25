@@ -61,7 +61,6 @@ body {
   color: var(--color-texto);
   background-color: var(--color-fondo);
   overflow-x: hidden;
-  padding-top: var(--header-height);
 }
 
 /* Layout root: keep footer at bottom and main growing */

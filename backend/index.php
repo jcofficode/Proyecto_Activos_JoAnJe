@@ -87,6 +87,7 @@ $mapa_jja = [
     'solicitudes-devolucion' => 'SolicitudDevolucionController_jja',
     'ofertas' => 'OfertaController_jja',
     'transacciones' => 'TransaccionController_jja',
+    'escaneo'       => 'EscaneoController_jja',
 ];
 
 $clase_jja = $mapa_jja[$recurso_jja] ?? null;
@@ -111,12 +112,16 @@ catch (PDOException $e_jja) {
     $msg_jja = ($_ENV['APP_ENV'] === 'development')
         ? 'Error de base de datos: ' . $e_jja->getMessage()
         : 'Error interno del servidor.';
-    echo json_encode(['exito' => false, 'mensaje' => $msg_jja, 'datos' => null], JSON_UNESCAPED_UNICODE);
+    $out = json_encode(['exito' => false, 'mensaje' => $msg_jja, 'datos' => null], JSON_UNESCAPED_UNICODE);
+    file_put_contents(__DIR__ . '/test_log.txt', "[500] $uri_limpia_jja -> $out\n", FILE_APPEND);
+    echo $out;
 }
 catch (Throwable $e_jja) {
     http_response_code(500);
     $msg_jja = ($_ENV['APP_ENV'] === 'development')
         ? 'Error inesperado: ' . $e_jja->getMessage() . ' en ' . $e_jja->getFile() . ':' . $e_jja->getLine()
         : 'Error interno del servidor.';
-    echo json_encode(['exito' => false, 'mensaje' => $msg_jja, 'datos' => null], JSON_UNESCAPED_UNICODE);
+    $out = json_encode(['exito' => false, 'mensaje' => $msg_jja, 'datos' => null], JSON_UNESCAPED_UNICODE);
+    file_put_contents(__DIR__ . '/test_log.txt', "[500] $uri_limpia_jja -> $out\n", FILE_APPEND);
+    echo $out;
 }
