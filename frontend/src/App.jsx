@@ -23,6 +23,7 @@ import ContactoUbicacion from './components/landing/ContactoUbicacion'
 import CTASeccion from './components/landing/CTASeccion'
 import Footer from './components/layout/Footer'
 import Login from './components/auth/Login'
+import CambiarClaveForzado_jja from './components/auth_jja/CambiarClaveForzado_jja'
 
 // ── Páginas Admin ────────────────────────────────────────────
 import Dashboard_jja from './pages/admin/Dashboard_jja'
@@ -83,10 +84,12 @@ const AppRoutes_jja = () => {
     const tokenGuardado = sessionStorage.getItem('token_jja')
     if (tokenGuardado && auth?.login) {
       auth.login(tokenGuardado, {
+        id: datos.id,
         nombre: datos.nombre,
         apellido: datos.apellido || '',
         correo: datos.correo,
         rol: datos.rol,
+        debeCambiarClave: datos.debeCambiarClave
       })
     }
   }
@@ -118,13 +121,19 @@ const AppRoutes_jja = () => {
       } />
 
       <Route path="/login" element={
-        auth?.estaAutenticado ? (
+        auth?.estaAutenticado && !auth?.usuario?.debeCambiarClave ? (
           <Navigate to={auth.esCliente ? '/marketplace' : '/sistema/dashboard'} replace />
         ) : (
           <div className="app">
             <main><Login onLogin={handleLogin} /></main>
           </div>
         )
+      } />
+
+      <Route path="/cambiar-clave" element={
+        <div className="app">
+          <main><CambiarClaveForzado_jja /></main>
+        </div>
       } />
 
       {/* ── Rutas del Sistema (Admin + Encargado) ────────── */}

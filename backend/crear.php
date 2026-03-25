@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS `roles_jja` (
     PRIMARY KEY (`id_rol_jja`),
     UNIQUE KEY `uq_nombre_rol_jja` (`nombre_rol_jja`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Roles del sistema: administrador, encargado, usuario_final';
+  COMMENT='Roles del sistema: administrador, encargado, cliente';
 ", "Tabla <strong>roles_jja</strong>", $cnt_tablas_jja, $errores_jja);
 
 // ── 2.2 usuarios_jja ─────────────────────────────────────────
@@ -1741,24 +1741,12 @@ try {
         INSERT IGNORE INTO `roles_jja` (`nombre_rol_jja`, `descripcion_jja`) VALUES
         ('administrador', 'Acceso total: gestión de usuarios, inventario, auditorías y reportes.'),
         ('encargado',     'Procesa préstamos, devoluciones y consulta el inventario.'),
-        ('usuario_final', 'Solicita préstamos, consulta historial y recibe notificaciones.')
+        ('cliente',       'Solicita préstamos, consulta historial, accede al marketplace y recibe notificaciones.')
     ");
-    mostrar_jja('ok', '✅', "Roles insertados: <strong>administrador, encargado, usuario_final</strong>.");
+    mostrar_jja('ok', '✅', "Roles insertados: <strong>administrador, encargado, cliente</strong>.");
 }
 catch (PDOException $ex_jja) {
     mostrar_jja('err', '❌', 'Error al insertar roles: ' . $ex_jja->getMessage());
-}
-
-// Añadir roles marketplace (empresa/cliente) si aún no existen
-try {
-    $pdo_jja->exec("INSERT IGNORE INTO `roles_jja` (`nombre_rol_jja`, `descripcion_jja`) VALUES
-        ('empresa', 'Cuenta tipo empresa vendedora en el marketplace.'),
-        ('cliente', 'Cuenta tipo cliente que solicita préstamos o arrendamientos.')
-    ");
-    mostrar_jja('ok', '✅', "Roles marketplace insertados (empresa, cliente) si no existían.");
-}
-catch (PDOException $ex_jja) {
-    mostrar_jja('err', '❌', 'Error al insertar roles marketplace: ' . $ex_jja->getMessage());
 }
 
 // Tipos de activos
@@ -1828,17 +1816,8 @@ catch (PDOException $ex_jja) {
     mostrar_jja('err', '❌', 'Error al crear admin: ' . $ex_jja->getMessage());
 }
 
-// Usuarios de prueba: empresa, cliente, encargado
+// Usuarios de prueba: cliente, encargado
 try {
-    $hash_empresa = password_hash('Empresa2026!', PASSWORD_BCRYPT, ['cost' => 12]);
-    $stmt_e = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`
-        (`nombre_jja`, `apellido_jja`, `cedula_jja`, `correo_jja`, `telefono_jja`, `contrasena_jja`, `id_rol_jja`)
-        SELECT :nombre, :apellido, :cedula, :correo, :telefono, :hash, (SELECT `id_rol_jja` FROM `roles_jja` WHERE `nombre_rol_jja` = 'empresa' LIMIT 1)
-        WHERE NOT EXISTS (SELECT 1 FROM `usuarios_jja` WHERE `correo_jja` = :correo2)");
-    $stmt_e->execute([
-        ':nombre' => 'Empresa', ':apellido' => 'Demo', ':cedula' => '90000001', ':correo' => 'empresa@demo.com', ':correo2' => 'empresa@demo.com', ':telefono' => '+58-412-1111111', ':hash' => $hash_empresa
-    ]);
-    mostrar_jja('ok', '✅', "Usuario <strong>empresa</strong> creado (empresa@demo.com / Empresa2026!).");
 
     $hash_cliente = password_hash('Cliente2026!', PASSWORD_BCRYPT, ['cost' => 12]);
     $stmt_c = $pdo_jja->prepare("INSERT IGNORE INTO `usuarios_jja`

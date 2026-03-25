@@ -27,6 +27,11 @@ const ProtectedRoute_jja = ({ children, rolesPermitidos = [], redireccion = '/lo
     return <Navigate to={redireccion} replace />
   }
 
+  // Si debe cambiar clave y está intentando acceder a otra ruta, forzar redirección
+  if (usuario?.debeCambiarClave && window.location.pathname !== '/cambiar-clave') {
+    return <Navigate to="/cambiar-clave" replace />
+  }
+
   // Si hay roles permitidos, verificar
   if (rolesPermitidos.length > 0 && !rolesPermitidos.includes(usuario?.rol)) {
     // Redirigir según rol

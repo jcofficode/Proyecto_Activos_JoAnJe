@@ -62,14 +62,20 @@ const Login = ({ onLogin }) => {
           setEstado_jja({ cargando: false, mensaje: '✅ Acceso correcto. Cargando...', tipo: 'exito' })
           setTimeout(() => {
             const usuarioData = {
+              id: data.datos.usuario.id,
               nombre: data.datos.usuario.nombre,
               correo: data.datos.usuario.correo,
-              rol: data.datos.usuario.rol
+              rol: data.datos.usuario.rol,
+              debeCambiarClave: data.datos.debe_cambiar_clave === true
             }
             if (typeof onLogin === 'function') {
               onLogin(usuarioData)
-              const defaultNext = (usuarioData.rol === 'cliente') ? '/marketplace' : '/sistema'
-              const next = location.state?.next || sessionStorage.getItem('joanje_next') || defaultNext
+              
+              // Si debe cambiar clave, ignoramos cualquier ruta previa guardada
+              const next = usuarioData.debeCambiarClave 
+                ? '/cambiar-clave' 
+                : (location.state?.next || sessionStorage.getItem('joanje_next') || (usuarioData.rol === 'cliente' ? '/marketplace' : '/sistema'))
+              
               sessionStorage.removeItem('joanje_next')
               navigate(next)
             }

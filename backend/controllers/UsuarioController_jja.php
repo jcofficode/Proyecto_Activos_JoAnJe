@@ -77,7 +77,7 @@ class UsuarioController_jja extends Controller_jja
 
     private function listar_jja(object $payload_jja): void
     {
-        // Encargado y usuario_final solo ven su propio perfil
+        // Cliente solo ve su propio perfil
         if ($payload_jja->rol === Middleware_jja::ROL_ENCARGADO || Middleware_jja::esRolUsuario($payload_jja->rol)) {
             $usuario_jja = $this->modelo_jja->buscarPorId_jja((int)$payload_jja->id);
             $this->responder_jja(true, $usuario_jja, 'Perfil de usuario.');

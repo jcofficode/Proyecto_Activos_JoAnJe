@@ -197,6 +197,20 @@ class AuthController_jja extends Controller_jja
 
         $usuarioModel = new UsuarioModel_jja();
 
+        // Obtener el ID del rol 'cliente' dinámicamente
+        $rolModel_jja = new RolModel_jja();
+        $roles_jja = $rolModel_jja->listar_jja();
+        $idRolCliente_jja = null;
+        foreach ($roles_jja as $r_jja) {
+            if (($r_jja['nombre_rol_jja'] ?? '') === 'cliente') {
+                $idRolCliente_jja = (int)$r_jja['id_rol_jja'];
+                break;
+            }
+        }
+        if (!$idRolCliente_jja) {
+            $this->responder_jja(false, null, 'Error interno: rol cliente no encontrado en la BD.', 500);
+        }
+
         // If user doesn't exist, create a dummy account for them
         if (!$usuario_jja) {
             $cedula_demo = 'DEMO-' . random_int(10000, 99999);
@@ -209,7 +223,7 @@ class AuthController_jja extends Controller_jja
                     $body_jja['telefono'] ?? null,
                     $hash_jja,
                     null, // No imagen
-                    3, // Rol usuario final
+                    $idRolCliente_jja, // Rol cliente (dinámico)
                     1 // debe_cambiar_clave_jja
                 );
             }

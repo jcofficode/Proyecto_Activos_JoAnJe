@@ -14,9 +14,6 @@ class Middleware_jja
     // Constantes de roles (coinciden con roles_jja en la BD)
     public const ROL_ADMIN     = 'administrador';
     public const ROL_ENCARGADO = 'encargado';
-    public const ROL_USUARIO   = 'usuario_final';
-    // Roles adicionales presentes en la semilla
-    public const ROL_EMPRESA   = 'empresa';
     public const ROL_CLIENTE   = 'cliente';
 
     /**
@@ -74,11 +71,11 @@ class Middleware_jja
     }
 
     /**
-     * Normaliza la comprobacion para usuarios finales: incluye 'usuario_final' y 'cliente'.
+     * Comprueba si el rol corresponde a un cliente del sistema.
      */
     public static function esRolUsuario(string $rol_jja): bool
     {
-        return in_array($rol_jja, [self::ROL_USUARIO, self::ROL_CLIENTE], true);
+        return $rol_jja === self::ROL_CLIENTE;
     }
 
     /**
