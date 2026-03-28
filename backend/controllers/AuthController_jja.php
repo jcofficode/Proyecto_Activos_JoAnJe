@@ -62,7 +62,7 @@ class AuthController_jja extends Controller_jja
 
         $debeCambiar_jja = (bool)($usuario_jja['debe_cambiar_clave_jja'] ?? false);
         $nombreCompleto_jja = trim($usuario_jja['nombre_jja'] . ' ' . $usuario_jja['apellido_jja']);
-
+        
         $token_jja = $this->jwt_jja->generar_jja(
             (int)$usuario_jja['id_usuario_jja'],
             $usuario_jja['cedula_jja'],
@@ -77,9 +77,14 @@ class AuthController_jja extends Controller_jja
             'debe_cambiar_clave' => $debeCambiar_jja,
             'usuario' => [
                 'id' => $usuario_jja['id_usuario_jja'],
-                'nombre' => $nombreCompleto_jja,
+                'nombre' => $usuario_jja['nombre_jja'],
+                'apellido' => $usuario_jja['apellido_jja'],
+                'cedula' => $usuario_jja['cedula_jja'],
                 'correo' => $usuario_jja['correo_jja'],
+                'telefono' => $usuario_jja['telefono_jja'],
                 'rol' => $usuario_jja['nombre_rol_jja'] ?? '',
+                'id_rol' => $usuario_jja['id_rol_jja'],
+                'imagen' => $usuario_jja['imagen_jja']
             ],
         ];
 

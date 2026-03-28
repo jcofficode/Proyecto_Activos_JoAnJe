@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { IconoMenu_jja, IconoNotificacion_jja, IconoPerfil_jja, IconoLogout_jja } from '../ui_jja/Iconos_jja'
 import Breadcrumb_jja from '../ui_jja/Breadcrumb_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
+import { API_URL_JC } from '../../api.config'
 
 const HeaderSistema_jja = ({ breadcrumb = [], onToggleSidebar }) => {
   const { usuario, esAdmin, esEncargado, logout } = useAuth_jja()
@@ -77,8 +78,13 @@ const HeaderSistema_jja = ({ breadcrumb = [], onToggleSidebar }) => {
               className="header-avatar-jja" 
               onClick={() => setMenuAbierto_jja(!menuAbierto_jja)}
               title={usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'}
+              style={{ overflow: 'hidden' }}
             >
-              {iniciales_jja}
+              {usuario?.imagen ? (
+                 <img src={`${API_URL_JC.replace('/api/v1', '')}${usuario.imagen}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                 iniciales_jja
+              )}
             </div>
             
             <div className="header-dropdown-jja">

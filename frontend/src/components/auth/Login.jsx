@@ -64,8 +64,13 @@ const Login = ({ onLogin }) => {
             const usuarioData = {
               id: data.datos.usuario.id,
               nombre: data.datos.usuario.nombre,
+              apellido: data.datos.usuario.apellido,
+              cedula: data.datos.usuario.cedula,
               correo: data.datos.usuario.correo,
+              telefono: data.datos.usuario.telefono,
+              imagen: data.datos.usuario.imagen,
               rol: data.datos.usuario.rol,
+              id_rol: data.datos.usuario.id_rol,
               debeCambiarClave: data.datos.debe_cambiar_clave === true
             }
             if (typeof onLogin === 'function') {

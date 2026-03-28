@@ -89,8 +89,12 @@ const AppRoutes_jja = () => {
         id: datos.id,
         nombre: datos.nombre,
         apellido: datos.apellido || '',
+        cedula: datos.cedula || '',
         correo: datos.correo,
+        telefono: datos.telefono || '',
+        imagen: datos.imagen || null,
         rol: datos.rol,
+        id_rol: datos.id_rol,
         debeCambiarClave: datos.debeCambiarClave
       })
     }

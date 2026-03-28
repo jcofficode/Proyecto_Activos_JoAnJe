@@ -10,6 +10,7 @@ import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import KpiCard_jja from '../../components/ui_jja/KpiCard_jja'
+import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import {
   IconoPerfil_jja, IconoCandado_jja, IconoCheck_jja,
   IconoSolicitudes_jja, IconoPrestamo_jja, IconoDevolucion_jja,
@@ -33,8 +34,9 @@ const PerfilCompartidoPage_jja = () => {
   const [stats_jja, setStats_jja] = useState({ solicitudes: 0, prestamosActivos: 0, devueltos: 0 })
   const [guardando_jja, setGuardando_jja] = useState(false)
   const [guardandoPassword_jja, setGuardandoPassword_jja] = useState(false)
-  const [mensaje_jja, setMensaje_jja] = useState('')
-  const [mensajePassword_jja, setMensajePassword_jja] = useState('')
+  const [modal_jja, setModal_jja] = useState({ visible: false, titulo: '', mensaje: '', variante: 'exito' })
+  const [imagenSeleccionada_jja, setImagenSeleccionada_jja] = useState(null)
+  const [imagenVistaPrevia_jja, setImagenVistaPrevia_jja] = useState(null)
 
   useEffect(() => {
     if (usuario) {
@@ -85,32 +87,53 @@ const PerfilCompartidoPage_jja = () => {
 
   const guardarPerfil = async () => {
     setGuardando_jja(true)
-    setMensaje_jja('')
     try {
+      const rolIdDerivado = usuario.id_rol || (usuario.rol === 'administrador' ? 1 : usuario.rol === 'encargado' ? 2 : 3)
+
       await apiRequest(`/usuarios/${usuario.id}`, {
         method: 'PUT',
         body: JSON.stringify({
           nombre: form_jja.nombre,
           apellido: form_jja.apellido,
+          cedula: form_jja.cedula,
           correo: form_jja.correo,
           telefono: form_jja.telefono,
+          id_rol: rolIdDerivado,
         })
       })
-      setMensaje_jja('✅ Perfil actualizado correctamente')
-      // Refrescar sesión local para que Sidebar cambie enseguida y la vista
-      login(token, { ...usuario, nombre: form_jja.nombre, apellido: form_jja.apellido, correo: form_jja.correo, telefono: form_jja.telefono })
-    } catch (err) { setMensaje_jja('❌ Error: ' + err.message) }
+
+      let urlImagenFinal = usuario.imagen
+      if (imagenSeleccionada_jja) {
+        setSubiendoImagen_jja(true)
+        const formData = new FormData()
+        formData.append('imagen', imagenSeleccionada_jja)
+        const resImg = await apiRequest(`/usuarios/${usuario.id}/imagen`, {
+          method: 'POST',
+          body: formData,
+        })
+        if (resImg.exito) {
+          urlImagenFinal = resImg.datos?.imagen || resImg.imagen || usuario.imagen
+        }
+        setSubiendoImagen_jja(false)
+      }
+
+      setModal_jja({ visible: true, titulo: 'Perfil Actualizado', mensaje: 'Los datos de tu perfil se han actualizado exitosamente.', variante: 'exito' })
+      login(token, { ...usuario, nombre: form_jja.nombre, apellido: form_jja.apellido, cedula: form_jja.cedula, correo: form_jja.correo, telefono: form_jja.telefono, imagen: urlImagenFinal })
+      setImagenSeleccionada_jja(null)
+    } catch (err) { 
+      setModal_jja({ visible: true, titulo: 'Error al actualizar', mensaje: err.message, variante: 'error' })
+      setSubiendoImagen_jja(false) 
+    }
     finally { setGuardando_jja(false) }
   }
 
   const cambiarPassword = async () => {
-    setMensajePassword_jja('')
     if (passwordForm_jja.nueva !== passwordForm_jja.confirmar) {
-      setMensajePassword_jja('❌ Las contraseñas no coinciden')
+      setModal_jja({ visible: true, titulo: 'Error', mensaje: 'Las contraseñas no coinciden', variante: 'error' })
       return
     }
     if (passwordForm_jja.nueva.length < 6) {
-      setMensajePassword_jja('❌ La contraseña debe tener al menos 6 caracteres')
+      setModal_jja({ visible: true, titulo: 'Error', mensaje: 'La contraseña debe tener al menos 6 caracteres', variante: 'error' })
       return
     }
     setGuardandoPassword_jja(true)
@@ -122,9 +145,11 @@ const PerfilCompartidoPage_jja = () => {
           password_nueva: passwordForm_jja.nueva,
         })
       })
-      setMensajePassword_jja('✅ Contraseña actualizada')
+      setModal_jja({ visible: true, titulo: 'Contraseña Actualizada', mensaje: 'Tu contraseña se ha cambiado correctamente.', variante: 'exito' })
       setPasswordForm_jja({ actual: '', nueva: '', confirmar: '' })
-    } catch (err) { setMensajePassword_jja('❌ Error: ' + err.message) }
+    } catch (err) { 
+      setModal_jja({ visible: true, titulo: 'Error al cambiar contraseña', mensaje: err.message, variante: 'error' })
+    }
     finally { setGuardandoPassword_jja(false) }
   }
 
@@ -140,32 +165,17 @@ const PerfilCompartidoPage_jja = () => {
   const manejarSalidaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(false) }
   const manejarCaida_jja = (e) => {
     e.preventDefault(); e.stopPropagation(); setDragOver_jja(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) subirImagen_jja(e.dataTransfer.files[0])
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) procesarArchivoUI_jja(e.dataTransfer.files[0])
   }
   const manejarSeleccionImagen_jja = (e) => {
-    if (e.target.files && e.target.files.length > 0) subirImagen_jja(e.target.files[0])
+    if (e.target.files && e.target.files.length > 0) procesarArchivoUI_jja(e.target.files[0])
+  }
+  const procesarArchivoUI_jja = (archivo) => {
+    setImagenSeleccionada_jja(archivo)
+    setImagenVistaPrevia_jja(URL.createObjectURL(archivo))
   }
 
-  const subirImagen_jja = async (archivo) => {
-    setSubiendoImagen_jja(true)
-    try {
-      const formData = new FormData()
-      formData.append('imagen', archivo)
-      
-      const res = await apiRequest(`/usuarios/${usuario.id}/imagen`, {
-        method: 'POST',
-        body: formData,
-        // Al enviar FormData, no debes establecer Content-Type en los headers; 
-        // el navegador y fetch se encargan de configurar el límite multipart automático.
-      })
-      if (res.exito) {
-        setMensaje_jja('✅ Imagen de perfil actualizada')
-        const usuarioActualizado = { ...usuario, imagen: res.datos?.imagen || res.imagen }
-        login(token, usuarioActualizado)
-      }
-    } catch (err) { setMensaje_jja('❌ Error al subir: ' + err.message) }
-    finally { setSubiendoImagen_jja(false) }
-  }
+
 
   return (
     <div>
@@ -233,8 +243,8 @@ const PerfilCompartidoPage_jja = () => {
                 onDrop={manejarCaida_jja}
                 title="Haz clic o arrastra una imagen para cambiar tu foto de perfil"
               >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {imagenVistaPrevia_jja || avatarUrl ? (
+                  <img src={imagenVistaPrevia_jja || avatarUrl} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   iniciales || 'U'
                 )}
@@ -269,17 +279,11 @@ const PerfilCompartidoPage_jja = () => {
               <FormGroup_jja label="Nombre" nombre="nombre" valor={form_jja.nombre} onChange={handleCambioForm} />
               <FormGroup_jja label="Apellido" nombre="apellido" valor={form_jja.apellido} onChange={handleCambioForm} />
             </div>
-            <FormGroup_jja label="Cédula" nombre="cedula" valor={form_jja.cedula} onChange={() => {}} helper="Solo lectura" />
+            <FormGroup_jja label="Cédula" nombre="cedula" valor={form_jja.cedula} onChange={handleCambioForm} />
             <div className="form-grid-jja">
               <FormGroup_jja label="Correo electrónico" nombre="correo" valor={form_jja.correo} onChange={handleCambioForm} />
               <FormGroup_jja label="Teléfono" nombre="telefono" valor={form_jja.telefono} onChange={handleCambioForm} />
             </div>
-
-            {mensaje_jja && (
-              <div style={{ fontSize: '0.85rem', marginBottom: 12, padding: '8px 12px', borderRadius: 6, background: mensaje_jja.startsWith('✅') ? 'var(--color-exito-bg-jja)' : 'var(--color-error-bg-jja)' }}>
-                {mensaje_jja}
-              </div>
-            )}
 
             <BotonAccion_jja
               variante="primario"
@@ -325,12 +329,6 @@ const PerfilCompartidoPage_jja = () => {
               placeholder="Repite la nueva contraseña"
             />
 
-            {mensajePassword_jja && (
-              <div style={{ fontSize: '0.85rem', marginBottom: 12, padding: '8px 12px', borderRadius: 6, background: mensajePassword_jja.startsWith('✅') ? 'var(--color-exito-bg-jja)' : 'var(--color-error-bg-jja)' }}>
-                {mensajePassword_jja}
-              </div>
-            )}
-
             <BotonAccion_jja
               variante="advertencia"
               icono={<IconoCandado_jja />}
@@ -342,6 +340,28 @@ const PerfilCompartidoPage_jja = () => {
           </div>
         </div>
       </div>
+
+      <ActionModal_jja
+        visible={modal_jja.visible}
+        titulo={modal_jja.titulo}
+        variante={modal_jja.variante}
+        textoCancelar="Aceptar"
+        sinFooter={true} 
+        onCerrar={() => setModal_jja(prev => ({ ...prev, visible: false }))}
+      >
+        <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '1.05rem' }}>
+          {modal_jja.mensaje}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+          <button 
+            className={`btn-jja btn-${modal_jja.variante}-jja`} 
+            onClick={() => setModal_jja(prev => ({ ...prev, visible: false }))}
+            style={{ width: '100%' }}
+          >
+            Aceptar
+          </button>
+        </div>
+      </ActionModal_jja>
     </div>
   )
 }

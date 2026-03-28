@@ -49,13 +49,14 @@ class UsuarioModel_jja extends Model_jja
         int $id_jja,
         string $nombre_jja,
         string $apellido_jja,
+        string $cedula_jja,
         string $correo_jja,
         ?string $telefono_jja,
         int $idRol_jja
         ): array
     {
         $res_jja = $this->ejecutarSPUno_jja('SP_ACTUALIZAR_USUARIO_jja', [
-            $id_jja, $nombre_jja, $apellido_jja, $correo_jja, $telefono_jja, $idRol_jja
+            $id_jja, $nombre_jja, $apellido_jja, $cedula_jja, $correo_jja, $telefono_jja, $idRol_jja
         ]);
         return $res_jja ?? [];
     }

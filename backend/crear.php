@@ -730,25 +730,38 @@ CREATE PROCEDURE `SP_ACTUALIZAR_USUARIO_jja`(
     IN p_id_jja       INT UNSIGNED,
     IN p_nombre_jja   VARCHAR(100),
     IN p_apellido_jja VARCHAR(100),
+    IN p_cedula_jja   VARCHAR(20),
     IN p_correo_jja   VARCHAR(150),
     IN p_telefono_jja VARCHAR(20),
     IN p_id_rol_jja   INT UNSIGNED
 )
 BEGIN
     DECLARE v_correo_dup INT DEFAULT 0;
+    DECLARE v_cedula_dup INT DEFAULT 0;
+    
     SELECT COUNT(*) INTO v_correo_dup
     FROM `usuarios_jja`
     WHERE `correo_jja` = p_correo_jja
       AND `id_usuario_jja` <> p_id_jja
       AND `estado_registro_jja` = 1;
 
+    SELECT COUNT(*) INTO v_cedula_dup
+    FROM `usuarios_jja`
+    WHERE `cedula_jja` = p_cedula_jja
+      AND `id_usuario_jja` <> p_id_jja
+      AND `estado_registro_jja` = 1;
+
     IF v_correo_dup > 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El correo ya está en uso por otro usuario.';
+    ELSEIF v_cedula_dup > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La cédula ya está en uso por otro usuario.';
     ELSE
         UPDATE `usuarios_jja`
         SET `nombre_jja`   = p_nombre_jja,
             `apellido_jja` = p_apellido_jja,
+            `cedula_jja`   = p_cedula_jja,
             `correo_jja`   = p_correo_jja,
             `telefono_jja` = p_telefono_jja,
             `id_rol_jja`   = p_id_rol_jja

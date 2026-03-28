@@ -62,6 +62,21 @@ class UsuarioController_jja extends Controller_jja
                 }
                 break;
 
+            case 'PATCH':
+                if ($id_jja !== null && isset($segmentos_jja[1]) && $segmentos_jja[1] === 'password') {
+                    if (!$this->validarId_jja($id_jja)) {
+                        $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
+                    }
+                    if ($payload_jja->rol === Middleware_jja::ROL_ADMIN || (int)$payload_jja->id === (int)$id_jja) {
+                        $this->actualizarPassword_jja((int)$id_jja);
+                    } else {
+                        $this->responder_jja(false, null, 'No tienes permisos para cambiar esta contrasena.', 403);
+                    }
+                } else {
+                    $this->responder_jja(false, null, 'Metodo HTTP no permitido.', 405);
+                }
+                break;
+
             case 'DELETE':
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
                 if (!$this->validarId_jja($id_jja)) {
@@ -186,7 +201,8 @@ class UsuarioController_jja extends Controller_jja
             $this->responder_jja(false, null, 'La imagen no debe superar los 2MB.', 400);
         }
 
-        $directorio = __DIR__ . '/../../frontend/public/uploads/perfiles/';
+        // Se guarda en la carpeta del backend (para que el propio backend lo sirva en PROD)
+        $directorio = __DIR__ . '/../uploads/perfiles/';
         if (!is_dir($directorio)) {
             mkdir($directorio, 0777, true);
         }
@@ -214,7 +230,7 @@ class UsuarioController_jja extends Controller_jja
     {
         $body_jja = $this->obtenerBody_jja();
 
-        $falta_jja = $this->campoFaltante_jja($body_jja, ['nombre', 'apellido', 'correo', 'id_rol']);
+        $falta_jja = $this->campoFaltante_jja($body_jja, ['nombre', 'apellido', 'cedula', 'correo', 'id_rol']);
         if ($falta_jja) {
             $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
         }
@@ -227,6 +243,7 @@ class UsuarioController_jja extends Controller_jja
                 $id_jja,
                 trim($body_jja['nombre']),
                 trim($body_jja['apellido']),
+                trim($body_jja['cedula']),
                 trim($body_jja['correo']),
                 isset($body_jja['telefono']) ? trim($body_jja['telefono']) : null,
                 (int)$body_jja['id_rol']
@@ -238,6 +255,32 @@ class UsuarioController_jja extends Controller_jja
         }
 
         $this->responder_jja(true, null, 'Usuario actualizado correctamente.', 200);
+    }
+
+    private function actualizarPassword_jja(int $id_jja): void
+    {
+        $body_jja = $this->obtenerBody_jja();
+        $falta_jja = $this->campoFaltante_jja($body_jja, ['password_actual', 'password_nueva']);
+        if ($falta_jja) {
+            $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
+        }
+
+        $authModel = new AuthModel_jja();
+        $hashActual = $authModel->buscarHashPorId_jja($id_jja);
+        
+        if (!$hashActual || !password_verify($body_jja['password_actual'], $hashActual)) {
+            $this->responder_jja(false, null, 'La contrasena actual es incorrecta.', 401);
+        }
+
+        $nueva = $body_jja['password_nueva'];
+        if (strlen($nueva) < 6) {
+            $this->responder_jja(false, null, 'La nueva contrasena debe tener al menos 6 caracteres.', 400);
+        }
+
+        $nuevoHash_jja = password_hash($nueva, PASSWORD_BCRYPT, ['cost' => 12]);
+        $authModel->cambiarContrasena_jja($id_jja, $nuevoHash_jja);
+
+        $this->responder_jja(true, null, 'Contrasena actualizada correctamente.', 200);
     }
 
     private function eliminar_jja(int $id_jja): void

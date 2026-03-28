@@ -25,6 +25,7 @@ const PerfilPage_jja = () => {
     apellido: usuario?.apellido || '',
     correo: usuario?.correo || '',
     telefono: usuario?.telefono || '',
+    cedula: usuario?.cedula || '',
   })
   const [clave_jja, setClave_jja] = useState({ actual: '', nueva: '', confirmar: '' })
   const [errorClave_jja, setErrorClave_jja] = useState('')
@@ -39,13 +40,13 @@ const PerfilPage_jja = () => {
     try {
       await apiRequest(`/usuarios/${usuario.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ nombre: form_jja.nombre, apellido: form_jja.apellido, correo: form_jja.correo, telefono: form_jja.telefono })
+        body: JSON.stringify({ nombre: form_jja.nombre, apellido: form_jja.apellido, cedula: form_jja.cedula, correo: form_jja.correo, telefono: form_jja.telefono, id_rol: usuario.id_rol })
       })
       setEditando_jja(false)
       setExito_jja('Perfil actualizado correctamente')
       setTimeout(() => setExito_jja(''), 3000)
       // Refrescar login context
-      login(token, { ...usuario, nombre: form_jja.nombre, apellido: form_jja.apellido, correo: form_jja.correo, telefono: form_jja.telefono })
+      login(token, { ...usuario, nombre: form_jja.nombre, apellido: form_jja.apellido, cedula: form_jja.cedula, correo: form_jja.correo, telefono: form_jja.telefono })
     } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
     finally { setGuardando_jja(false) }
   }
@@ -180,7 +181,10 @@ const PerfilPage_jja = () => {
                 <FormGroup_jja label="Apellido" nombre="apellido" valor={form_jja.apellido} onChange={handleCambio} disabled={!editando_jja} />
               </div>
               <div className="form-grid-jja">
+                <FormGroup_jja label="Cédula" nombre="cedula" valor={form_jja.cedula} onChange={handleCambio} disabled={!editando_jja} />
                 <FormGroup_jja label="Correo" nombre="correo" tipo="email" valor={form_jja.correo} onChange={handleCambio} disabled={!editando_jja} />
+              </div>
+              <div className="form-grid-jja">
                 <FormGroup_jja label="Teléfono" nombre="telefono" valor={form_jja.telefono} onChange={handleCambio} disabled={!editando_jja} />
               </div>
               {editando_jja && (
