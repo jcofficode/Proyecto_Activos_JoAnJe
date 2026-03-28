@@ -23,7 +23,8 @@ const SolicitudesPage_jja = () => {
   const [escaneando_jja, setEscaneando_jja] = useState(false)
 
   // ── Confirm modal ──────────────────────────────────────────
-  const [confirmar_jja, setConfirmar_jja] = useState({ visible: false, titulo: '', mensaje: '', onConfirmar: null })
+  const [confirmar_jja, setConfirmar_jja] = useState({ visible: false, titulo: '', mensaje: '', onConfirmar: null, accion: '' })
+  const [motivoRechazo_jja, setMotivoRechazo_jja] = useState('')
 
   useEffect(() => { cargarDatos_jja() }, [])
 
@@ -60,18 +61,28 @@ const SolicitudesPage_jja = () => {
       estadoBackend = 'en_proceso';
     }
     const accion = estado === 'aprobada' ? 'aprobar' : 'rechazar'
+    if (estado !== 'aprobada') setMotivoRechazo_jja('')
+    
     setConfirmar_jja({
       visible: true,
       titulo: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} solicitud?`,
       mensaje: `Esta acción cambiará el estado de la solicitud a "${estado}".`,
-      onConfirmar: async () => {
+      accion: estado,
+      onConfirmar: async (motivo) => {
         try {
           const endpoints = {
             prestamos: `/solicitudes-prestamo/${id}/estado`,
             devoluciones: `/solicitudes-devolucion/${id}/estado`,
             devolucionesProd: `/solicitudes-devolucion-productos/${id}/estado`,
           }
-          await apiRequest(endpoints[tipo], { method: 'PATCH', body: JSON.stringify({ estado: estadoBackend, tipo: tipoItemBackend }) })
+          await apiRequest(endpoints[tipo], { 
+            method: 'PATCH', 
+            body: JSON.stringify({ 
+              estado: estadoBackend, 
+              tipo: tipoItemBackend,
+              observaciones_jja: motivo 
+            }) 
+          })
           toast_jja.exito(`Solicitud de ${tipo === 'prestamos' ? 'préstamo' : 'devolución'} enviada a ${estadoBackend === 'en_proceso' ? 'proceso' : estado}.`)
           cargarDatos_jja()
         } catch (err) {
@@ -250,9 +261,23 @@ const SolicitudesPage_jja = () => {
         mensaje={confirmar_jja.mensaje}
         textoConfirmar="Confirmar"
         variante="advertencia"
-        onConfirmar={confirmar_jja.onConfirmar}
+        onConfirmar={() => confirmar_jja.onConfirmar(motivoRechazo_jja)}
         onCancelar={() => setConfirmar_jja(prev => ({ ...prev, visible: false }))}
-      />
+      >
+        {confirmar_jja.accion === 'rechazada' && (
+          <div className="form-grupo-jja" style={{ marginTop: 16, textAlign: 'left' }}>
+            <label className="form-label-jja" style={{ fontWeight: 600 }}>Motivo de rechazo (Opcional)</label>
+            <textarea
+              className="form-input-jja form-textarea-jja"
+              placeholder="Escribe aquí el motivo del rechazo..."
+              value={motivoRechazo_jja}
+              onChange={(e) => setMotivoRechazo_jja(e.target.value)}
+              rows="3"
+              style={{ minHeight: '80px', marginTop: '8px', fontSize: '0.9rem' }}
+            />
+          </div>
+        )}
+      </ConfirmModal_jja>
     </div>
   )
 }

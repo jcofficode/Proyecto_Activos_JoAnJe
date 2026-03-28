@@ -9,11 +9,13 @@ import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
+import { useModal_jja } from '../../context/ModalContext_jja'
 import { IconoPlus_jja, IconoEditar_jja, IconoEliminar_jja } from '../../components/ui_jja/Iconos_jja'
 
 const COLORES_ROL = { administrador: '#4f46e5', encargado: '#10b981', cliente: '#f59e0b' }
 
 const UsuariosPage_jja = () => {
+  const { mostrarModal } = useModal_jja()
   const [usuarios_jja, setUsuarios_jja] = useState([])
   const [roles_jja, setRoles_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
@@ -88,16 +90,23 @@ const UsuariosPage_jja = () => {
       }
       setModalVisible_jja(false)
       cargarDatos()
-    } catch (err) { alert('Error: ' + err.message) }
+    } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
     finally { setGuardando_jja(false) }
   }
 
-  const handleEliminar = async (fila) => {
-    if (!confirm(`¿Eliminar al usuario "${fila.nombre_jja} ${fila.apellido_jja}"?`)) return
-    try {
-      await apiRequest(`/usuarios/${fila.id_usuario_jja}`, { method: 'DELETE' })
-      cargarDatos()
-    } catch (err) { alert('Error: ' + err.message) }
+  const handleEliminar = (fila) => {
+    mostrarModal({
+      titulo: 'Eliminar Usuario',
+      mensaje: `¿Eliminar al usuario "${fila.nombre_jja} ${fila.apellido_jja}"?`,
+      tipo: 'warning',
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/usuarios/${fila.id_usuario_jja}`, { method: 'DELETE' })
+          cargarDatos()
+          mostrarModal({ mensaje: 'Usuario eliminado exitosamente', tipo: 'success' })
+        } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
+      }
+    })
   }
 
   const handleCambioForm = (campo, valor) => setForm_jja(prev => ({ ...prev, [campo]: valor }))

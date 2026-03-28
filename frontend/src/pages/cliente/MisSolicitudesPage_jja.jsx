@@ -9,6 +9,7 @@ import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import EmptyState_jja from '../../components/ui_jja/EmptyState_jja'
+import { useModal_jja } from '../../context/ModalContext_jja'
 import {
   IconoSolicitudes_jja, IconoCancelar_jja, IconoReloj_jja,
   IconoCheck_jja, IconoCerrar_jja,
@@ -34,6 +35,7 @@ const TABS_JJA = [
 ]
 
 const MisSolicitudesPage_jja = () => {
+  const { mostrarModal } = useModal_jja()
   const [solicitudes_jja, setSolicitudes_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const [error_jja, setError_jja] = useState('')
@@ -86,13 +88,20 @@ const MisSolicitudesPage_jja = () => {
     if (!solicitudCancelar_jja) return
     setCancelando_jja(true)
     try {
-      await apiRequest(`/solicitudes-prestamo/${solicitudCancelar_jja.id_solicitud_jja}/estado`, {
+      let endpoint = `/solicitudes-prestamo/${solicitudCancelar_jja.id_solicitud_jja}/estado`
+      if (solicitudCancelar_jja.tipo_jja === 'devolucion') {
+        endpoint = `/solicitudes-devolucion/${solicitudCancelar_jja.id_solicitud_jja}/estado`
+      } else if (solicitudCancelar_jja.tipo_jja === 'devolucionProd') {
+        endpoint = `/solicitudes-devolucion-productos/${solicitudCancelar_jja.id_solicitud_jja}/estado`
+      }
+
+      await apiRequest(endpoint, {
         method: 'PATCH',
         body: JSON.stringify({ estado: 'cancelada', tipo: solicitudCancelar_jja.tipo_jja })
       })
       setModalCancelar_jja(false)
       cargarDatos()
-    } catch (err) { alert('Error: ' + err.message) }
+    } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
     finally { setCancelando_jja(false) }
   }
 
@@ -236,7 +245,7 @@ const MisSolicitudesPage_jja = () => {
                 {/* Estado + acciones */}
                 <div className="solicitud-card-acciones-jja">
                   <StatusBadge_jja estado={s.estado_jja} />
-                  {s.estado_jja === 'pendiente' && !s.tipo_solicitud?.includes('Devolución') && (
+                  {(s.estado_jja === 'pendiente' || s.estado_jja === 'en_proceso') && (
                     <BotonAccion_jja
                       variante="ghost"
                       tamaño="sm"

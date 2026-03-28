@@ -10,6 +10,7 @@ import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import EmptyState_jja from '../../components/ui_jja/EmptyState_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
+import { useModal_jja } from '../../context/ModalContext_jja'
 import {
   IconoBuscar_jja, IconoMarketplace_jja, IconoCarrito_jja,
   IconoFiltrar_jja, IconoChevronIzq_jja, IconoChevronDer_jja,
@@ -19,6 +20,7 @@ import {
 const ITEMS_POR_PAGINA = 12
 
 const MarketplacePage_jja = () => {
+  const { mostrarModal } = useModal_jja()
   const [productos_jja, setProductos_jja] = useState([])
   const [tipos_jja, setTipos_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
@@ -116,10 +118,10 @@ const MarketplacePage_jja = () => {
       })
       setModalVisible_jja(false)
       // Mostrar confirmación visual y recargar la cuadrícula para actualizar el estado
-      alert('✅ Solicitud de préstamo enviada exitosamente')
+      mostrarModal({ mensaje: 'Solicitud de préstamo enviada exitosamente', tipo: 'success' })
       cargarDatos()
     } catch (err) {
-      alert('Error: ' + err.message)
+      mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' })
     } finally {
       setEnviando_jja(false)
     }

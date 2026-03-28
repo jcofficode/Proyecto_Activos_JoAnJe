@@ -3,8 +3,8 @@
 // Avatar, formulario, cambio contraseña, estadísticas
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
-import React, { useState, useEffect } from 'react'
-import { apiRequest } from '../../utils/api'
+import React, { useState, useEffect, useRef } from 'react'
+import { apiRequest, API_URL_JC } from '../../utils/api'
 import useAuth_jja from '../../hooks/useAuth_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
@@ -19,7 +19,11 @@ import {
 const COLORES = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
 
 const PerfilCompartidoPage_jja = () => {
-  const { usuario } = useAuth_jja()
+  const { usuario, token, login } = useAuth_jja()
+  const [dragOver_jja, setDragOver_jja] = useState(false)
+  const [subiendoImagen_jja, setSubiendoImagen_jja] = useState(false)
+  const inputRef_jja = useRef(null)
+
   const [form_jja, setForm_jja] = useState({
     nombre: '', apellido: '', correo: '', telefono: '', cedula: '',
   })
@@ -93,6 +97,8 @@ const PerfilCompartidoPage_jja = () => {
         })
       })
       setMensaje_jja('✅ Perfil actualizado correctamente')
+      // Refrescar sesión local para que Sidebar cambie enseguida y la vista
+      login(token, { ...usuario, nombre: form_jja.nombre, apellido: form_jja.apellido, correo: form_jja.correo, telefono: form_jja.telefono })
     } catch (err) { setMensaje_jja('❌ Error: ' + err.message) }
     finally { setGuardando_jja(false) }
   }
@@ -122,10 +128,44 @@ const PerfilCompartidoPage_jja = () => {
     finally { setGuardandoPassword_jja(false) }
   }
 
-  // Iniciales y color
+  // Iniciales y color avatar
   const iniciales = `${(usuario?.nombre || '')[0] || ''}${(usuario?.apellido || '')[0] || ''}`.toUpperCase()
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i); return h }
   const colorAvatar = COLORES[Math.abs(hashStr(usuario?.nombre || '')) % COLORES.length]
+  const apiUrlBase = API_URL_JC.replace('/api/v1', '')
+  const avatarUrl = usuario?.imagen ? `${apiUrlBase}${usuario.imagen}` : null
+
+  // Manejo de la subida de imagen de perfil
+  const manejarEntradaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(true) }
+  const manejarSalidaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(false) }
+  const manejarCaida_jja = (e) => {
+    e.preventDefault(); e.stopPropagation(); setDragOver_jja(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) subirImagen_jja(e.dataTransfer.files[0])
+  }
+  const manejarSeleccionImagen_jja = (e) => {
+    if (e.target.files && e.target.files.length > 0) subirImagen_jja(e.target.files[0])
+  }
+
+  const subirImagen_jja = async (archivo) => {
+    setSubiendoImagen_jja(true)
+    try {
+      const formData = new FormData()
+      formData.append('imagen', archivo)
+      
+      const res = await apiRequest(`/usuarios/${usuario.id}/imagen`, {
+        method: 'POST',
+        body: formData,
+        // Al enviar FormData, no debes establecer Content-Type en los headers; 
+        // el navegador y fetch se encargan de configurar el límite multipart automático.
+      })
+      if (res.exito) {
+        setMensaje_jja('✅ Imagen de perfil actualizada')
+        const usuarioActualizado = { ...usuario, imagen: res.datos?.imagen || res.imagen }
+        login(token, usuarioActualizado)
+      }
+    } catch (err) { setMensaje_jja('❌ Error al subir: ' + err.message) }
+    finally { setSubiendoImagen_jja(false) }
+  }
 
   return (
     <div>
@@ -174,12 +214,53 @@ const PerfilCompartidoPage_jja = () => {
           <div className="card-body-jja">
             {/* Avatar */}
             <div className="perfil-avatar-seccion-jja">
-              <div className="perfil-avatar-grande-jja" style={{ background: `linear-gradient(135deg, ${colorAvatar}, ${colorAvatar}cc)` }}>
-                {iniciales || 'U'}
+              <div 
+                className={`perfil-avatar-grande-jja ${dragOver_jja ? 'drag-over-jja' : ''} ${subiendoImagen_jja ? 'subiendo-jja' : ''}`}
+                style={{ 
+                  background: avatarUrl ? 'transparent' : `linear-gradient(135deg, ${colorAvatar}, ${colorAvatar}cc)`,
+                  cursor: 'pointer',
+                  border: dragOver_jja ? '3px dashed var(--color-primario-jja)' : '3px solid transparent',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={() => inputRef_jja.current?.click()}
+                onDragEnter={manejarEntradaArrastre_jja}
+                onDragOver={manejarEntradaArrastre_jja}
+                onDragLeave={manejarSalidaArrastre_jja}
+                onDrop={manejarCaida_jja}
+                title="Haz clic o arrastra una imagen para cambiar tu foto de perfil"
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  iniciales || 'U'
+                )}
+                {/* Overlay semi-transparente en hover para indicar accion */}
+                <div style={{
+                  position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', color: 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem',
+                  opacity: (dragOver_jja || subiendoImagen_jja) ? 1 : 0, transition: 'opacity 0.2s ease', 
+                  pointerEvents: 'none'
+                }}>
+                  {subiendoImagen_jja ? '⏳' : '📷'}
+                </div>
               </div>
+              <input 
+                type="file" 
+                ref={inputRef_jja} 
+                style={{ display: 'none' }} 
+                accept="image/png, image/jpeg, image/webp" 
+                onChange={manejarSeleccionImagen_jja}
+              />
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{usuario?.nombre} {usuario?.apellido}</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--texto-secundario-jja)' }}>{usuario?.correo}</div>
+                <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--color-primario-jja)' }}>
+                  Haz clic o arrastra una imagen para actualizar tu foto.
+                </div>
               </div>
             </div>
 

@@ -46,7 +46,7 @@ const InventarioPage_jja = () => {
   const [imagenFichero_jja, setImagenFichero_jja] = useState(null)
   const [imagenPrevia_jja, setImagenPrevia_jja] = useState(null)
   const [arrastrando_jja, setArrastrando_jja] = useState(false)
-  const [modalAlerta_jja, setModalAlerta_jja] = useState({ visible: false, mensaje: '' })
+  const [modalAlerta_jja, setModalAlerta_jja] = useState({ visible: false, titulo: '', mensaje: '' })
 
   // Modal Detalle QR
   const [detalleVisible_jja, setDetalleVisible_jja] = useState(false)
@@ -200,6 +200,14 @@ const InventarioPage_jja = () => {
   }
 
   const handleEliminar = async (fila) => {
+    if (fila.estado_jja === 'prestado' || fila.estado_jja === 'en_proceso_prestamo') {
+      setModalAlerta_jja({ 
+        visible: true, 
+        titulo: 'Acción no permitida', 
+        mensaje: 'No se puede eliminar un activo que está en proceso de préstamo o está prestado.' 
+      })
+      return
+    }
     setConfirmarElim_jja({ visible: true, fila })
   }
 
@@ -222,7 +230,7 @@ const InventarioPage_jja = () => {
     const extension = file.name.split('.').pop().toLowerCase();
     const permitidas = ['jpg', 'jpeg', 'png', 'webp'];
     if (!permitidas.includes(extension)) {
-      setModalAlerta_jja({ visible: true, mensaje: 'Solo se aceptan imágenes con extensión JPG, PNG o WEBP.' });
+      setModalAlerta_jja({ visible: true, titulo: 'Archivo no permitido', mensaje: 'Solo se aceptan imágenes con extensión JPG, PNG o WEBP.' });
       return false;
     }
     return true;
@@ -511,9 +519,9 @@ const InventarioPage_jja = () => {
       {/* Modal Alerta de Tipo de Archivo _jja */}
       <ActionModal_jja
         visible={modalAlerta_jja.visible}
-        titulo="Archivo no permitido"
-        onCerrar={() => setModalAlerta_jja({ visible: false, mensaje: '' })}
-        onConfirmar={() => setModalAlerta_jja({ visible: false, mensaje: '' })}
+        titulo={modalAlerta_jja.titulo || 'Alerta'}
+        onCerrar={() => setModalAlerta_jja({ visible: false, titulo: '', mensaje: '' })}
+        onConfirmar={() => setModalAlerta_jja({ visible: false, titulo: '', mensaje: '' })}
         textoConfirmar="Aceptar"
         sinCancelar
         ancho="400px"

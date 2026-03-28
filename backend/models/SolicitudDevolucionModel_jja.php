@@ -73,4 +73,11 @@ class SolicitudDevolucionModel_jja extends Model_jja
         $stmt = $this->db_jja->prepare($sql);
         return $stmt->execute([':estado' => $estado_jja, ':resp' => $respondido_por_jja, ':id' => $id_jja]);
     }
+
+    public function actualizarEstadoYObs_jja(int $id_jja, string $estado_jja, string $observaciones_jja, ?int $respondido_por_jja = null): bool
+    {
+        $sql = "UPDATE solicitudes_devolucion_jja SET estado_jja = :estado, observaciones_jja = :obs, fecha_respuesta_jja = CURRENT_TIMESTAMP, respondido_por_jja = :resp WHERE id_solicitud_devolucion_jja = :id";
+        $stmt = $this->db_jja->prepare($sql);
+        return $stmt->execute([':estado' => $estado_jja, ':obs' => $observaciones_jja, ':resp' => $respondido_por_jja, ':id' => $id_jja]);
+    }
 }

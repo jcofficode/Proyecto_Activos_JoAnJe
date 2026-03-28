@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `historial_prestamos_jja` (
         REFERENCES `prestamos_jja` (`id_prestamo_jja`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Log inmutable de movimientos de activos';
-" , "Tabla <strong>historial_prestamos_jja</strong>", $cnt_tablas_jja, $errores_jja);
+", "Tabla <strong>historial_prestamos_jja</strong>", $cnt_tablas_jja, $errores_jja);
 
 // solicitudes_prestamo_activos_jja
 ejecutar_jja($pdo_jja, "
@@ -469,7 +469,7 @@ CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_jja` (
         `id_solicitud_devolucion_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `id_prestamo_jja`             INT UNSIGNED NOT NULL,
         `id_usuario_solicitante_jja`  INT UNSIGNED NOT NULL,
-        `estado_jja`                  ENUM('pendiente','en_proceso','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `estado_jja`                  ENUM('pendiente','en_proceso','aprobada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
         `observaciones_jja`           TEXT DEFAULT NULL,
         `creado_en_jja`               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `fecha_respuesta_jja`         TIMESTAMP NULL DEFAULT NULL,
@@ -489,7 +489,7 @@ CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_productos_jja` (
         `id_solicitud_devolucion_producto_jja` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `id_prestamo_producto_jja`             INT UNSIGNED NOT NULL,
         `id_usuario_solicitante_jja`           INT UNSIGNED NOT NULL,
-        `estado_jja`                           ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+        `estado_jja`                           ENUM('pendiente','aprobada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
         `observaciones_jja`                    TEXT DEFAULT NULL,
         `creado_en_jja`                        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `fecha_respuesta_jja`                  DATETIME DEFAULT NULL,

@@ -4,6 +4,7 @@ import { qrImageUrl, qrDataForProduct } from '../../utils/qr'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
 import { apiRequest, API_URL_JC } from '../../utils/api'
+import { useModal_jja } from '../../context/ModalContext_jja'
 
 function ProductRow({ p, onLoan, onEdit, onDelete, onPublish }){
   // extraer imagen principal si existe
@@ -67,6 +68,7 @@ function ProductRow({ p, onLoan, onEdit, onDelete, onPublish }){
 
 export default function Inventory(){
   console.log('📦 INVENTORY: Componente montado')
+  const { mostrarModal } = useModal_jja()
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -159,29 +161,48 @@ export default function Inventory(){
     setEditarProducto(product)
   }
 
-  async function handleDelete(product){
-    if (!confirm(`Eliminar activo '${product.nombre_jja}'? Esta acción no se puede deshacer.`)) return
-    try{
-      await apiRequest(`/activos/${product.id_activo_jja}`, { method: 'DELETE' })
-      await loadProductos()
-      alert('Activo eliminado')
-    }catch(err){ alert('Error al eliminar: '+err.message) }
+  function handleDelete(product) {
+    mostrarModal({
+      titulo: 'Eliminar activo',
+      mensaje: `¿Eliminar activo '${product.nombre_jja}'? Esta acción no se puede deshacer.`,
+      tipo: 'warning',
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/activos/${product.id_activo_jja}`, { method: 'DELETE' })
+          await loadProductos()
+          mostrarModal({ mensaje: 'Activo eliminado', tipo: 'success' })
+        } catch(err) { 
+          mostrarModal({ mensaje: 'Error al eliminar: ' + err.message, tipo: 'error' }) 
+        }
+      }
+    })
   }
 
   function handleLoan(product){
-    // Por ahora, solo alert
-    alert(`Producto ${product.nombre_jja} listo para prestar.`)
+    mostrarModal({
+      titulo: 'Préstamo',
+      mensaje: `Producto ${product.nombre_jja} listo para prestar.`,
+      tipo: 'info'
+    })
   }
 
-  async function handlePublish(product){
+  function handlePublish(product){
     const id = product.id_activo_jja
     const nuevo = (product.publicado_jja && Number(product.publicado_jja) === 1) ? 0 : 1
-    if (!confirm(`${nuevo===1 ? 'Publicar' : 'Despublicar'} activo '${product.nombre_jja}'?`)) return
-    try{
-      await apiRequest(`/activos/${id}/publicar`, { method: 'PATCH', body: JSON.stringify({ publicado: nuevo }) })
-      alert(nuevo===1 ? 'Activo publicado.' : 'Activo despublicado.')
-      await loadProductos()
-    }catch(err){ alert('Error al cambiar publicación: '+err.message) }
+    mostrarModal({
+      titulo: 'Confirmar',
+      mensaje: `¿${nuevo===1 ? 'Publicar' : 'Despublicar'} activo '${product.nombre_jja}'?`,
+      tipo: 'info',
+      onConfirm: async () => {
+        try{
+          await apiRequest(`/activos/${id}/publicar`, { method: 'PATCH', body: JSON.stringify({ publicado: nuevo }) })
+          mostrarModal({ mensaje: nuevo===1 ? 'Activo publicado.' : 'Activo despublicado.', tipo: 'success' })
+          await loadProductos()
+        }catch(err){ 
+          mostrarModal({ mensaje: 'Error al cambiar publicación: ' + err.message, tipo: 'error' }) 
+        }
+      }
+    })
   }
 
   if (loading) return <div>Cargando inventario...</div>

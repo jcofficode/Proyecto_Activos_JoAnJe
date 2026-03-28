@@ -315,10 +315,21 @@ class ActivoController_jja extends Controller_jja
 
     private function eliminar_jja(int $id_jja): void
     {
+        $activo = $this->modelo_jja->buscarPorId_jja($id_jja);
+        if (!$activo) {
+            $this->responder_jja(false, null, "Activo con ID {$id_jja} no encontrado.", 404);
+            return;
+        }
+
+        if (in_array($activo['estado_jja'] ?? '', ['prestado', 'en_proceso_prestamo'], true)) {
+            $this->responder_jja(false, null, 'No se puede eliminar un activo que está en proceso de préstamo o está prestado.', 400);
+            return;
+        }
+
         try {
             $res_jja = $this->modelo_jja->eliminar_jja($id_jja);
             ($res_jja['filas_afectadas'] ?? 0) < 1
-                ? $this->responder_jja(false, null, "Activo con ID {$id_jja} no encontrado.", 404)
+                ? $this->responder_jja(false, null, "Activo con ID {$id_jja} no pudo ser eliminado.", 400)
                 : $this->responder_jja(true, null, 'Activo eliminado del inventario.');
         } catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)

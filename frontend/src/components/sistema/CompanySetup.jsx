@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useModal_jja } from '../../context/ModalContext_jja'
 
 const STORAGE_KEY = 'joanje_company'
 
 export default function CompanySetup({ onSaved, onCancel }) {
+  const { mostrarModal } = useModal_jja()
   const [nombre, setNombre] = useState('')
   const [logoData, setLogoData] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -49,7 +51,7 @@ export default function CompanySetup({ onSaved, onCancel }) {
       }, 400)
     } catch (err) {
       setSaving(false)
-      alert('No se pudo guardar la configuración en el navegador.')
+      mostrarModal({ mensaje: 'No se pudo guardar la configuración en el navegador.', tipo: 'error' })
     }
   }
 

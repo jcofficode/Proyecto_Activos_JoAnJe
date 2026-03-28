@@ -14,6 +14,7 @@ const ConfirmModal_jja = ({
   onConfirmar,
   onCancelar,
   cargando = false,
+  children,
 }) => {
   if (!visible) return null
 
@@ -50,6 +51,7 @@ const ConfirmModal_jja = ({
         </div>
         <h3 className="confirm-titulo-jja">{titulo}</h3>
         {mensaje && <p className="confirm-mensaje-jja">{mensaje}</p>}
+        {children && <div className="confirm-children-jja" style={{marginTop: 15, marginBottom: 15, width: '100%', textAlign: 'left'}}>{children}</div>}
         <div className="confirm-acciones-jja">
           <button
             className="btn-jja btn-ghost-jja"

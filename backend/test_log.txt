@@ -1,0 +1,2 @@
+[500] /solicitudes-devolucion/1/estado -> {"exito":false,"mensaje":"Error de base de datos: SQLSTATE[01000]: Warning: 1265 Data truncated for column 'estado_jja' at row 1","datos":null}
+[500] /solicitudes-devolucion/1/estado -> {"exito":false,"mensaje":"Error de base de datos: SQLSTATE[01000]: Warning: 1265 Data truncated for column 'estado_jja' at row 1","datos":null}

@@ -6,6 +6,7 @@ import React, { useContext } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ThemeContext_jja } from '../../context/ThemeContext_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
+import { API_URL_JC } from '../../utils/api'
 import logoDefault from '../../assets/JoanjeCoders.png'
 import {
   IconoDashboard_jja, IconoInventario_jja, IconoUsuarios_jja,
@@ -65,6 +66,9 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
   const iniciales = usuario
     ? `${(usuario.nombre || '')[0] || ''}${(usuario.apellido || '')[0] || ''}`.toUpperCase()
     : 'U'
+
+  const apiUrlBase = API_URL_JC.replace('/api/v1', '')
+  const avatarUrl = usuario?.imagen ? `${apiUrlBase}${usuario.imagen}` : null
 
   const handleLogout = () => {
     logout()
@@ -142,7 +146,13 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
 
           {/* Info usuario */}
           <div className="sidebar-usuario-jja">
-            <div className="sidebar-avatar-jja">{iniciales}</div>
+            <div className="sidebar-avatar-jja" style={{ overflow: 'hidden' }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                iniciales
+              )}
+            </div>
             <div className="sidebar-usuario-info-jja">
               <div className="sidebar-usuario-nombre-jja">{usuario?.nombre} {usuario?.apellido}</div>
               <div className="sidebar-usuario-rol-jja">{usuario?.rol}</div>

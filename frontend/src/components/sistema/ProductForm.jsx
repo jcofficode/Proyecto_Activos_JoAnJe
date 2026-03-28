@@ -3,8 +3,10 @@ import Card from '../ui/Card'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import { apiRequest, API_URL_JC } from '../../utils/api'
+import { useModal_jja } from '../../context/ModalContext_jja'
 
 export default function ProductForm({ onSave, initial = null, onCancel = null }) {
+  const { mostrarModal } = useModal_jja()
   const [nombre, setNombre] = useState('')
   const [idTipo, setIdTipo] = useState('')
   const [ubicacion, setUbicacion] = useState('')
@@ -93,9 +95,10 @@ export default function ProductForm({ onSave, initial = null, onCancel = null })
       setUbicacion('')
       setDescripcion('')
       setCodigoQR('')
+      setCodigoQR('')
       setImagen(null)
     } catch (err) {
-      alert('Error al guardar activo: ' + err.message)
+      mostrarModal({ mensaje: 'Error al guardar activo: ' + err.message, tipo: 'error' })
     } finally {
       setLoading(false)
     }

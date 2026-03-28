@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
 import { apiRequest } from '../../utils/api'
+import { useModal_jja } from '../../context/ModalContext_jja'
 
 import {
   Chart as ChartJS,
@@ -41,6 +42,7 @@ function downloadCSV(filename, rows){
 }
 
 export default function Reports(){
+  const { mostrarModal } = useModal_jja()
   const [topActivos, setTopActivos] = useState([])
   const [topUsuarios, setTopUsuarios] = useState([])
   const [tasaDev, setTasaDev] = useState(null)
@@ -62,7 +64,7 @@ export default function Reports(){
       setTopActivos(Array.isArray(act) ? act : (act.datos || act))
       setTopUsuarios(Array.isArray(usu) ? usu : (usu.datos || usu))
       setTasaDev(tasa && (tasa.datos || tasa))
-    }catch(err){ console.error(err); alert('Error cargando reportes: '+err.message) }
+    }catch(err){ console.error(err); mostrarModal({ mensaje: 'Error cargando reportes: '+err.message, tipo: 'error' }) }
     finally{ setLoading(false) }
   }
 
@@ -85,7 +87,7 @@ export default function Reports(){
         rows = Object.keys(map).sort().map(k=>({fecha:k, cantidad: map[k]}))
       }
       setPrestamosSerie(rows || [])
-    }catch(err){ console.error(err); alert('Error: '+err.message) }
+    }catch(err){ console.error(err); mostrarModal({ mensaje: 'Error: '+err.message, tipo: 'error' }) }
     finally{ setLoading(false) }
   }
 

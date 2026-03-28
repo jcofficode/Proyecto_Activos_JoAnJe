@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
 import { apiRequest } from '../../utils/api'
+import { useModal_jja } from '../../context/ModalContext_jja'
 
 export default function Alerts(){
+  const { mostrarModal } = useModal_jja()
   const [notifs, setNotifs] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -26,13 +28,13 @@ export default function Alerts(){
 
   async function marcarLeida(id){
     try{ await apiRequest(`/notificaciones/${id}/leer`, { method: 'PATCH' }); fetchAll() }
-    catch(e){ console.error(e); alert('No se pudo marcar como leída') }
+    catch(e){ console.error(e); mostrarModal({ mensaje: 'No se pudo marcar como leída', tipo: 'error' }) }
   }
 
   async function marcarTodas(){
-    if(!user) return alert('Usuario no determinado')
+    if(!user) return mostrarModal({ mensaje: 'Usuario no determinado', tipo: 'warning' })
     try{ await apiRequest(`/notificaciones/usuario/${user.id}/leer-todas`, { method: 'PATCH' }); fetchAll() }
-    catch(e){ console.error(e); alert('No se pudo marcar todas') }
+    catch(e){ console.error(e); mostrarModal({ mensaje: 'No se pudo marcar todas', tipo: 'error' }) }
   }
 
   const unread = notifs.filter(n => !n.leida_jja && n.leida_jja !== 1)

@@ -10,6 +10,7 @@ import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import EmptyState_jja from '../../components/ui_jja/EmptyState_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
+import { useModal_jja } from '../../context/ModalContext_jja'
 import {
   IconoPrestamo_jja, IconoDevolucion_jja, IconoReloj_jja,
   IconoAlertaTriangulo_jja,
@@ -22,6 +23,7 @@ const TABS_JJA = [
 ]
 
 const MisPrestamosPage_jja = () => {
+  const { mostrarModal } = useModal_jja()
   const [prestamos_jja, setPrestamos_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const [tabActivo_jja, setTabActivo_jja] = useState('activos')
@@ -130,9 +132,9 @@ const MisPrestamosPage_jja = () => {
         body: JSON.stringify({ observaciones: observacionesDevolucion_jja || 'Solicitud de devolución' })
       })
       setModalDevolucion_jja(false)
-      alert('✅ Solicitud de devolución enviada')
+      mostrarModal({ mensaje: 'Solicitud de devolución enviada exitosamente', tipo: 'success' })
       cargarDatos()
-    } catch (err) { alert('Error: ' + err.message) }
+    } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
     finally { setEnviando_jja(false) }
   }
 

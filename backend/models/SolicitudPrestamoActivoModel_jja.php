@@ -64,4 +64,12 @@ class SolicitudPrestamoActivoModel_jja extends Model_jja
         $stmt->execute([':estado' => $estado_jja, ':id' => $id_jja]);
         return ['filas_afectadas' => $stmt->rowCount()];
     }
+
+    public function actualizarEstadoYObs_jja(int $id_jja, string $estado_jja, string $observaciones_jja): array
+    {
+        $sql = "UPDATE solicitudes_prestamo_activos_jja SET estado_jja = :estado, observaciones_jja = :obs WHERE id_solicitud_activo_jja = :id";
+        $stmt = $this->db_jja->prepare($sql);
+        $stmt->execute([':estado' => $estado_jja, ':obs' => $observaciones_jja, ':id' => $id_jja]);
+        return ['filas_afectadas' => $stmt->rowCount()];
+    }
 }
