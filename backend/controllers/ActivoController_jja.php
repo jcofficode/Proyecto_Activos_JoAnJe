@@ -21,19 +21,23 @@ class ActivoController_jja extends Controller_jja
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
     {
         $payload_jja = Middleware_jja::autenticar_jja();
-        $seg0_jja    = $segmentos_jja[0] ?? null;  // 'qr' | 'nfc' | id
-        $seg1_jja    = $segmentos_jja[1] ?? null;  // codigo QR/NFC | 'estado'
+        $seg0_jja = $segmentos_jja[0] ?? null; // 'qr' | 'nfc' | id
+        $seg1_jja = $segmentos_jja[1] ?? null; // codigo QR/NFC | 'estado'
 
         switch ($metodo_jja) {
             case 'GET':
                 if ($seg0_jja === 'qr') {
                     $this->buscarPorQR_jja($seg1_jja ?? '');
-                } elseif ($seg0_jja === 'nfc') {
+                }
+                elseif ($seg0_jja === 'nfc') {
                     $this->buscarPorNFC_jja($seg1_jja ?? '');
-                } elseif ($seg0_jja !== null) {
-                    if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                }
+                elseif ($seg0_jja !== null) {
+                    if (!$this->validarId_jja($seg0_jja))
+                        $this->responder_jja(false, null, 'ID de activo invalido.', 400);
                     $this->mostrar_jja((int)$seg0_jja);
-                } else {
+                }
+                else {
                     $this->responder_jja(true, $this->modelo_jja->listar_jja(), 'Inventario de activos.');
                 }
                 break;
@@ -41,7 +45,8 @@ class ActivoController_jja extends Controller_jja
             case 'POST':
                 // Soportar POST /activos/{id}/imagen para subir imagen del activo
                 if ($seg1_jja === 'imagen' && $seg0_jja !== null) {
-                    if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                    if (!$this->validarId_jja($seg0_jja))
+                        $this->responder_jja(false, null, 'ID de activo invalido.', 400);
                     $this->subirImagen_jja((int)$seg0_jja);
                     break;
                 }
@@ -63,26 +68,31 @@ class ActivoController_jja extends Controller_jja
 
             case 'PUT':
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
-                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                if (!$this->validarId_jja($seg0_jja))
+                    $this->responder_jja(false, null, 'ID de activo invalido.', 400);
                 $this->actualizar_jja((int)$seg0_jja);
                 break;
 
             case 'PATCH':
                 // PATCH /activos/{id}/estado  OR  PATCH /activos/{id}/publicar
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
-                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                if (!$this->validarId_jja($seg0_jja))
+                    $this->responder_jja(false, null, 'ID de activo invalido.', 400);
                 if ($seg1_jja === 'estado') {
                     $this->actualizarEstado_jja((int)$seg0_jja);
-                } elseif ($seg1_jja === 'publicar') {
+                }
+                elseif ($seg1_jja === 'publicar') {
                     $this->publicar_jja((int)$seg0_jja);
-                } else {
+                }
+                else {
                     $this->responder_jja(false, null, 'Sub-ruta no reconocida. Usa /activos/{id}/estado o /activos/{id}/publicar', 404);
                 }
                 break;
 
             case 'DELETE':
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
-                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                if (!$this->validarId_jja($seg0_jja))
+                    $this->responder_jja(false, null, 'ID de activo invalido.', 400);
                 $this->eliminar_jja((int)$seg0_jja);
                 break;
 
@@ -125,11 +135,13 @@ class ActivoController_jja extends Controller_jja
 
     private function crear_jja(): void
     {
-        $body_jja  = $this->obtenerBody_jja();
+        $body_jja = $this->obtenerBody_jja();
         $falta_jja = $this->campoFaltante_jja($body_jja, ['nombre', 'id_tipo']);
-        if ($falta_jja) $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
+        if ($falta_jja)
+            $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
 
-        if (strlen(trim($body_jja['nombre'])) > 150) $this->responder_jja(false, null, 'El nombre no debe superar 150 caracteres.', 400);
+        if (strlen(trim($body_jja['nombre'])) > 150)
+            $this->responder_jja(false, null, 'El nombre no debe superar 150 caracteres.', 400);
         if (!is_numeric($body_jja['id_tipo']) || (int)$body_jja['id_tipo'] < 1)
             $this->responder_jja(false, null, 'El campo id_tipo debe ser un entero positivo.', 400);
 
@@ -144,15 +156,16 @@ class ActivoController_jja extends Controller_jja
                 $codigo_qr,
                 isset($body_jja['codigo_nfc']) ? trim($body_jja['codigo_nfc']) : null,
                 (int)$body_jja['id_tipo'],
-                isset($body_jja['ubicacion'])   ? trim($body_jja['ubicacion'])   : null,
-                isset($body_jja['descripcion'])  ? trim($body_jja['descripcion']) : null
+                isset($body_jja['ubicacion']) ? trim($body_jja['ubicacion']) : null,
+                isset($body_jja['descripcion']) ? trim($body_jja['descripcion']) : null
             );
-            
+
             // Actualizar estado 'publicado' si fue proporcionado
             if (isset($res_jja['id_activo_jja']) && isset($body_jja['publicado'])) {
                 $this->modelo_jja->publicar_jja((int)$res_jja['id_activo_jja'], (int)$body_jja['publicado']);
             }
-        } catch (PDOException $e_jja) {
+        }
+        catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
                 ? $m_jja[1] : 'Error al registrar el activo.';
             $this->responder_jja(false, null, $msg_jja, 409);
@@ -181,31 +194,33 @@ class ActivoController_jja extends Controller_jja
 
     private function actualizar_jja(int $id_jja): void
     {
-        $body_jja  = $this->obtenerBody_jja();
+        $body_jja = $this->obtenerBody_jja();
         $falta_jja = $this->campoFaltante_jja($body_jja, ['nombre', 'id_tipo']);
-        if ($falta_jja) $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
+        if ($falta_jja)
+            $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
 
         $this->modelo_jja->actualizar_jja(
             $id_jja,
             trim($body_jja['nombre']),
             isset($body_jja['codigo_nfc']) ? trim($body_jja['codigo_nfc']) : null,
             (int)$body_jja['id_tipo'],
-            isset($body_jja['ubicacion'])  ? trim($body_jja['ubicacion'])  : null,
-            isset($body_jja['descripcion'])? trim($body_jja['descripcion']): null
+            isset($body_jja['ubicacion']) ? trim($body_jja['ubicacion']) : null,
+            isset($body_jja['descripcion']) ? trim($body_jja['descripcion']) : null
         );
-        
+
         // Actualizar estado 'publicado' si fue proporcionado
         if (isset($body_jja['publicado'])) {
             $this->modelo_jja->publicar_jja($id_jja, (int)$body_jja['publicado']);
         }
-        
+
         $this->responder_jja(true, null, 'Activo actualizado correctamente.');
     }
 
     private function actualizarEstado_jja(int $id_jja): void
     {
         $body_jja = $this->obtenerBody_jja();
-        if (empty($body_jja['estado'])) $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
+        if (empty($body_jja['estado']))
+            $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
 
         $estado_jja = strtolower(trim($body_jja['estado']));
         if (!in_array($estado_jja, self::ESTADOS_VALIDOS, true)) {
@@ -222,7 +237,8 @@ class ActivoController_jja extends Controller_jja
     {
         // cualquier usuario autenticado puede crear la solicitud
         $id_cliente = $payload_jja->id ?? null;
-        if (!$id_cliente) $this->responder_jja(false, null, 'Token inválido o id de usuario no disponible.', 400);
+        if (!$id_cliente)
+            $this->responder_jja(false, null, 'Token inválido o id de usuario no disponible.', 400);
 
         // ── Validación 1: verificar que el activo existe y está disponible ──
         $activo = $this->modelo_jja->buscarPorId_jja($id_activo_jja);
@@ -257,7 +273,8 @@ class ActivoController_jja extends Controller_jja
 
         try {
             $sol = $model->crear_jja($id_activo_jja, (int)$id_cliente, $observaciones);
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $this->responder_jja(false, null, 'Error al crear la solicitud: ' . $e->getMessage(), 500);
             return;
         }
@@ -293,8 +310,10 @@ class ActivoController_jja extends Controller_jja
             $this->responder_jja(false, null, 'La imagen no debe superar los 4MB.', 400);
         }
 
-        $directorio = __DIR__ . '/../../frontend/public/uploads/activos/';
-        if (!is_dir($directorio)) mkdir($directorio, 0777, true);
+        // Se guarda en la carpeta del backend (para que el propio backend lo sirva en PROD)
+        $directorio = __DIR__ . '/../uploads/activos/';
+        if (!is_dir($directorio))
+            mkdir($directorio, 0777, true);
 
         $nombreArchivo = 'activo_' . $id_jja . '_' . time() . '.' . $extension;
         $rutaCompleta = $directorio . $nombreArchivo;
@@ -304,11 +323,13 @@ class ActivoController_jja extends Controller_jja
             try {
                 $this->modelo_jja->actualizarImagenes_jja($id_jja, $rutaRelativa);
                 $this->responder_jja(true, ['imagen' => $rutaRelativa], 'Imagen del activo subida correctamente.', 200);
-            } catch (PDOException $e_jja) {
+            }
+            catch (PDOException $e_jja) {
                 $msg_jja = 'Error al actualizar imagen del activo.';
                 $this->responder_jja(false, null, $msg_jja, 500);
             }
-        } else {
+        }
+        else {
             $this->responder_jja(false, null, 'No se pudo guardar la imagen en el servidor.', 500);
         }
     }
@@ -331,7 +352,8 @@ class ActivoController_jja extends Controller_jja
             ($res_jja['filas_afectadas'] ?? 0) < 1
                 ? $this->responder_jja(false, null, "Activo con ID {$id_jja} no pudo ser eliminado.", 400)
                 : $this->responder_jja(true, null, 'Activo eliminado del inventario.');
-        } catch (PDOException $e_jja) {
+        }
+        catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
                 ? $m_jja[1] : 'No se puede eliminar el activo.';
             $this->responder_jja(false, null, $msg_jja, 409);
@@ -342,12 +364,14 @@ class ActivoController_jja extends Controller_jja
     private function publicar_jja(int $id_jja): void
     {
         $body_jja = $this->obtenerBody_jja();
-        if (!isset($body_jja['publicado'])) $this->responder_jja(false, null, "El campo 'publicado' es obligatorio.", 400);
+        if (!isset($body_jja['publicado']))
+            $this->responder_jja(false, null, "El campo 'publicado' es obligatorio.", 400);
         $val = (int)$body_jja['publicado'] === 1 ? 1 : 0;
         try {
             $res = $this->modelo_jja->publicar_jja($id_jja, $val);
             $this->responder_jja(true, $res, $val ? 'Activo publicado.' : 'Activo despublicado.');
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $this->responder_jja(false, null, 'Error al cambiar publicación del activo.', 500);
         }
     }

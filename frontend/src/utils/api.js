@@ -25,11 +25,11 @@ export const apiRequest = async (endpoint, options = {}) => {
   if (!response.ok) {
     console.log('API Error:', data)
     // Solo hacer logout automático para errores de autenticación específicos
-    if (response.status === 401 || 
-        (data.mensaje && (data.mensaje.toLowerCase().includes('token') && 
-                         (data.mensaje.toLowerCase().includes('inválido') || 
-                          data.mensaje.toLowerCase().includes('expirado') || 
-                          data.mensaje.toLowerCase().includes('no válido'))))) {
+    if (response.status === 401 ||
+      (data.mensaje && (data.mensaje.toLowerCase().includes('token') &&
+        (data.mensaje.toLowerCase().includes('inválido') ||
+          data.mensaje.toLowerCase().includes('expirado') ||
+          data.mensaje.toLowerCase().includes('no válido'))))) {
       logout()
       window.location.href = '/'
       throw new Error('Sesión expirada. Redirigiendo al login...')

@@ -82,24 +82,25 @@ const InventarioPage_jja = () => {
             const arr = JSON.parse(fila.imagenes_jja);
             if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
             else imgUrl = `http://localhost:8000${fila.imagenes_jja}`;
-          } catch(e) { imgUrl = `http://localhost:8000${fila.imagenes_jja}`; }
+          } catch (e) { imgUrl = `http://localhost:8000${fila.imagenes_jja}`; }
         }
 
         return (
-        <div className="datatable-avatar-celda-jja">
-          {imgUrl ? (
-            <img src={imgUrl} alt={val} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-          ) : (
-            <div className="datatable-avatar-jja" style={{ background: ESTADO_COLORES[fila.estado_jja] || '#94a3b8' }}>
-              {(val || '?')[0].toUpperCase()}
+          <div className="datatable-avatar-celda-jja">
+            {imgUrl ? (
+              <img src={imgUrl} alt={val} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            ) : (
+              <div className="datatable-avatar-jja" style={{ background: ESTADO_COLORES[fila.estado_jja] || '#94a3b8' }}>
+                {(val || '?')[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div style={{ fontWeight: 600 }}>{val}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--texto-terciario-jja)' }}>{fila.nombre_tipo_jja}</div>
             </div>
-          )}
-          <div>
-            <div style={{ fontWeight: 600 }}>{val}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--texto-terciario-jja)' }}>{fila.nombre_tipo_jja}</div>
           </div>
-        </div>
-      )}
+        )
+      }
     },
     {
       clave: 'codigo_qr_jja', titulo: 'QR / NFC', ancho: 200, render: (val, fila) => (
@@ -116,7 +117,7 @@ const InventarioPage_jja = () => {
             </div>
             {fila.codigo_nfc_jja && (
               <div style={{ fontSize: '0.68rem', color: 'var(--texto-terciario-jja)', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36" /><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58" /><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8" /><path d="M16.37 2a20.16 20.16 0 0 1 0 20" /></svg>
                 NFC: {fila.codigo_nfc_jja}
               </div>
             )}
@@ -201,10 +202,10 @@ const InventarioPage_jja = () => {
 
   const handleEliminar = async (fila) => {
     if (fila.estado_jja === 'prestado' || fila.estado_jja === 'en_proceso_prestamo') {
-      setModalAlerta_jja({ 
-        visible: true, 
-        titulo: 'Acción no permitida', 
-        mensaje: 'No se puede eliminar un activo que está en proceso de préstamo o está prestado.' 
+      setModalAlerta_jja({
+        visible: true,
+        titulo: 'Acción no permitida',
+        mensaje: 'No se puede eliminar un activo que está en proceso de préstamo o está prestado.'
       })
       return
     }
@@ -326,17 +327,17 @@ const InventarioPage_jja = () => {
         <FormGroup_jja label="Descripción" nombre="descripcion" tipo="textarea" valor={form_jja.descripcion} onChange={handleCambioForm} placeholder="Descripción del activo..." />
 
         {/* Sección Imagen Drag & Drop _jja */}
-        <div 
-          className="form-grupo-jja" 
+        <div
+          className="form-grupo-jja"
           style={{ marginBottom: 16 }}
         >
           <label className="form-label-jja">Imagen del activo</label>
-          <div 
-            style={{ 
-              border: `2px dashed ${arrastrando_jja ? 'var(--color-primario-jja)' : 'var(--border-color-jja)'}`, 
-              borderRadius: 'var(--border-radius-sm-jja)', 
-              padding: 24, 
-              textAlign: 'center', 
+          <div
+            style={{
+              border: `2px dashed ${arrastrando_jja ? 'var(--color-primario-jja)' : 'var(--border-color-jja)'}`,
+              borderRadius: 'var(--border-radius-sm-jja)',
+              padding: 24,
+              textAlign: 'center',
               background: arrastrando_jja ? 'var(--color-primario-light-jja)' : 'var(--bg-principal-jja)',
               cursor: 'pointer',
               position: 'relative',
@@ -348,21 +349,21 @@ const InventarioPage_jja = () => {
             onDrop={manejarSoltar_jja}
             onClick={() => document.getElementById('input-imagen-jja').click()}
           >
-            <input 
+            <input
               id="input-imagen-jja"
-              type="file" 
-              accept="image/jpeg, image/png, image/webp" 
+              type="file"
+              accept="image/jpeg, image/png, image/webp"
               style={{ display: 'none' }}
               onChange={manejarSeleccionImagen_jja}
             />
             {imagenPrevia_jja ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
-                <img 
-                  src={imagenPrevia_jja} 
-                  alt="Previsualización de activo" 
-                  style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 6, display: 'block' }} 
+                <img
+                  src={imagenPrevia_jja}
+                  alt="Previsualización de activo"
+                  style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 6, display: 'block' }}
                 />
-                <button 
+                <button
                   type="button"
                   style={{ position: 'absolute', top: -10, right: -10, background: 'var(--color-peligro-jja)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={(e) => { e.stopPropagation(); setImagenFichero_jja(null); setImagenPrevia_jja(null); document.getElementById('input-imagen-jja').value = ''; }}
@@ -475,7 +476,7 @@ const InventarioPage_jja = () => {
               <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Código NFC</div>
               {activoDetalle_jja.codigo_nfc_jja ? (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#0ea5e9', background: '#e0f2fe', padding: '6px 16px', borderRadius: 6 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36" /><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58" /><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8" /><path d="M16.37 2a20.16 20.16 0 0 1 0 20" /></svg>
                   {activoDetalle_jja.codigo_nfc_jja}
                 </div>
               ) : (
@@ -528,7 +529,7 @@ const InventarioPage_jja = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ background: '#fee2e2', color: '#ef4444', minWidth: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
           </div>
           <div style={{ fontSize: '0.95rem', color: 'var(--texto-primario-jja)' }}>
             {modalAlerta_jja.mensaje}

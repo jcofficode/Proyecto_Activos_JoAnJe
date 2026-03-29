@@ -10,6 +10,29 @@ import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
 import { IconoCheck_jja, IconoCerrar_jja, IconoQR_jja } from '../../components/ui_jja/Iconos_jja'
 
+const API_BASE = 'http://localhost:8000'
+
+// Helper para resolver URL de imagen de activo
+function resolverImgActivo(fila) {
+  if (fila.imagenes_jja && Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0) {
+    return `${API_BASE}${fila.imagenes_jja[0]}`
+  }
+  if (typeof fila.imagenes_jja === 'string') {
+    try {
+      const arr = JSON.parse(fila.imagenes_jja)
+      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
+      return `${API_BASE}${fila.imagenes_jja}`
+    } catch { return `${API_BASE}${fila.imagenes_jja}` }
+  }
+  return null
+}
+
+// Helper para resolver URL de imagen de usuario/cliente
+function resolverImgUsuario(path) {
+  if (!path) return null
+  return `${API_BASE}${path}`
+}
+
 const SolicitudesPage_jja = () => {
   const [tabActivo_jja, setTabActivo_jja] = useState('prestamos')
   const [solicitudes_jja, setSolicitudes_jja] = useState([])
@@ -62,7 +85,7 @@ const SolicitudesPage_jja = () => {
     }
     const accion = estado === 'aprobada' ? 'aprobar' : 'rechazar'
     if (estado !== 'aprobada') setMotivoRechazo_jja('')
-    
+
     setConfirmar_jja({
       visible: true,
       titulo: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} solicitud?`,
@@ -75,13 +98,13 @@ const SolicitudesPage_jja = () => {
             devoluciones: `/solicitudes-devolucion/${id}/estado`,
             devolucionesProd: `/solicitudes-devolucion-productos/${id}/estado`,
           }
-          await apiRequest(endpoints[tipo], { 
-            method: 'PATCH', 
-            body: JSON.stringify({ 
-              estado: estadoBackend, 
+          await apiRequest(endpoints[tipo], {
+            method: 'PATCH',
+            body: JSON.stringify({
+              estado: estadoBackend,
               tipo: tipoItemBackend,
-              observaciones_jja: motivo 
-            }) 
+              observaciones_jja: motivo
+            })
           })
           toast_jja.exito(`Solicitud de ${tipo === 'prestamos' ? 'préstamo' : 'devolución'} enviada a ${estadoBackend === 'en_proceso' ? 'proceso' : estado}.`)
           cargarDatos_jja()
@@ -108,7 +131,6 @@ const SolicitudesPage_jja = () => {
 
       if (respuesta?.exito || respuesta?.status === 'success') {
         toast_jja.exito(`✅ ${mensaje} (${accion === 'entrega' ? 'Entrega' : accion === 'devolucion' ? 'Devolución' : accion})`)
-        // Recargar datos para reflejar el cambio sin reload de página
         cargarDatos_jja()
       } else {
         toast_jja.error(mensaje)
@@ -121,75 +143,133 @@ const SolicitudesPage_jja = () => {
     }
   }
 
+  // Formato fecha/hora
+  const formatFechaHora = (v) => {
+    if (!v) return '—'
+    const d = new Date(v)
+    const fecha = d.toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
+    const hora = d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+    return { fecha, hora }
+  }
+
   // ── Columnas ───────────────────────────────────────────────
   const colsSolicitudes_jja = [
-    { clave: 'producto_nombre', titulo: 'Producto', render: (v, f) => {
-        let imgUrl = null;
-        if (f.imagenes_jja && Array.isArray(f.imagenes_jja) && f.imagenes_jja.length > 0) {
-          imgUrl = `http://localhost:8000${f.imagenes_jja[0]}`;
-        } else if (typeof f.imagenes_jja === 'string') {
-          try {
-            const arr = JSON.parse(f.imagenes_jja);
-            if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
-            else imgUrl = `http://localhost:8000${f.imagenes_jja}`;
-          } catch(e) { imgUrl = `http://localhost:8000${f.imagenes_jja}`; }
-        }
-        
+    {
+      clave: 'producto_nombre', titulo: 'Producto', render: (v, f) => {
+        const imgUrl = resolverImgActivo(f)
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {imgUrl ? (
-              <img src={imgUrl} alt="Activo" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+              <img src={imgUrl} alt="Activo" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 36, height: 36, background: '#94a3b8' }}>
+              <div className="datatable-avatar-jja" style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
                 {(v || f.nombre_activo_jja || f.activo_nombre || 'A')[0].toUpperCase()}
               </div>
             )}
             <div>
-              <div style={{ fontWeight: 600 }}>{v || f.nombre_activo_jja || f.activo_nombre || `Activo #${f.id_activo_jja || '—'}`}</div>
-              {f.tipo_solicitud_jja && <div style={{ fontSize: '0.7rem', color: 'var(--texto-terciario-jja)' }}>{f.tipo_solicitud_jja}</div>}
+              <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{v || f.nombre_activo_jja || f.activo_nombre || `Activo #${f.id_activo_jja || '—'}`}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)', marginTop: 2 }}>
+                ID: {f.id_activo_jja || '—'}
+                {f.tipo_solicitud_jja && ` · ${f.tipo_solicitud_jja}`}
+              </div>
             </div>
           </div>
         )
       }
     },
-    { clave: 'cliente_nombre', titulo: 'Cliente' },
-    { clave: 'cantidad_jja', titulo: 'Cant.', render: (v) => `x${v || 1}` },
-    { clave: 'fecha_solicitud_jja', titulo: 'Fecha', render: (v) => v ? new Date(v).toLocaleDateString('es-VE') : '—' },
+    {
+      clave: 'cliente_nombre', titulo: 'Cliente', render: (v, f) => {
+        const clienteImg = resolverImgUsuario(f.cliente_imagen)
+        const nombre = v || `Cliente #${f.id_cliente_jja || '—'}`
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {clienteImg ? (
+              <img src={clienteImg} alt="Cliente" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+            ) : (
+              <div className="datatable-avatar-jja" style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.75rem' }}>
+                {nombre[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{nombre}</div>
+              {f.cliente_correo && <div style={{ fontSize: '0.7rem', color: 'var(--texto-terciario-jja)' }}>{f.cliente_correo}</div>}
+              {f.cliente_cedula && <div style={{ fontSize: '0.68rem', color: 'var(--texto-terciario-jja)' }}>CI: {f.cliente_cedula}</div>}
+            </div>
+          </div>
+        )
+      }
+    },
+    { clave: 'cantidad_jja', titulo: 'Cant.', render: (v) => <span style={{ fontWeight: 600, color: 'var(--color-primario-jja)' }}>x{v || 1}</span> },
+    {
+      clave: 'fecha_solicitud_jja', titulo: 'Fecha / Hora', render: (v) => {
+        const fh = formatFechaHora(v)
+        if (fh === '—') return '—'
+        return (
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{fh.fecha}</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)' }}>{fh.hora}</div>
+          </div>
+        )
+      }
+    },
     { clave: 'estado_jja', titulo: 'Estado', render: (v) => <StatusBadge_jja estado={v} /> },
   ]
 
   const colsDevoluciones_jja = [
-    { clave: 'id_prestamo_jja', titulo: 'Producto / Préstamo', render: (v, f) => {
-        let imgUrl = null;
-        if (f.imagenes_jja && Array.isArray(f.imagenes_jja) && f.imagenes_jja.length > 0) {
-          imgUrl = `http://localhost:8000${f.imagenes_jja[0]}`;
-        } else if (typeof f.imagenes_jja === 'string') {
-          try {
-            const arr = JSON.parse(f.imagenes_jja);
-            if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
-            else imgUrl = `http://localhost:8000${f.imagenes_jja}`;
-          } catch(e) { imgUrl = `http://localhost:8000${f.imagenes_jja}`; }
-        }
-
+    {
+      clave: 'id_prestamo_jja', titulo: 'Producto / Préstamo', render: (v, f) => {
+        const imgUrl = resolverImgActivo(f)
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {imgUrl ? (
-              <img src={imgUrl} alt="Activo" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+              <img src={imgUrl} alt="Activo" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
             ) : (
-               <div className="datatable-avatar-jja" style={{ width: 36, height: 36, background: '#94a3b8' }}>
-                 {(f.activo_nombre || f.producto_nombre || 'P')[0].toUpperCase()}
-               </div>
+              <div className="datatable-avatar-jja" style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
+                {(f.activo_nombre || f.producto_nombre || 'P')[0].toUpperCase()}
+              </div>
             )}
             <div>
-              <div style={{ fontWeight: 600 }}>{f.activo_nombre || f.producto_nombre || `Préstamo #${v}`}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--texto-terciario-jja)' }}>Devolución</div>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{f.activo_nombre || f.producto_nombre || `Préstamo #${v}`}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)', marginTop: 2 }}>Devolución · Préstamo #{v}</div>
             </div>
           </div>
         )
-    }},
-    { clave: 'solicitante_nombre', titulo: 'Solicitante', render: (v, f) => v || `ID ${f.id_usuario_solicitante_jja}` },
-    { clave: 'observaciones_jja', titulo: 'Observaciones', render: (v) => v || '—' },
-    { clave: 'creado_en_jja', titulo: 'Fecha', render: (v) => v ? new Date(v).toLocaleDateString('es-VE') : '—' },
+      }
+    },
+    {
+      clave: 'solicitante_nombre', titulo: 'Solicitante', render: (v, f) => {
+        const nombre = v || `ID ${f.id_usuario_solicitante_jja}`
+        const solImg = resolverImgUsuario(f.solicitante_imagen)
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {solImg ? (
+              <img src={solImg} alt="Solicitante" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+            ) : (
+              <div className="datatable-avatar-jja" style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.75rem' }}>
+                {nombre[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{nombre}</div>
+              {f.solicitante_apellido && <div style={{ fontSize: '0.7rem', color: 'var(--texto-terciario-jja)' }}>{f.solicitante_apellido}</div>}
+            </div>
+          </div>
+        )
+      }
+    },
+    { clave: 'observaciones_jja', titulo: 'Observaciones', render: (v) => <span style={{ fontSize: '0.82rem', maxWidth: 150, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v || '—'}</span> },
+    {
+      clave: 'creado_en_jja', titulo: 'Fecha / Hora', render: (v) => {
+        const fh = formatFechaHora(v)
+        if (fh === '—') return '—'
+        return (
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{fh.fecha}</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)' }}>{fh.hora}</div>
+          </div>
+        )
+      }
+    },
     { clave: 'estado_jja', titulo: 'Estado', render: (v) => <StatusBadge_jja estado={v} /> },
   ]
 

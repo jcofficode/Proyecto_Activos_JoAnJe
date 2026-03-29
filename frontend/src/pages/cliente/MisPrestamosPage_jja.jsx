@@ -16,6 +16,24 @@ import {
   IconoAlertaTriangulo_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
+const API_BASE = 'http://localhost:8000'
+
+// Helper para resolver URL de imagen de activo
+function resolverImgActivo(raw) {
+  const imgs = raw?.imagenes_jja
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) {
+    return `${API_BASE}${imgs[0]}`
+  }
+  if (typeof imgs === 'string') {
+    try {
+      const arr = JSON.parse(imgs)
+      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
+      return `${API_BASE}${imgs}`
+    } catch { return `${API_BASE}${imgs}` }
+  }
+  return null
+}
+
 const TABS_JJA = [
   { clave: 'activos', label: 'Activos' },
   { clave: 'devueltos', label: 'Devueltos' },
@@ -55,7 +73,7 @@ const MisPrestamosPage_jja = () => {
         ...prestamos.map(p => ({
           tipo: 'activo',
           id: p.id_prestamo_jja,
-          nombre: p.nombre_activo_jja || p.nombre_jja || `Activo #${p.id_activo_jja}`,
+          nombre: p.nombre_activo_jja || p.activo_nombre_jja || p.nombre_jja || `Activo #${p.id_activo_jja}`,
           estado: p.estado_prestamo_jja,
           fechaPrestamo: p.fecha_prestamo_jja,
           fechaDevolucion: p.fecha_devolucion_jja || p.fecha_limite_jja,
@@ -144,6 +162,11 @@ const MisPrestamosPage_jja = () => {
     return new Date(f).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
+  const formatearHora = (f) => {
+    if (!f) return ''
+    return new Date(f).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+  }
+
   return (
     <div>
       {/* Header */}
@@ -178,7 +201,7 @@ const MisPrestamosPage_jja = () => {
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="prestamo-card-jja">
               <div style={{ display: 'flex', gap: 16, padding: 20 }}>
-                <div className="skeleton-jja" style={{ width: 48, height: 48, borderRadius: 12 }} />
+                <div className="skeleton-jja" style={{ width: 56, height: 56, borderRadius: 12 }} />
                 <div style={{ flex: 1 }}>
                   <div className="skeleton-jja" style={{ height: 18, width: '50%', marginBottom: 8 }} />
                   <div className="skeleton-jja" style={{ height: 14, width: '30%' }} />
@@ -199,6 +222,7 @@ const MisPrestamosPage_jja = () => {
         <div className="prestamos-lista-jja">
           {prestamosFiltrados_jja.map(p => {
             const vencimiento = estadoVencimiento(p)
+            const activoImg = resolverImgActivo(p.raw)
             return (
               <div key={`${p.tipo}-${p.id}`} className="prestamo-card-jja">
                 {/* Alerta de vencimiento */}
@@ -216,24 +240,48 @@ const MisPrestamosPage_jja = () => {
                 )}
 
                 <div className="prestamo-card-contenido-jja">
-                  {/* Icono tipo */}
-                  <div className="prestamo-card-icono-jja" style={{
-                    background: p.estado === 'activo' ? 'var(--color-exito-bg-jja)' : p.estado === 'devuelto' ? 'var(--color-info-bg-jja)' : 'var(--color-error-bg-jja)',
-                    color: p.estado === 'activo' ? 'var(--color-exito-jja)' : p.estado === 'devuelto' ? 'var(--color-info-jja)' : 'var(--color-error-jja)',
-                  }}>
-                    <IconoPrestamo_jja style={{ fontSize: '1.2rem' }} />
-                  </div>
+                  {/* Imagen del activo o icono */}
+                  {activoImg ? (
+                    <img
+                      src={activoImg}
+                      alt="Activo"
+                      style={{
+                        width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0,
+                        border: '2px solid var(--borde-jja)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                      }}
+                    />
+                  ) : (
+                    <div className="prestamo-card-icono-jja" style={{
+                      background: p.estado === 'activo' ? 'var(--color-exito-bg-jja)' : p.estado === 'devuelto' ? 'var(--color-info-bg-jja)' : 'var(--color-error-bg-jja)',
+                      color: p.estado === 'activo' ? 'var(--color-exito-jja)' : p.estado === 'devuelto' ? 'var(--color-info-jja)' : 'var(--color-error-jja)',
+                    }}>
+                      <IconoPrestamo_jja style={{ fontSize: '1.2rem' }} />
+                    </div>
+                  )}
 
                   {/* Info */}
                   <div className="prestamo-card-info-jja">
                     <div className="prestamo-card-nombre-jja">{p.nombre}</div>
-                    <div className="prestamo-card-meta-jja">
+                    <div className="prestamo-card-meta-jja" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginTop: 3 }}>
                       <span className="prestamo-card-tipo-badge-jja">
                         {p.tipo === 'activo' ? 'Activo' : 'Producto'}
                       </span>
-                      · Préstamo: {formatearFecha(p.fechaPrestamo)}
-                      {p.fechaDevolucion && ` · Límite: ${formatearFecha(p.fechaDevolucion)}`}
+                      <span style={{ color: 'var(--texto-terciario-jja)' }}>·</span>
+                      <span>📅 {formatearFecha(p.fechaPrestamo)}</span>
+                      <span style={{ color: 'var(--texto-terciario-jja)' }}>·</span>
+                      <span>🕐 {formatearHora(p.fechaPrestamo)}</span>
                     </div>
+                    {p.fechaDevolucion && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--texto-terciario-jja)', marginTop: 3 }}>
+                        🔄 Límite devolución: {formatearFecha(p.fechaDevolucion)}
+                      </div>
+                    )}
+                    {p.raw?.nombre_tipo_jja && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)', marginTop: 2 }}>
+                        Tipo: {p.raw.nombre_tipo_jja}
+                      </div>
+                    )}
                   </div>
 
                   {/* Estado + acciones */}
@@ -274,7 +322,14 @@ const MisPrestamosPage_jja = () => {
               background: 'var(--bg-principal-jja)', borderRadius: 'var(--border-radius-sm-jja)',
               padding: 16, marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center'
             }}>
-              <IconoDevolucion_jja style={{ fontSize: '1.5rem', color: 'var(--color-info-jja)' }} />
+              {(() => {
+                const img = resolverImgActivo(prestamoDevolucion_jja.raw)
+                return img ? (
+                  <img src={img} alt="Activo" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '2px solid var(--borde-jja)' }} />
+                ) : (
+                  <IconoDevolucion_jja style={{ fontSize: '1.5rem', color: 'var(--color-info-jja)' }} />
+                )
+              })()}
               <div>
                 <div style={{ fontWeight: 700 }}>{prestamoDevolucion_jja.nombre}</div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--texto-secundario-jja)' }}>

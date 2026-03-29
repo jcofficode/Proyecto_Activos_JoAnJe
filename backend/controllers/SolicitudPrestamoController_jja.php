@@ -17,6 +17,14 @@ class SolicitudPrestamoController_jja extends Controller_jja
         $this->notificacion_jja = new NotificacionModel_jja();
     }
 
+    // Helper para parsear imagenes JSON del activo
+    private function parseImagenes_jja(?string $json): array
+    {
+        if (empty($json)) return [];
+        $decoded = json_decode($json, true);
+        return is_array($decoded) ? $decoded : [$json];
+    }
+
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
     {
         $payload = Middleware_jja::autenticar_jja();
@@ -40,8 +48,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
                         'id_solicitud_jja' => (int)$a['id_solicitud_activo_jja'],
                         'producto_nombre' => $a['activo_nombre'],
                         'cantidad_jja' => 1,
-                        'cliente_nombre' => $a['cliente_nombre'],
+                        'cliente_nombre' => trim(($a['cliente_nombre'] ?? '') . ' ' . ($a['cliente_apellido'] ?? '')),
                         'cliente_correo' => $a['cliente_correo'],
+                        'cliente_imagen' => $a['cliente_imagen'] ?? null,
+                        'cliente_cedula' => $a['cliente_cedula'] ?? null,
+                        'imagenes_jja' => $this->parseImagenes_jja($a['activo_imagenes'] ?? null),
                         'fecha_solicitud_jja' => $a['fecha_solicitud_jja'],
                         'estado_jja' => $a['estado_jja'],
                         'tipo_jja' => 'activo',
@@ -60,6 +71,8 @@ class SolicitudPrestamoController_jja extends Controller_jja
                         'cantidad_jja' => 1,
                         'cliente_nombre' => '',
                         'cliente_correo' => '',
+                        'cliente_imagen' => null,
+                        'imagenes_jja' => $this->parseImagenes_jja($d['activo_imagenes'] ?? null),
                         'fecha_solicitud_jja' => $d['creado_en_jja'],
                         'estado_jja' => $d['estado_jja'],
                         'tipo_jja' => 'devolucion',
@@ -102,8 +115,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
                         'id_solicitud_jja' => (int)$a['id_solicitud_activo_jja'],
                         'producto_nombre' => $a['activo_nombre'],
                         'cantidad_jja' => 1,
-                        'cliente_nombre' => $a['cliente_nombre'],
+                        'cliente_nombre' => trim(($a['cliente_nombre'] ?? '') . ' ' . ($a['cliente_apellido'] ?? '')),
                         'cliente_correo' => $a['cliente_correo'],
+                        'cliente_imagen' => $a['cliente_imagen'] ?? null,
+                        'cliente_cedula' => $a['cliente_cedula'] ?? null,
+                        'imagenes_jja' => $this->parseImagenes_jja($a['activo_imagenes'] ?? null),
                         'fecha_solicitud_jja' => $a['fecha_solicitud_jja'],
                         'estado_jja' => $a['estado_jja'],
                         'tipo_jja' => 'activo',
@@ -119,11 +135,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
             case 'PATCH':
                 $body = $this->obtenerBody_jja();
                 $estado = !empty($body['estado']) ? strtolower(trim($body['estado'])) : '';
-                
+
                 if ($estado !== 'cancelada') {
                     Middleware_jja::autorizar_jja($payload, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                 }
-                
+
                 if (!$this->validarId_jja($id))
                     $this->responder_jja(false, null, 'ID invalido.', 400);
                 if ($sub !== 'estado')
@@ -174,7 +190,8 @@ class SolicitudPrestamoController_jja extends Controller_jja
 
                     if ($estado === 'rechazada') {
                         $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' fue rechazada.";
-                        if ($observaciones) $mensaje .= " Motivo: " . $observaciones;
+                        if ($observaciones)
+                            $mensaje .= " Motivo: " . $observaciones;
                         $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
                     }
                 }

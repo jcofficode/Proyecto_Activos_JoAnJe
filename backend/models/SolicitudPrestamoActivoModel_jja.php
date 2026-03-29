@@ -22,7 +22,10 @@ class SolicitudPrestamoActivoModel_jja extends Model_jja
 
     public function buscarPorId_jja(int $id_jja): ?array
     {
-        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, u.nombre_jja AS cliente_nombre, u.correo_jja AS cliente_correo
+        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes,
+                       u.nombre_jja AS cliente_nombre, u.apellido_jja AS cliente_apellido,
+                       u.correo_jja AS cliente_correo, u.imagen_jja AS cliente_imagen,
+                       u.cedula_jja AS cliente_cedula
                 FROM solicitudes_prestamo_activos_jja s
                 JOIN activos_jja a ON s.id_activo_jja = a.id_activo_jja
                 JOIN usuarios_jja u ON s.id_cliente_jja = u.id_usuario_jja
@@ -35,7 +38,10 @@ class SolicitudPrestamoActivoModel_jja extends Model_jja
 
     public function listarTodas_jja(): array
     {
-        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, u.nombre_jja AS cliente_nombre, u.correo_jja AS cliente_correo
+        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes,
+                       u.nombre_jja AS cliente_nombre, u.apellido_jja AS cliente_apellido,
+                       u.correo_jja AS cliente_correo, u.imagen_jja AS cliente_imagen,
+                       u.cedula_jja AS cliente_cedula
                 FROM solicitudes_prestamo_activos_jja s
                 JOIN activos_jja a ON s.id_activo_jja = a.id_activo_jja
                 JOIN usuarios_jja u ON s.id_cliente_jja = u.id_usuario_jja
@@ -47,7 +53,10 @@ class SolicitudPrestamoActivoModel_jja extends Model_jja
 
     public function listarPorCliente_jja(int $id_cliente_jja): array
     {
-        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, u.nombre_jja AS cliente_nombre, u.correo_jja AS cliente_correo
+        $sql = "SELECT s.*, a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes,
+                       u.nombre_jja AS cliente_nombre, u.apellido_jja AS cliente_apellido,
+                       u.correo_jja AS cliente_correo, u.imagen_jja AS cliente_imagen,
+                       u.cedula_jja AS cliente_cedula
                 FROM solicitudes_prestamo_activos_jja s
                 JOIN activos_jja a ON s.id_activo_jja = a.id_activo_jja
                 JOIN usuarios_jja u ON s.id_cliente_jja = u.id_usuario_jja

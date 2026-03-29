@@ -15,6 +15,23 @@ import {
   IconoCheck_jja, IconoCerrar_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
+const API_BASE = 'http://localhost:8000'
+
+// Helper para resolver URL de imagen de activo
+function resolverImgActivo(s) {
+  if (s.imagenes_jja && Array.isArray(s.imagenes_jja) && s.imagenes_jja.length > 0) {
+    return `${API_BASE}${s.imagenes_jja[0]}`
+  }
+  if (typeof s.imagenes_jja === 'string') {
+    try {
+      const arr = JSON.parse(s.imagenes_jja)
+      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
+      return `${API_BASE}${s.imagenes_jja}`
+    } catch { return `${API_BASE}${s.imagenes_jja}` }
+  }
+  return null
+}
+
 // Helper para extraer id del usuario
 function extraerIdUsuario(meResp) {
   if (!meResp) return null
@@ -112,6 +129,12 @@ const MisSolicitudesPage_jja = () => {
     return d.toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
+  const formatearHora = (f) => {
+    if (!f) return ''
+    const d = new Date(f)
+    return d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+  }
+
   // Icono del estado
   const iconoEstado = (estado) => {
     switch (estado) {
@@ -175,7 +198,7 @@ const MisSolicitudesPage_jja = () => {
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="solicitud-card-jja">
               <div style={{ display: 'flex', gap: 16, padding: 20 }}>
-                <div className="skeleton-jja" style={{ width: 48, height: 48, borderRadius: 12 }} />
+                <div className="skeleton-jja" style={{ width: 56, height: 56, borderRadius: 12 }} />
                 <div style={{ flex: 1 }}>
                   <div className="skeleton-jja" style={{ height: 18, width: '50%', marginBottom: 8 }} />
                   <div className="skeleton-jja" style={{ height: 14, width: '30%' }} />
@@ -194,71 +217,78 @@ const MisSolicitudesPage_jja = () => {
         />
       ) : (
         <div className="solicitudes-lista-jja">
-          {solicitudesFiltradas_jja.map(s => (
-            <div key={s.id_solicitud_jja} className="solicitud-card-jja">
-              <div className="solicitud-card-contenido-jja">
-                {/* Imagen o Icono estado */}
-                {(() => {
-                  let imgUrl = null;
-                  if (s.imagenes_jja && Array.isArray(s.imagenes_jja) && s.imagenes_jja.length > 0) {
-                    imgUrl = `http://localhost:8000${s.imagenes_jja[0]}`;
-                  } else if (typeof s.imagenes_jja === 'string') {
-                    try {
-                      const arr = JSON.parse(s.imagenes_jja);
-                      if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
-                      else imgUrl = `http://localhost:8000${s.imagenes_jja}`;
-                    } catch(e) { imgUrl = `http://localhost:8000${s.imagenes_jja}`; }
-                  }
-                  
-                  return imgUrl ? (
-                    <img src={imgUrl} alt="Activo" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+          {solicitudesFiltradas_jja.map(s => {
+            const imgUrl = resolverImgActivo(s)
+            return (
+              <div key={s.id_solicitud_jja} className="solicitud-card-jja">
+                <div className="solicitud-card-contenido-jja">
+                  {/* Imagen del activo o Icono estado */}
+                  {imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt="Activo"
+                      style={{
+                        width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0,
+                        border: '2px solid var(--borde-jja)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                      }}
+                    />
                   ) : (
                     <div className="solicitud-card-icono-jja">
                       {iconoEstado(s.estado_jja)}
                     </div>
-                  );
-                })()}
+                  )}
 
-                {/* Info principal */}
-                <div className="solicitud-card-info-jja">
-                  <div className="solicitud-card-nombre-jja" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    {s.producto_nombre || s.activo_nombre || 'Activo'}
-                    <span style={{ fontSize: '0.70rem', fontWeight: 600, color: 'var(--color-primario-jja)', border: '1px solid var(--color-primario-jja)', padding: '2px 8px', borderRadius: 12 }}>
-                      {s.tipo_solicitud || 'Préstamo de Producto'}
-                    </span>
-                  </div>
-                  <div className="solicitud-card-meta-jja">
-                    Cantidad: {s.cantidad_jja || 1} · Solicitado: {formatearFecha(s.fecha_solicitud_jja)}
-                  </div>
-                  {s.observaciones_jja && (
-                    <div className="solicitud-card-obs-jja">
-                      {s.observaciones_jja}
+                  {/* Info principal */}
+                  <div className="solicitud-card-info-jja">
+                    <div className="solicitud-card-nombre-jja" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {s.producto_nombre || s.activo_nombre || 'Activo'}
+                      <span style={{ fontSize: '0.70rem', fontWeight: 600, color: 'var(--color-primario-jja)', border: '1px solid var(--color-primario-jja)', padding: '2px 8px', borderRadius: 12 }}>
+                        {s.tipo_solicitud || 'Préstamo de Activo'}
+                      </span>
                     </div>
-                  )}
-                  {s.fecha_respuesta_jja && (
-                    <div className="solicitud-card-respuesta-jja">
-                      Respondido: {formatearFecha(s.fecha_respuesta_jja)}
+                    <div className="solicitud-card-meta-jja" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                      <span>Cantidad: {s.cantidad_jja || 1}</span>
+                      <span style={{ color: 'var(--texto-terciario-jja)' }}>·</span>
+                      <span>📅 {formatearFecha(s.fecha_solicitud_jja)}</span>
+                      <span style={{ color: 'var(--texto-terciario-jja)' }}>·</span>
+                      <span>🕐 {formatearHora(s.fecha_solicitud_jja)}</span>
                     </div>
-                  )}
-                </div>
+                    {s.id_activo_jja && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)', marginTop: 3 }}>
+                        ID Activo: {s.id_activo_jja}
+                      </div>
+                    )}
+                    {s.observaciones_jja && (
+                      <div className="solicitud-card-obs-jja" style={{ marginTop: 4 }}>
+                        💬 {s.observaciones_jja}
+                      </div>
+                    )}
+                    {s.fecha_respuesta_jja && (
+                      <div className="solicitud-card-respuesta-jja" style={{ marginTop: 3 }}>
+                        ✅ Respondido: {formatearFecha(s.fecha_respuesta_jja)} a las {formatearHora(s.fecha_respuesta_jja)}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Estado + acciones */}
-                <div className="solicitud-card-acciones-jja">
-                  <StatusBadge_jja estado={s.estado_jja} />
-                  {(s.estado_jja === 'pendiente' || s.estado_jja === 'en_proceso') && (
-                    <BotonAccion_jja
-                      variante="ghost"
-                      tamaño="sm"
-                      icono={<IconoCancelar_jja />}
-                      onClick={() => abrirCancelar(s)}
-                    >
-                      Cancelar
-                    </BotonAccion_jja>
-                  )}
+                  {/* Estado + acciones */}
+                  <div className="solicitud-card-acciones-jja">
+                    <StatusBadge_jja estado={s.estado_jja} />
+                    {(s.estado_jja === 'pendiente' || s.estado_jja === 'en_proceso') && (
+                      <BotonAccion_jja
+                        variante="ghost"
+                        tamaño="sm"
+                        icono={<IconoCancelar_jja />}
+                        onClick={() => abrirCancelar(s)}
+                      >
+                        Cancelar
+                      </BotonAccion_jja>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

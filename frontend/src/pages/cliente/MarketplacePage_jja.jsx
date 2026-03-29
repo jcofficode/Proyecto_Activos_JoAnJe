@@ -4,7 +4,7 @@
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useEffect, useMemo } from 'react'
-import { apiRequest } from '../../utils/api'
+import { apiRequest, API_URL_JC } from '../../utils/api'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
@@ -65,14 +65,14 @@ const MarketplacePage_jja = () => {
 
   // Extraer imagen del activo
   function obtenerImagen(activo) {
+    // Derivar URL base del backend (quitar /api/v1 de API_URL_JC)
+    const BACKEND_URL = API_URL_JC.replace(/\/api\/v1\/?$/, '')
     try {
       if (!activo.imagenes_jja) return null
       let imgs = activo.imagenes_jja
       if (typeof imgs === 'string') imgs = JSON.parse(imgs)
       if (Array.isArray(imgs) && imgs.length > 0) {
-        let src = imgs[0]
-        if (src.startsWith('/')) src = window.location.origin.replace(/\/$/, '') + src
-        return src
+        return `${BACKEND_URL}${imgs[0]}`
       }
     } catch (e) { /* silenciar */ }
     return null
@@ -224,8 +224,8 @@ const MarketplacePage_jja = () => {
                     {p.ubicacion_jja && (
                       <div className="marketplace-card-ubicacion-jja">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                          <circle cx="12" cy="10" r="3"/>
+                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                          <circle cx="12" cy="10" r="3" />
                         </svg>
                         {p.ubicacion_jja}
                       </div>

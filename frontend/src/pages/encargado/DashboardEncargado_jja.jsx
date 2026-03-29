@@ -18,8 +18,31 @@ import {
   IconoChevronDer_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
+const API_BASE = 'http://localhost:8000'
+
 // ── Colores para avatares ────────────────────────────────────
 const COLORES_AVATAR = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+
+// Helper para resolver URL de imagen de activo
+function resolverImgActivo(fila) {
+  const imgs = fila.imagenes_jja
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) {
+    return `${API_BASE}${imgs[0]}`
+  }
+  if (typeof imgs === 'string') {
+    try {
+      const arr = JSON.parse(imgs)
+      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
+      return `${API_BASE}${imgs}`
+    } catch { return `${API_BASE}${imgs}` }
+  }
+  return null
+}
+
+function resolverImgUsuario(path) {
+  if (!path) return null
+  return `${API_BASE}${path}`
+}
 
 const DashboardEncargado_jja = () => {
   const navigate = useNavigate()
@@ -47,8 +70,6 @@ const DashboardEncargado_jja = () => {
       const activos = extraerLista_jja(activosResp)
       const prestamos = extraerLista_jja(prestamosResp)
       const solicitudes = extraerLista_jja(solicitudesResp)
-
-      console.log('Dashboard Encargado Data:', { activos, prestamos, solicitudes })
 
       // Calcular préstamos vencidos
       const hoy = new Date()
@@ -223,23 +244,40 @@ const DashboardEncargado_jja = () => {
               <div style={{ padding: 20, textAlign: 'center', color: 'var(--texto-terciario-jja)' }}>Sin préstamos registrados hoy</div>
             ) : (
               <ul className="mini-lista-jja">
-                {ultimosPrestamos_jja.map((p, i) => (
-                  <li key={p.id_prestamo_jja || i} className="mini-lista-item-jja">
-                    <div className="mini-lista-izq-jja">
-                      <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(p.nombre_usuario_jja || p.usuario_nombre || '') }}>
-                        {(p.nombre_usuario_jja || p.usuario_nombre || 'U')[0].toUpperCase()}
+                {ultimosPrestamos_jja.map((p, i) => {
+                  const activoImg = resolverImgActivo(p)
+                  const usuarioImg = resolverImgUsuario(p.usuario_imagen)
+                  const nombreUsuario = p.nombre_usuario_jja || p.usuario_nombre || p.usuario_nombre_completo_jja || `Usuario #${p.id_usuario_jja}`
+                  const nombreActivo = p.nombre_activo_jja || p.activo_nombre || p.activo_nombre_jja || `Activo #${p.id_activo_jja}`
+
+                  return (
+                    <li key={p.id_prestamo_jja || i} className="mini-lista-item-jja">
+                      <div className="mini-lista-izq-jja">
+                        {/* Avatar del usuario con foto */}
+                        {usuarioImg ? (
+                          <img src={usuarioImg} alt="Usuario" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+                        ) : (
+                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreUsuario), width: 40, height: 40 }}>
+                            {nombreUsuario[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div className="mini-lista-nombre-jja">{nombreUsuario}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                            {activoImg && (
+                              <img src={activoImg} alt="Activo" style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover' }} />
+                            )}
+                            <span className="mini-lista-detalle-jja">{nombreActivo}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="mini-lista-nombre-jja">{p.nombre_usuario_jja || p.usuario_nombre || `Usuario #${p.id_usuario_jja}`}</div>
-                        <div className="mini-lista-detalle-jja">{p.nombre_activo_jja || p.activo_nombre || `Activo #${p.id_activo_jja}`}</div>
+                      <div className="mini-lista-der-jja">
+                        <div className="mini-lista-fecha-jja">{fechaCorta_jja(p.fecha_prestamo_jja)}</div>
+                        <div className="mini-lista-hora-jja">{horaCorta_jja(p.fecha_prestamo_jja)}</div>
                       </div>
-                    </div>
-                    <div className="mini-lista-der-jja">
-                      <div className="mini-lista-fecha-jja">{fechaCorta_jja(p.fecha_prestamo_jja)}</div>
-                      <div className="mini-lista-hora-jja">{horaCorta_jja(p.fecha_prestamo_jja)}</div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -262,22 +300,45 @@ const DashboardEncargado_jja = () => {
               <div style={{ padding: 20, textAlign: 'center', color: 'var(--texto-terciario-jja)' }}>Sin solicitudes</div>
             ) : (
               <ul className="mini-lista-jja">
-                {solicitudesRecientes_jja.map((s, i) => (
-                  <li key={s.id_solicitud_jja || i} className="mini-lista-item-jja">
-                    <div className="mini-lista-izq-jja">
-                      <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(s.cliente_nombre || '') }}>
-                        {(s.cliente_nombre || 'C')[0].toUpperCase()}
+                {solicitudesRecientes_jja.map((s, i) => {
+                  const activoImg = resolverImgActivo(s)
+                  const clienteImg = resolverImgUsuario(s.cliente_imagen)
+                  const nombreCliente = s.cliente_nombre || `Cliente #${s.id_cliente_jja}`
+                  const nombreActivo = s.producto_nombre || s.nombre_activo_jja || 'Activo'
+
+                  return (
+                    <li key={s.id_solicitud_jja || i} className="mini-lista-item-jja">
+                      <div className="mini-lista-izq-jja">
+                        {/* Avatar del cliente */}
+                        {clienteImg ? (
+                          <img src={clienteImg} alt="Cliente" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+                        ) : (
+                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreCliente), width: 40, height: 40 }}>
+                            {nombreCliente[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div className="mini-lista-nombre-jja">{nombreCliente}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                            {activoImg && (
+                              <img src={activoImg} alt="Activo" style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover' }} />
+                            )}
+                            <span className="mini-lista-detalle-jja">{nombreActivo} · x{s.cantidad_jja || 1}</span>
+                          </div>
+                          {s.cliente_correo && (
+                            <div style={{ fontSize: '0.68rem', color: 'var(--texto-terciario-jja)', marginTop: 1 }}>{s.cliente_correo}</div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <div className="mini-lista-nombre-jja">{s.cliente_nombre || `Cliente #${s.id_cliente_jja}`}</div>
-                        <div className="mini-lista-detalle-jja">{s.producto_nombre || s.nombre_activo_jja || 'Activo'} · x{s.cantidad_jja || 1}</div>
+                      <div className="mini-lista-der-jja" style={{ textAlign: 'right' }}>
+                        <StatusBadge_jja estado={s.estado_jja} />
+                        <div className="mini-lista-fecha-jja" style={{ marginTop: 4, fontSize: '0.7rem' }}>
+                          {fechaCorta_jja(s.fecha_solicitud_jja)}
+                        </div>
                       </div>
-                    </div>
-                    <div className="mini-lista-der-jja">
-                      <StatusBadge_jja estado={s.estado_jja} />
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>

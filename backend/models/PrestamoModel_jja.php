@@ -40,7 +40,8 @@ class PrestamoModel_jja extends Model_jja
     /** Lista todos los prestamos. */
     public function listar_jja(): array
     {
-        return $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_jja');
+        $rows = $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_jja');
+        return $this->enriquecerConImagenes_jja($rows);
     }
 
     public function buscarPorId_jja(int $id_jja): ?array
@@ -50,7 +51,8 @@ class PrestamoModel_jja extends Model_jja
 
     public function listarPorUsuario_jja(int $idUsuario_jja): array
     {
-        return $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_USUARIO_jja', [$idUsuario_jja]);
+        $rows = $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_USUARIO_jja', [$idUsuario_jja]);
+        return $this->enriquecerConImagenes_jja($rows);
     }
 
     public function listarPorActivo_jja(int $idActivo_jja): array
@@ -60,7 +62,8 @@ class PrestamoModel_jja extends Model_jja
 
     public function listarActivos_jja(): array
     {
-        return $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_ACTIVOS_jja');
+        $rows = $this->ejecutarSP_jja('SP_LEER_PRESTAMOS_ACTIVOS_jja');
+        return $this->enriquecerConImagenes_jja($rows);
     }
 
     public function listarVencidos_jja(): array
@@ -85,5 +88,58 @@ class PrestamoModel_jja extends Model_jja
     {
         $res_jja = $this->ejecutarSPUno_jja('SP_ACTUALIZAR_VENCIDOS_jja');
         return $res_jja ?? ['prestamos_actualizados' => 0];
+    }
+
+    /**
+     * Enriquece prestamos con imagenes del activo y del usuario.
+     * Lee imagenes_jja de activos_jja e imagen_jja de usuarios_jja.
+     */
+    private function enriquecerConImagenes_jja(array $rows): array
+    {
+        if (empty($rows)) return $rows;
+
+        $stmtActivo = $this->db_jja->prepare(
+            "SELECT imagenes_jja FROM activos_jja WHERE id_activo_jja = :id AND estado_registro_jja = 1"
+        );
+        $stmtUsuario = $this->db_jja->prepare(
+            "SELECT imagen_jja FROM usuarios_jja WHERE id_usuario_jja = :id AND estado_registro_jja = 1"
+        );
+
+        foreach ($rows as &$r) {
+            // Imagenes del activo
+            try {
+                $idActivo = $r['id_activo_jja'] ?? null;
+                if ($idActivo) {
+                    $stmtActivo->execute([':id' => $idActivo]);
+                    $rowA = $stmtActivo->fetch(\PDO::FETCH_ASSOC);
+                    if ($rowA && !empty($rowA['imagenes_jja'])) {
+                        $decoded = json_decode($rowA['imagenes_jja'], true);
+                        $r['imagenes_jja'] = is_array($decoded) ? $decoded : [$rowA['imagenes_jja']];
+                    } else {
+                        $r['imagenes_jja'] = [];
+                    }
+                } else {
+                    $r['imagenes_jja'] = [];
+                }
+            } catch (\Throwable) {
+                $r['imagenes_jja'] = [];
+            }
+
+            // Imagen del usuario
+            try {
+                $idUsuario = $r['id_usuario_jja'] ?? null;
+                if ($idUsuario) {
+                    $stmtUsuario->execute([':id' => $idUsuario]);
+                    $rowU = $stmtUsuario->fetch(\PDO::FETCH_ASSOC);
+                    $r['usuario_imagen'] = ($rowU && !empty($rowU['imagen_jja'])) ? $rowU['imagen_jja'] : null;
+                } else {
+                    $r['usuario_imagen'] = null;
+                }
+            } catch (\Throwable) {
+                $r['usuario_imagen'] = null;
+            }
+        }
+
+        return $rows;
     }
 }
