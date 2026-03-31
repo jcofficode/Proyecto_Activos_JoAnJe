@@ -13,7 +13,7 @@ import {
   IconoSolicitudes_jja, IconoReportes_jja, IconoAlertas_jja,
   IconoConfiguracion_jja, IconoPersonalizacion_jja, IconoAuditoria_jja,
   IconoPerfil_jja, IconoLogout_jja, IconoMarketplace_jja, IconoPrestamo_jja,
-  IconoNotificacion_jja,
+  IconoNotificacion_jja, IconoSancion_jja,
 } from '../ui_jja/Iconos_jja'
 
 // ── Definición de menú por rol ───────────────────────────────
@@ -25,6 +25,7 @@ const MENU_ADMIN_JJA = [
   { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
   { ruta: '/sistema/reportes', icono: <IconoReportes_jja />, label: 'Reportes' },
   { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { ruta: '/sistema/lista-negra', icono: <IconoSancion_jja />, label: 'Lista Negra' },
   { separador: true },
   { seccion: 'Configuración' },
   { ruta: '/sistema/configuracion', icono: <IconoConfiguracion_jja />, label: 'Configuración' },
@@ -38,6 +39,7 @@ const MENU_ENCARGADO_JJA = [
   { ruta: '/sistema/inventario', icono: <IconoInventario_jja />, label: 'Inventario' },
   { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
   { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { ruta: '/sistema/lista-negra', icono: <IconoSancion_jja />, label: 'Lista Negra' },
   { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones' },
   { separador: true },
   { seccion: 'Marketplace' },

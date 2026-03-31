@@ -11,6 +11,7 @@ import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
 import EmptyState_jja from '../../components/ui_jja/EmptyState_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import { useModal_jja } from '../../context/ModalContext_jja'
+import ModalSancion_jja from '../../components/ui_jja/ModalSancion_jja'
 import {
   IconoBuscar_jja, IconoMarketplace_jja, IconoCarrito_jja,
   IconoFiltrar_jja, IconoChevronIzq_jja, IconoChevronDer_jja,
@@ -34,6 +35,9 @@ const MarketplacePage_jja = () => {
   const [observaciones_jja, setObservaciones_jja] = useState('')
   const [enviando_jja, setEnviando_jja] = useState(false)
 
+  // Modal de sanción bloqueante
+  const [modalSancion_jja, setModalSancion_jja] = useState({ visible: false, motivo: '' })
+
   useEffect(() => { cargarDatos() }, [])
 
   async function cargarDatos() {
@@ -42,7 +46,6 @@ const MarketplacePage_jja = () => {
         apiRequest('/activos'),
         apiRequest('/tipos-activos'),
       ])
-      // Solo activos publicados y disponibles
       // Solo activos publicados (Mostrar todos los estados para que el cliente sepa qué está prestado)
       const activos = extraerLista(activosResp)
       const publicados = activos.filter(a =>
@@ -78,6 +81,50 @@ const MarketplacePage_jja = () => {
     return null
   }
 
+  // ── Verificar sanción antes de solicitar ──
+  async function verificarSancionAntesDeSolicitar_jja(producto) {
+    try {
+      const resp_jja = await apiRequest('/lista-negra/verificar')
+      const datos_jja = resp_jja?.datos || resp_jja
+      if (datos_jja?.tiene_sancion_activa === 1 || datos_jja?.tiene_sancion_activa === '1') {
+        // Usuario sancionado — mostrar modal rojo
+        setModalSancion_jja({ visible: true, motivo: datos_jja?.motivo || '' })
+        return
+      }
+    } catch (err) {
+      // Si falla la verificación, permitir continuar
+      console.warn('Error al verificar sanción:', err)
+    }
+    // No está sancionado — abrir modal de solicitud
+    setProductoSeleccionado_jja(producto)
+    setObservaciones_jja('')
+    setModalVisible_jja(true)
+  }
+
+  // Solicitar préstamo
+  const abrirSolicitud = (producto) => {
+    verificarSancionAntesDeSolicitar_jja(producto)
+  }
+
+  const enviarSolicitud = async () => {
+    if (!productoSeleccionado_jja) return
+    setEnviando_jja(true)
+    try {
+      await apiRequest(`/activos/${productoSeleccionado_jja.id_activo_jja}/solicitudes`, {
+        method: 'POST',
+        body: JSON.stringify({ observaciones: observaciones_jja || 'Solicitud desde marketplace' })
+      })
+      setModalVisible_jja(false)
+      // Mostrar confirmación visual y recargar la cuadrícula para actualizar el estado
+      mostrarModal({ mensaje: 'Solicitud de préstamo enviada exitosamente', tipo: 'success' })
+      cargarDatos()
+    } catch (err) {
+      mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' })
+    } finally {
+      setEnviando_jja(false)
+    }
+  }
+
   // Filtrado
   const productosFiltrados_jja = useMemo(() => {
     let resultado = productos_jja
@@ -100,32 +147,6 @@ const MarketplacePage_jja = () => {
   const paginaActual = Math.min(pagina_jja, totalPaginas)
   const inicio = (paginaActual - 1) * ITEMS_POR_PAGINA
   const productosPagina = productosFiltrados_jja.slice(inicio, inicio + ITEMS_POR_PAGINA)
-
-  // Solicitar préstamo
-  const abrirSolicitud = (producto) => {
-    setProductoSeleccionado_jja(producto)
-    setObservaciones_jja('')
-    setModalVisible_jja(true)
-  }
-
-  const enviarSolicitud = async () => {
-    if (!productoSeleccionado_jja) return
-    setEnviando_jja(true)
-    try {
-      await apiRequest(`/activos/${productoSeleccionado_jja.id_activo_jja}/solicitudes`, {
-        method: 'POST',
-        body: JSON.stringify({ observaciones: observaciones_jja || 'Solicitud desde marketplace' })
-      })
-      setModalVisible_jja(false)
-      // Mostrar confirmación visual y recargar la cuadrícula para actualizar el estado
-      mostrarModal({ mensaje: 'Solicitud de préstamo enviada exitosamente', tipo: 'success' })
-      cargarDatos()
-    } catch (err) {
-      mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' })
-    } finally {
-      setEnviando_jja(false)
-    }
-  }
 
   return (
     <div>
@@ -321,6 +342,13 @@ const MarketplacePage_jja = () => {
           </div>
         )}
       </ActionModal_jja>
+
+      {/* Modal de sanción — se muestra al intentar solicitar estando sancionado */}
+      <ModalSancion_jja
+        visible={modalSancion_jja.visible}
+        motivo={modalSancion_jja.motivo}
+        onCerrar={() => setModalSancion_jja({ visible: false, motivo: '' })}
+      />
     </div>
   )
 }

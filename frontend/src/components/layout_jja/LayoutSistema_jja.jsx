@@ -7,6 +7,7 @@ import React, { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar_jja from './Sidebar_jja'
 import HeaderSistema_jja from './HeaderSistema_jja'
+import VerificadorSancion_jja from '../sistema/VerificadorSancion_jja'
 import '../../styles/sistema_jja.css'
 
 const LayoutSistema_jja = () => {
@@ -26,8 +27,11 @@ const LayoutSistema_jja = () => {
           <Outlet />
         </main>
       </div>
+      {/* Verificador de sanción para clientes — modal rojo cada 5s */}
+      <VerificadorSancion_jja />
     </div>
   )
 }
 
 export default LayoutSistema_jja
+

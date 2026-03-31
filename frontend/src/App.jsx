@@ -37,6 +37,7 @@ import AlertasPage_jja from './pages/admin/AlertasPage_jja'
 import ConfiguracionPage_jja from './pages/admin/ConfiguracionPage_jja'
 import PersonalizacionPage_jja from './pages/admin/PersonalizacionPage_jja'
 import AuditoriaPage_jja from './pages/admin/AuditoriaPage_jja'
+import ListaNegraPage_jja from './pages/admin/ListaNegraPage_jja'
 
 // ── Página Encargado ─────────────────────────────────────────
 import DashboardEncargado_jja from './pages/encargado/DashboardEncargado_jja'
@@ -159,6 +160,7 @@ const AppRoutes_jja = () => {
         <Route path="solicitudes" element={<SolicitudesPage_jja />} />
         <Route path="reportes" element={<ReportesPage_jja />} />
         <Route path="alertas" element={<AlertasPage_jja />} />
+        <Route path="lista-negra" element={<ListaNegraPage_jja />} />
         <Route path="configuracion" element={
           <ProtectedRoute_jja rolesPermitidos={['administrador']}>
             <ConfiguracionPage_jja />

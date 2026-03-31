@@ -569,6 +569,7 @@ $sps_a_eliminar_jja = [
     // Lista negra
     'SP_CREAR_SANCION_jja', 'SP_LEER_SANCIONES_jja', 'SP_LEER_SANCIONES_USUARIO_jja',
     'SP_LEVANTAR_SANCION_jja', 'SP_VERIFICAR_SANCION_jja',
+    'SP_VERIFICAR_SANCION_DETALLE_jja', 'SP_AUTO_SANCIONAR_VENCIDOS_jja',
     // Auditoría
     'SP_LEER_AUDITORIA_jja', 'SP_LEER_AUDITORIA_TABLA_jja', 'SP_LEER_AUDITORIA_USUARIO_jja',
     'SP_REGISTRAR_AUDITORIA_jja',
@@ -1470,6 +1471,55 @@ BEGIN
       AND (`fecha_fin_sancion_jja` IS NULL OR `fecha_fin_sancion_jja` > NOW());
 END
 ", "SP: SP_VERIFICAR_SANCION_jja (consulta rápida para el API)", $cnt_sp_jja, $errores_jja);
+
+ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_VERIFICAR_SANCION_DETALLE_jja`(IN p_id_usuario_jja INT UNSIGNED)
+BEGIN
+    SELECT sanc.`id_sancion_jja`, sanc.`motivo_jja`,
+           sanc.`fecha_inicio_sancion_jja`, sanc.`fecha_fin_sancion_jja`,
+           sanc.`activa_jja`
+    FROM `lista_negra_jja` sanc
+    WHERE sanc.`id_usuario_jja` = p_id_usuario_jja
+      AND sanc.`activa_jja` = 1
+      AND (`fecha_fin_sancion_jja` IS NULL OR `fecha_fin_sancion_jja` > NOW())
+    ORDER BY sanc.`fecha_inicio_sancion_jja` DESC
+    LIMIT 1;
+END
+", "SP: SP_VERIFICAR_SANCION_DETALLE_jja (detalle de sanción activa para modal)", $cnt_sp_jja, $errores_jja);
+
+ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_AUTO_SANCIONAR_VENCIDOS_jja`(IN p_admin_jja INT UNSIGNED)
+BEGIN
+    DECLARE v_contador INT DEFAULT 0;
+
+    -- Primero marcar como vencidos los préstamos activos cuya fecha límite pasó
+    UPDATE `prestamos_jja`
+    SET `estado_prestamo_jja` = 'vencido'
+    WHERE `estado_prestamo_jja` = 'activo' AND `fecha_limite_jja` < NOW();
+
+    -- Insertar sanciones para usuarios con préstamos vencidos que NO tienen sanción activa para ese préstamo
+    INSERT INTO `lista_negra_jja` (`id_usuario_jja`, `id_prestamo_jja`, `motivo_jja`, `creado_por_jja`)
+    SELECT DISTINCT prest.`id_usuario_jja`, prest.`id_prestamo_jja`,
+           CONCAT('Sanción automática: préstamo #', prest.`id_prestamo_jja`,
+                  ' del activo \"', actv.`nombre_jja`, '\" venció el ',
+                  DATE_FORMAT(prest.`fecha_limite_jja`, '%d/%m/%Y %H:%i'),
+                  ' y no fue devuelto a tiempo.'),
+           p_admin_jja
+    FROM `prestamos_jja` prest
+    INNER JOIN `activos_jja` actv ON prest.`id_activo_jja` = actv.`id_activo_jja`
+    WHERE prest.`estado_prestamo_jja` = 'vencido'
+      AND prest.`estado_registro_jja` = 1
+      AND NOT EXISTS (
+          SELECT 1 FROM `lista_negra_jja` ln
+          WHERE ln.`id_prestamo_jja` = prest.`id_prestamo_jja`
+            AND ln.`id_usuario_jja` = prest.`id_usuario_jja`
+            AND ln.`activa_jja` = 1
+      );
+
+    SET v_contador = ROW_COUNT();
+    SELECT v_contador AS `sanciones_creadas_jja`;
+END
+", "SP: SP_AUTO_SANCIONAR_VENCIDOS_jja (sancionar automáticamente préstamos vencidos)", $cnt_sp_jja, $errores_jja);
 
 // ═══════════════════════
 // STORED PROCEDURES AUDITORÍA

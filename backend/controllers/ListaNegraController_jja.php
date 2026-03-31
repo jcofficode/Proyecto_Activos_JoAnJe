@@ -1,10 +1,14 @@
 <?php
 // ============================================================
 // controllers/ListaNegraController_jja.php
-// GET /lista-negra            <- admin/encargado
-// GET /lista-negra/usuario/{id}
-// POST /lista-negra           <- admin
-// PATCH /lista-negra/{id}/levantar  <- admin
+// Gestión de sanciones (Lista Negra) — JoAnJe Coders
+//
+// GET    /lista-negra                  <- admin/encargado: listar todas
+// GET    /lista-negra/usuario/{id}     <- admin/encargado: sanciones de un usuario
+// GET    /lista-negra/verificar        <- cualquier autenticado: verificar mi sanción
+// POST   /lista-negra                  <- admin/encargado: crear sanción manual
+// POST   /lista-negra/auto-sancionar   <- admin/encargado: ejecutar auto-sanción
+// PATCH  /lista-negra/{id}/levantar    <- admin/encargado: levantar sanción
 // ============================================================
 
 class ListaNegraController_jja extends Controller_jja
@@ -24,6 +28,22 @@ class ListaNegraController_jja extends Controller_jja
 
         switch ($metodo_jja) {
             case 'GET':
+                // ── Verificar sanción propia (cualquier usuario autenticado) ──
+                if ($seg0_jja === 'verificar') {
+                    $idUsuario_jja = (int)$payload_jja->id;
+                    $detalle_jja   = $this->modelo_jja->verificarSancionDetalle_jja($idUsuario_jja);
+                    $conteo_jja    = $this->modelo_jja->verificarSancion_jja($idUsuario_jja);
+                    $tieneSancion_jja = ($conteo_jja['tiene_sancion_activa'] ?? 0) > 0;
+                    $this->responder_jja(true, [
+                        'tiene_sancion_activa' => $tieneSancion_jja ? 1 : 0,
+                        'motivo'               => $detalle_jja['motivo_jja'] ?? null,
+                        'fecha_inicio'         => $detalle_jja['fecha_inicio_sancion_jja'] ?? null,
+                        'fecha_fin'            => $detalle_jja['fecha_fin_sancion_jja'] ?? null,
+                    ], $tieneSancion_jja ? 'Usuario sancionado.' : 'Sin sanción activa.');
+                    break;
+                }
+
+                // ── Listar sanciones (solo admin/encargado) ──
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                 if ($seg0_jja === 'usuario' && $this->validarId_jja($seg1_jja)) {
                     $this->responder_jja(true, $this->modelo_jja->listarPorUsuario_jja((int)$seg1_jja), 'Sanciones del usuario.');
@@ -33,7 +53,21 @@ class ListaNegraController_jja extends Controller_jja
                 break;
 
             case 'POST':
-                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+
+                // ── Auto-sancionar préstamos vencidos ──
+                if ($seg0_jja === 'auto-sancionar') {
+                    $idAdmin_jja = (int)$payload_jja->id;
+                    $res_jja = $this->modelo_jja->autoSancionarVencidos_jja($idAdmin_jja);
+                    $cantidad_jja = $res_jja['sanciones_creadas_jja'] ?? 0;
+                    $this->responder_jja(true, $res_jja,
+                        $cantidad_jja > 0
+                            ? "Se crearon {$cantidad_jja} sanción(es) automática(s)."
+                            : 'No hay préstamos vencidos sin sanción.');
+                    break;
+                }
+
+                // ── Crear sanción manual ──
                 $body_jja  = $this->obtenerBody_jja();
                 $falta_jja = $this->campoFaltante_jja($body_jja, ['id_usuario', 'motivo']);
                 if ($falta_jja) $this->responder_jja(false, null, "El campo '{$falta_jja}' es obligatorio.", 400);
@@ -44,24 +78,24 @@ class ListaNegraController_jja extends Controller_jja
                     trim($body_jja['motivo']),
                     $body_jja['fecha_fin'] ?? null
                 );
-                $this->responder_jja(true, $res_jja, 'Sancion registrada.', 201);
+                $this->responder_jja(true, $res_jja, 'Sanción registrada.', 201);
                 break;
 
             case 'PATCH':
-                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
-                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID invalido.', 400);
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+                if (!$this->validarId_jja($seg0_jja)) $this->responder_jja(false, null, 'ID inválido.', 400);
                 if ($seg1_jja !== 'levantar') $this->responder_jja(false, null, 'Sub-ruta no reconocida.', 404);
                 
                 $res_levantar_jja = $this->modelo_jja->levantarSancion_jja((int)$seg0_jja);
                 if (isset($res_levantar_jja['filas_afectadas']) && $res_levantar_jja['filas_afectadas'] == 0) {
-                    $this->responder_jja(false, null, "La sancion con ID {$seg0_jja} no existe o ya se encuentra levantada.", 404);
+                    $this->responder_jja(false, null, "La sanción con ID {$seg0_jja} no existe o ya se encuentra levantada.", 404);
                 }
                 
-                $this->responder_jja(true, null, 'Sancion levantada correctamente.');
+                $this->responder_jja(true, null, 'Sanción levantada correctamente.');
                 break;
 
             default:
-                $this->responder_jja(false, null, 'Metodo HTTP no permitido.', 405);
+                $this->responder_jja(false, null, 'Método HTTP no permitido.', 405);
         }
     }
 }
