@@ -37,6 +37,7 @@ class SolicitudDevolucionModel_jja extends Model_jja
     {
         $sql = "SELECT s.*, u.nombre_jja AS solicitante_nombre, p.id_usuario_jja AS prestamo_usuario,
                        a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes,
+                       a.imagenes_jja,
                        u.imagen_jja AS solicitante_imagen, u.apellido_jja AS solicitante_apellido,
                        p.id_activo_jja
                 FROM solicitudes_devolucion_jja s
@@ -53,6 +54,7 @@ class SolicitudDevolucionModel_jja extends Model_jja
     {
         $sql = "SELECT s.*, u.nombre_jja AS solicitante_nombre, p.id_usuario_jja AS prestamo_usuario,
                        a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes,
+                       a.imagenes_jja,
                        u.imagen_jja AS solicitante_imagen, u.apellido_jja AS solicitante_apellido,
                        p.id_activo_jja
                 FROM solicitudes_devolucion_jja s

@@ -229,13 +229,23 @@ const MisPrestamosPage_jja = () => {
                 {vencimiento && vencimiento.tipo === 'vencido' && (
                   <div className="alerta-vencido-jja">
                     <IconoAlertaTriangulo_jja style={{ fontSize: '1rem' }} />
-                    <span>Este préstamo está vencido — Tienes {vencimiento.dias} día{vencimiento.dias !== 1 ? 's' : ''} de retraso</span>
+                    <span>
+                      {vencimiento.dias === 1
+                        ? 'Este préstamo venció ayer — Tienes 1 día de retraso'
+                        : `Este préstamo está vencido — Tienes ${vencimiento.dias} días de retraso`}
+                    </span>
                   </div>
                 )}
                 {vencimiento && vencimiento.tipo === 'proximo' && (
                   <div className="alerta-vencimiento-jja">
                     <IconoReloj_jja style={{ fontSize: '1rem' }} />
-                    <span>Este préstamo vence en {vencimiento.dias} día{vencimiento.dias !== 1 ? 's' : ''}</span>
+                    <span>
+                      {vencimiento.dias === 0
+                        ? '¡Este préstamo vence hoy! Devuélvelo antes de que finalice el día'
+                        : vencimiento.dias === 1
+                          ? 'Este préstamo vence mañana'
+                          : `Este préstamo vence en ${vencimiento.dias} días`}
+                    </span>
                   </div>
                 )}
 
