@@ -179,7 +179,7 @@ export const useNotificaciones_jja = () => {
   // Retornar fallback seguro si no hay provider
   if (!ctx) {
     return {
-      noLeidas: 0, toastNotif: null, refrescar: () => {}, cerrarToast: () => {},
+      noLeidas: 0, toastNotif: null, refrescar: () => { }, cerrarToast: () => { },
       conteosAlerts: 0, conteosSolicitudes: 0, conteosAuditoria: 0,
     }
   }

@@ -471,8 +471,15 @@
 }
 
 @keyframes notifBadgePulse_jja {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -513,6 +520,7 @@
     opacity: 0;
     transform: translateX(100px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -590,6 +598,7 @@
   box-shadow: 0 2px 8px rgba(26, 61, 110, 0.25);
   transition: transform var(--transicion-jja);
 }
+
 .header-avatar-jja:hover {
   transform: translateY(-1px);
 }
@@ -833,37 +842,53 @@
   background: var(--color-primario-jja);
   color: white;
 }
-.btn-primario-jja:hover { background: var(--color-primario-hover-jja); }
+
+.btn-primario-jja:hover {
+  background: var(--color-primario-hover-jja);
+}
 
 .btn-exito-jja {
   background: var(--color-exito-jja);
   color: white;
 }
-.btn-exito-jja:hover { background: #059669; }
+
+.btn-exito-jja:hover {
+  background: #059669;
+}
 
 .btn-advertencia-jja {
   background: var(--color-advertencia-jja);
   color: white;
 }
-.btn-advertencia-jja:hover { background: #d97706; }
+
+.btn-advertencia-jja:hover {
+  background: #d97706;
+}
 
 .btn-error-jja {
   background: var(--color-error-jja);
   color: white;
 }
-.btn-error-jja:hover { background: #dc2626; }
+
+.btn-error-jja:hover {
+  background: #dc2626;
+}
 
 .btn-info-jja {
   background: var(--color-info-jja);
   color: white;
 }
-.btn-info-jja:hover { background: #2563eb; }
+
+.btn-info-jja:hover {
+  background: #2563eb;
+}
 
 .btn-ghost-jja {
   background: transparent;
   color: var(--texto-secundario-jja);
   border: 1px solid var(--border-color-jja);
 }
+
 .btn-ghost-jja:hover {
   background: var(--bg-principal-jja);
   color: var(--texto-primario-jja);
@@ -1169,10 +1194,21 @@
   background: var(--bg-principal-jja);
 }
 
-.datatable-accion-btn-jja.editar-jja { color: var(--color-primario-jja); }
-.datatable-accion-btn-jja.eliminar-jja { color: var(--color-error-jja); }
-.datatable-accion-btn-jja.ver-jja { color: var(--color-info-jja); }
-.datatable-accion-btn-jja.aprobar-jja { color: var(--color-exito-jja); }
+.datatable-accion-btn-jja.editar-jja {
+  color: var(--color-primario-jja);
+}
+
+.datatable-accion-btn-jja.eliminar-jja {
+  color: var(--color-error-jja);
+}
+
+.datatable-accion-btn-jja.ver-jja {
+  color: var(--color-info-jja);
+}
+
+.datatable-accion-btn-jja.aprobar-jja {
+  color: var(--color-exito-jja);
+}
 
 /* ══════════════════════════════════════════════════════════════
    BADGE DE ESTADO
@@ -1188,24 +1224,33 @@
   white-space: nowrap;
 }
 
-.badge-jja.disponible-jja, .badge-jja.activo-jja, .badge-jja.aprobada-jja, .badge-jja.devuelto-jja,
+.badge-jja.disponible-jja,
+.badge-jja.activo-jja,
+.badge-jja.aprobada-jja,
+.badge-jja.devuelto-jja,
 .badge-jja.completado-jja {
   background: var(--color-exito-bg-jja);
   color: #065f46;
 }
 
-.badge-jja.pendiente-jja, .badge-jja.en_proceso_prestamo-jja {
+.badge-jja.pendiente-jja,
+.badge-jja.en_proceso_prestamo-jja {
   background: var(--color-advertencia-bg-jja);
   color: #92400e;
 }
 
-.badge-jja.vencido-jja, .badge-jja.rechazada-jja, .badge-jja.perdido-jja,
-.badge-jja.dañado-jja, .badge-jja.fallido-jja, .badge-jja.cancelada-jja {
+.badge-jja.vencido-jja,
+.badge-jja.rechazada-jja,
+.badge-jja.perdido-jja,
+.badge-jja.dañado-jja,
+.badge-jja.fallido-jja,
+.badge-jja.cancelada-jja {
   background: var(--color-error-bg-jja);
   color: #991b1b;
 }
 
-.badge-jja.prestado-jja, .badge-jja.info-jja {
+.badge-jja.prestado-jja,
+.badge-jja.info-jja {
   background: var(--color-info-bg-jja);
   color: #1e40af;
 }
@@ -1240,8 +1285,13 @@
 }
 
 @keyframes fadeIn-jja {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-contenido-jja {
@@ -1256,8 +1306,15 @@
 }
 
 @keyframes slideUp-jja {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header-jja {
@@ -1674,8 +1731,15 @@
    ANIMACIONES
    ══════════════════════════════════════════════════════════════ */
 @keyframes conteo-jja {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animar-conteo-jja {
@@ -1683,8 +1747,15 @@
 }
 
 @keyframes pulso-jja {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .skeleton-jja {
@@ -2139,9 +2210,11 @@
   .dashboard-grid-jja {
     grid-template-columns: 1fr;
   }
+
   .form-grid-jja {
     grid-template-columns: 1fr;
   }
+
   .marketplace-grid-jja {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
@@ -2308,13 +2381,27 @@
 }
 
 @keyframes toastEntrar_jja {
-  from { transform: translateX(100%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes toastSalir_jja {
-  from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(100%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 .toast-exito-jja {
@@ -2394,13 +2481,25 @@
 }
 
 @keyframes fadeIn_jja {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalEntrar_jja {
-  from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
-  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  from {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
 }
 
 .confirm-icono-jja {
@@ -2477,6 +2576,7 @@
     right: 10px;
     max-width: none;
   }
+
   .escaneo-input-wrapper-jja {
     width: 100%;
   }
