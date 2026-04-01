@@ -103,7 +103,7 @@
    ══════════════════════════════════════════════════════════════ */
 .sidebar-jja {
   width: var(--sidebar-width-jja);
-  min-height: 100vh;
+  height: 100vh;
   background: var(--sidebar-bg-jja);
   color: var(--sidebar-text-jja);
   display: flex;
@@ -113,36 +113,28 @@
   left: 0;
   z-index: 100;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-.sidebar-jja::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-jja::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-}
-
-/* Logo / Brand */
+/* Logo / Brand — fijo arriba */
 .sidebar-brand-jja {
-  padding: 20px 20px 16px;
+  padding: 16px 18px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  min-height: 72px;
+  min-height: 64px;
+  flex-shrink: 0;
 }
 
 .sidebar-brand-logo-jja {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   object-fit: contain;
   background: rgba(255, 255, 255, 0.1);
   padding: 4px;
+  flex-shrink: 0;
 }
 
 .sidebar-brand-info-jja {
@@ -151,7 +143,7 @@
 }
 
 .sidebar-brand-nombre-jja {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -160,42 +152,65 @@
 }
 
 .sidebar-brand-subtitulo-jja {
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   color: rgba(199, 210, 254, 0.6);
   margin-top: 1px;
 }
 
 /* Sección del menú */
 .sidebar-seccion-jja {
-  padding: 16px 12px 6px;
+  padding: 12px 12px 4px;
 }
 
 .sidebar-seccion-titulo-jja {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(199, 210, 254, 0.45);
   padding: 0 8px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+/* Navegación — zona scrollable */
+.sidebar-nav-jja {
+  padding: 4px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.sidebar-nav-jja::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar-nav-jja::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav-jja::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.sidebar-nav-jja::-webkit-scrollbar-button {
+  display: none;
 }
 
 /* Items del menú */
-.sidebar-nav-jja {
-  padding: 4px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-}
-
 .sidebar-item-jja {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm-jja);
-  font-size: 0.875rem;
+  font-size: 0.84rem;
   font-weight: 500;
   color: var(--sidebar-text-jja);
   text-decoration: none;
@@ -205,6 +220,8 @@
   background: none;
   width: 100%;
   text-align: left;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .sidebar-item-jja:hover {
@@ -221,18 +238,20 @@
 .sidebar-item-jja.activo-jja::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: -10px;
   width: 4px;
-  height: 24px;
+  height: 22px;
   background: #3b82f6;
   border-radius: 0 4px 4px 0;
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
 }
 
 .sidebar-item-icono-jja {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
   opacity: 0.8;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-item-jja.activo-jja .sidebar-item-icono-jja {
@@ -243,45 +262,55 @@
   margin-left: auto;
   background: var(--color-error-jja);
   color: white;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 99px;
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
+  line-height: 1.2;
+  animation: notifBadgePulse_jja 2s ease-in-out infinite;
 }
 
 /* Separador */
 .sidebar-separador-jja {
   height: 1px;
   background: rgba(255, 255, 255, 0.06);
-  margin: 8px 20px;
+  margin: 6px 18px;
+  flex-shrink: 0;
 }
 
-/* Pie del sidebar */
+/* Pie del sidebar — fijo abajo */
 .sidebar-footer-jja {
-  padding: 12px;
+  padding: 8px 10px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-footer-jja .sidebar-item-jja {
+  padding: 7px 12px;
+  font-size: 0.82rem;
 }
 
 .sidebar-usuario-jja {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px;
+  padding: 10px 8px 4px;
   border-radius: var(--border-radius-sm-jja);
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-avatar-jja {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: white;
   background: linear-gradient(135deg, var(--color-primario-jja), var(--color-secundario-jja));
   flex-shrink: 0;
@@ -293,7 +322,7 @@
 }
 
 .sidebar-usuario-nombre-jja {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: white;
   white-space: nowrap;
@@ -302,7 +331,7 @@
 }
 
 .sidebar-usuario-rol-jja {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: rgba(199, 210, 254, 0.55);
   text-transform: capitalize;
 }
@@ -1355,6 +1384,42 @@
   border-bottom: 2px solid var(--border-color-jja);
   margin-bottom: 20px;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabs-jja::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ocultar flechas de scrollbar nativas en todo el panel del sistema */
+.layout-sistema-jja ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.layout-sistema-jja ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.layout-sistema-jja ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+
+.layout-sistema-jja ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.layout-sistema-jja ::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.contenido-sistema-jja {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
 .tab-btn-jja {

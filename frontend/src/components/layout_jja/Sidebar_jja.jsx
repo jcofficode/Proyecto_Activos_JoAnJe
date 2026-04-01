@@ -23,25 +23,26 @@ const MENU_ADMIN_JJA = [
   { ruta: '/sistema/dashboard', icono: <IconoDashboard_jja />, label: 'Dashboard' },
   { ruta: '/sistema/inventario', icono: <IconoInventario_jja />, label: 'Inventario' },
   { ruta: '/sistema/usuarios', icono: <IconoUsuarios_jja />, label: 'Usuarios' },
-  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
+  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes', badgeKey: 'solicitudes' },
   { ruta: '/sistema/reportes', icono: <IconoReportes_jja />, label: 'Reportes' },
-  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas', badgeKey: 'alertas' },
   { ruta: '/sistema/lista-negra', icono: <IconoSancion_jja />, label: 'Lista Negra' },
+  { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },
   { separador: true },
   { seccion: 'Configuración' },
   { ruta: '/sistema/configuracion', icono: <IconoConfiguracion_jja />, label: 'Configuración' },
   { ruta: '/sistema/personalizacion', icono: <IconoPersonalizacion_jja />, label: 'Personalización' },
-  { ruta: '/sistema/auditoria', icono: <IconoAuditoria_jja />, label: 'Auditoría' },
+  { ruta: '/sistema/auditoria', icono: <IconoAuditoria_jja />, label: 'Auditoría', badgeKey: 'auditoria' },
 ]
 
 const MENU_ENCARGADO_JJA = [
   { seccion: 'Menú Principal' },
   { ruta: '/sistema/dashboard', icono: <IconoDashboard_jja />, label: 'Dashboard' },
   { ruta: '/sistema/inventario', icono: <IconoInventario_jja />, label: 'Inventario' },
-  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes' },
-  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas' },
+  { ruta: '/sistema/solicitudes', icono: <IconoSolicitudes_jja />, label: 'Solicitudes', badgeKey: 'solicitudes' },
+  { ruta: '/sistema/alertas', icono: <IconoAlertas_jja />, label: 'Alertas', badgeKey: 'alertas' },
   { ruta: '/sistema/lista-negra', icono: <IconoSancion_jja />, label: 'Lista Negra' },
-  { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones' },
+  { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },
   { separador: true },
   { seccion: 'Marketplace' },
   { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
@@ -54,7 +55,7 @@ const MENU_CLIENTE_JJA = [
   { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
   { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
   { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
-  { ruta: '/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones' },
+  { ruta: '/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },
 ]
 
 const Sidebar_jja = ({ abierto = false, onCerrar }) => {
@@ -62,15 +63,26 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
   const { tema } = useContext(ThemeContext_jja)
   const navigate = useNavigate()
 
-  // Notificaciones no leídas
+  // Notificaciones y conteos
   const notifCtx = useNotificaciones_jja()
   const noLeidas_jja = notifCtx?.noLeidas || 0
+  const conteosAlerts_jja = notifCtx?.conteosAlerts || 0
+  const conteosSolicitudes_jja = notifCtx?.conteosSolicitudes || 0
+  const conteosAuditoria_jja = notifCtx?.conteosAuditoria || 0
 
-  // Seleccionar menú según rol y agregar badge dinámico a notificaciones
+  // Mapa de badges dinámicos
+  const badgeMap = {
+    notificaciones: noLeidas_jja,
+    alertas: conteosAlerts_jja,
+    solicitudes: conteosSolicitudes_jja,
+    auditoria: conteosAuditoria_jja,
+  }
+
+  // Seleccionar menú según rol y agregar badge dinámico
   const menuBase = esAdmin ? MENU_ADMIN_JJA : esEncargado ? MENU_ENCARGADO_JJA : MENU_CLIENTE_JJA
   const menuItems = menuBase.map(item => {
-    if (item.label === 'Notificaciones' && noLeidas_jja > 0) {
-      return { ...item, badge: noLeidas_jja }
+    if (item.badgeKey && badgeMap[item.badgeKey] > 0) {
+      return { ...item, badge: badgeMap[item.badgeKey] }
     }
     return item
   })
@@ -132,7 +144,7 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
               >
                 <span className="sidebar-item-icono-jja">{item.icono}</span>
                 <span>{item.label}</span>
-                {item.badge && <span className="sidebar-item-badge-jja">{item.badge}</span>}
+                {item.badge && <span className="sidebar-item-badge-jja">{item.badge > 99 ? '99+' : item.badge}</span>}
               </NavLink>
             )
           })}

@@ -119,14 +119,14 @@ const MisPrestamosPage_jja = () => {
   // Filtrar por tab
   const prestamosFiltrados_jja = useMemo(() => {
     if (tabActivo_jja === 'todos') return prestamos_jja
-    if (tabActivo_jja === 'activos') return prestamos_jja.filter(p => p.estado === 'activo')
+    if (tabActivo_jja === 'activos') return prestamos_jja.filter(p => p.estado === 'activo' || p.estado === 'vencido')
     if (tabActivo_jja === 'devueltos') return prestamos_jja.filter(p => p.estado === 'devuelto')
     return prestamos_jja
   }, [prestamos_jja, tabActivo_jja])
 
   // Conteos
   const conteos_jja = useMemo(() => ({
-    activos: prestamos_jja.filter(p => p.estado === 'activo').length,
+    activos: prestamos_jja.filter(p => p.estado === 'activo' || p.estado === 'vencido').length,
     devueltos: prestamos_jja.filter(p => p.estado === 'devuelto').length,
     todos: prestamos_jja.length,
   }), [prestamos_jja])
