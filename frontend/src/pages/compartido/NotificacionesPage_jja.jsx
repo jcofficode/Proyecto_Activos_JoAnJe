@@ -11,6 +11,7 @@ import {
   IconoNotificacion_jja, IconoAlertas_jja, IconoCheck_jja,
   IconoReloj_jja, IconoAlertaTriangulo_jja, IconoSolicitudes_jja,
 } from '../../components/ui_jja/Iconos_jja'
+import { useNotificaciones_jja } from '../../context/NotificacionContext_jja'
 
 // Icono según tipo de notificación
 function iconoTipo(tipo) {
@@ -26,6 +27,7 @@ function iconoTipo(tipo) {
 const NotificacionesPage_jja = () => {
   const [notificaciones_jja, setNotificaciones_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
+  const { refrescar: refrescarConteo_jja } = useNotificaciones_jja()
 
   useEffect(() => { cargarDatos() }, [])
 
@@ -51,6 +53,7 @@ const NotificacionesPage_jja = () => {
     try {
       await apiRequest(`/notificaciones/${notif.id_notificacion_jja}/leer`, { method: 'PATCH' })
       cargarDatos()
+      refrescarConteo_jja()
     } catch (err) { console.error(err) }
   }
 
@@ -60,6 +63,7 @@ const NotificacionesPage_jja = () => {
       const myId = me.datos?.id_usuario_jja || me.id_usuario_jja || me.datos?.id || me.id
       await apiRequest(`/notificaciones/usuario/${myId}/leer-todas`, { method: 'PATCH' })
       cargarDatos()
+      refrescarConteo_jja()
     } catch (err) { console.error(err) }
   }
 

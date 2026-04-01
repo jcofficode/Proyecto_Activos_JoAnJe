@@ -7,6 +7,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { ThemeContext_jja } from '../../context/ThemeContext_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
 import { API_URL_JC } from '../../utils/api'
+import { useNotificaciones_jja } from '../../context/NotificacionContext_jja'
 import logoDefault from '../../assets/JoanjeCoders.png'
 import {
   IconoDashboard_jja, IconoInventario_jja, IconoUsuarios_jja,
@@ -61,8 +62,18 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
   const { tema } = useContext(ThemeContext_jja)
   const navigate = useNavigate()
 
-  // Seleccionar menú según rol
-  const menuItems = esAdmin ? MENU_ADMIN_JJA : esEncargado ? MENU_ENCARGADO_JJA : MENU_CLIENTE_JJA
+  // Notificaciones no leídas
+  const notifCtx = useNotificaciones_jja()
+  const noLeidas_jja = notifCtx?.noLeidas || 0
+
+  // Seleccionar menú según rol y agregar badge dinámico a notificaciones
+  const menuBase = esAdmin ? MENU_ADMIN_JJA : esEncargado ? MENU_ENCARGADO_JJA : MENU_CLIENTE_JJA
+  const menuItems = menuBase.map(item => {
+    if (item.label === 'Notificaciones' && noLeidas_jja > 0) {
+      return { ...item, badge: noLeidas_jja }
+    }
+    return item
+  })
 
   // Iniciales del usuario para el avatar
   const iniciales = usuario

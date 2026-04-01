@@ -7,10 +7,12 @@ import { useNavigate } from 'react-router-dom'
 import { IconoMenu_jja, IconoNotificacion_jja, IconoPerfil_jja, IconoLogout_jja } from '../ui_jja/Iconos_jja'
 import Breadcrumb_jja from '../ui_jja/Breadcrumb_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
+import { useNotificaciones_jja } from '../../context/NotificacionContext_jja'
 import { API_URL_JC } from '../../api.config'
 
 const HeaderSistema_jja = ({ breadcrumb = [], onToggleSidebar }) => {
   const { usuario, esAdmin, esEncargado, logout } = useAuth_jja()
+  const { noLeidas } = useNotificaciones_jja()
   const navigate = useNavigate()
   const [menuAbierto_jja, setMenuAbierto_jja] = useState(false)
   const menuRef = useRef(null)
@@ -70,7 +72,9 @@ const HeaderSistema_jja = ({ breadcrumb = [], onToggleSidebar }) => {
           
           <button className="header-btn-notificacion-jja" onClick={handleNotificaciones} aria-label="Notificaciones">
             <IconoNotificacion_jja />
-            <span className="header-notificacion-badge-jja"></span>
+            {noLeidas > 0 && (
+              <span className="header-notificacion-count-jja">{noLeidas > 99 ? '99+' : noLeidas}</span>
+            )}
           </button>
 
           <div className={`header-dropdown-container-jja ${menuAbierto_jja ? 'abierto-jja' : ''}`} ref={menuRef}>

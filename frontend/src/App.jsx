@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider_jja, AuthContext_jja } from './context/AuthContext_jja'
 import { ThemeProvider_jja } from './context/ThemeContext_jja'
 import { ToastProvider_jja } from './context/ToastContext_jja'
+import { NotificacionProvider_jja } from './context/NotificacionContext_jja'
 import { ModalProvider_jja } from './context/ModalContext_jja'
 import GlobalModal_jja from './components/ui_jja/GlobalModal_jja'
 import ProtectedRoute_jja from './components/auth_jja/ProtectedRoute_jja'
@@ -225,10 +226,12 @@ const App = () => (
     <AuthProvider_jja>
       <ThemeProvider_jja>
         <ToastProvider_jja>
-          <ModalProvider_jja>
-            <AppRoutes_jja />
-            <GlobalModal_jja />
-          </ModalProvider_jja>
+          <NotificacionProvider_jja>
+            <ModalProvider_jja>
+              <AppRoutes_jja />
+              <GlobalModal_jja />
+            </ModalProvider_jja>
+          </NotificacionProvider_jja>
         </ToastProvider_jja>
       </ThemeProvider_jja>
     </AuthProvider_jja>

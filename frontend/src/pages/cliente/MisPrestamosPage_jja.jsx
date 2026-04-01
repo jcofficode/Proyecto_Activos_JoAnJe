@@ -297,9 +297,9 @@ const MisPrestamosPage_jja = () => {
                   {/* Estado + acciones */}
                   <div className="prestamo-card-acciones-jja">
                     <StatusBadge_jja estado={p.estado} />
-                    {p.estado === 'activo' && (
+                    {(p.estado === 'activo' || p.estado === 'vencido') && (
                       <BotonAccion_jja
-                        variante="info"
+                        variante={p.estado === 'vencido' ? 'advertencia' : 'info'}
                         tamaño="sm"
                         icono={<IconoDevolucion_jja />}
                         onClick={() => abrirDevolucion(p)}
