@@ -13,6 +13,7 @@ import { useModal_jja } from '../../context/ModalContext_jja'
 import { IconoPlus_jja, IconoEditar_jja, IconoEliminar_jja } from '../../components/ui_jja/Iconos_jja'
 
 const COLORES_ROL = { administrador: '#4f46e5', encargado: '#10b981', cliente: '#f59e0b' }
+const API_BASE_JJA = 'http://localhost:8000'
 
 const UsuariosPage_jja = () => {
   const { mostrarModal } = useModal_jja()
@@ -44,7 +45,11 @@ const UsuariosPage_jja = () => {
         const iniciales = `${(val || '')[0] || ''}${(fila.apellido_jja || '')[0] || ''}`.toUpperCase()
         return (
           <div className="datatable-avatar-celda-jja">
-            <div className="datatable-avatar-jja" style={{ background: COLORES_ROL[fila.nombre_rol_jja] || '#94a3b8' }}>{iniciales}</div>
+            {fila.imagen_jja ? (
+              <img src={`${API_BASE_JJA}${fila.imagen_jja}`} alt={val} className="datatable-avatar-jja" style={{ objectFit: 'cover' }} />
+            ) : (
+              <div className="datatable-avatar-jja" style={{ background: COLORES_ROL[fila.nombre_rol_jja] || '#94a3b8' }}>{iniciales}</div>
+            )}
             <div>
               <div style={{ fontWeight: 600 }}>{val} {fila.apellido_jja}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--texto-terciario-jja)' }}>{fila.cedula_jja}</div>
@@ -80,7 +85,7 @@ const UsuariosPage_jja = () => {
       if (editando_jja) {
         await apiRequest(`/usuarios/${editando_jja.id_usuario_jja}`, {
           method: 'PUT',
-          body: JSON.stringify({ nombre: form_jja.nombre, apellido: form_jja.apellido, correo: form_jja.correo, telefono: form_jja.telefono, id_rol: Number(form_jja.id_rol) })
+          body: JSON.stringify({ nombre: form_jja.nombre, apellido: form_jja.apellido, cedula: form_jja.cedula, correo: form_jja.correo, telefono: form_jja.telefono, id_rol: Number(form_jja.id_rol) })
         })
       } else {
         await apiRequest('/usuarios', {
@@ -90,6 +95,10 @@ const UsuariosPage_jja = () => {
       }
       setModalVisible_jja(false)
       cargarDatos()
+      mostrarModal({
+        mensaje: editando_jja ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente',
+        tipo: 'success'
+      })
     } catch (err) { mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' }) }
     finally { setGuardando_jja(false) }
   }

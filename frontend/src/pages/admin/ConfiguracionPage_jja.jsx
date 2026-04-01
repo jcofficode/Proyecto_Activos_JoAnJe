@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react'
 import { apiRequest } from '../../utils/api'
 import { useToast_jja } from '../../context/ToastContext_jja'
+import { useModal_jja } from '../../context/ModalContext_jja'
 import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
@@ -25,6 +26,7 @@ const ConfiguracionPage_jja = () => {
   const [guardando_jja, setGuardando_jja] = useState(false)
   const [confirmar_jja, setConfirmar_jja] = useState({ visible: false, titulo: '', mensaje: '', onConfirmar: null })
   const toast_jja = useToast_jja()
+  const { mostrarModal } = useModal_jja()
 
   useEffect(() => { cargarDatos_jja() }, [])
 
@@ -41,7 +43,7 @@ const ConfiguracionPage_jja = () => {
       setRoles_jja(extraer_jja(rResp))
     } catch (e) {
       console.error(e)
-      toast_jja.error('Error al cargar la configuración.')
+      mostrarModal({ mensaje: 'Error al cargar la configuración.', tipo: 'error' })
     }
     finally { setCargando_jja(false) }
   }
@@ -113,10 +115,10 @@ const ConfiguracionPage_jja = () => {
         const body = { nombre_tipo: form_jja.nombre_tipo, descripcion: form_jja.descripcion }
         if (editando_jja) {
           await apiRequest(`/tipos-activos/${editando_jja.id_tipo_jja}`, { method: 'PUT', body: JSON.stringify(body) })
-          toast_jja.exito('Tipo de activo actualizado correctamente.')
+          mostrarModal({ mensaje: 'Tipo de activo actualizado correctamente.', tipo: 'success' })
         } else {
           await apiRequest('/tipos-activos', { method: 'POST', body: JSON.stringify(body) })
-          toast_jja.exito('Tipo de activo creado correctamente.')
+          mostrarModal({ mensaje: 'Tipo de activo creado correctamente.', tipo: 'success' })
         }
       } else if (tabActivo_jja === 'politicas') {
         const body = {
@@ -127,16 +129,16 @@ const ConfiguracionPage_jja = () => {
         }
         if (editando_jja) {
           await apiRequest(`/politicas/${editando_jja.id_politica_jja}`, { method: 'PUT', body: JSON.stringify(body) })
-          toast_jja.exito('Política actualizada correctamente.')
+          mostrarModal({ mensaje: 'Política actualizada correctamente.', tipo: 'success' })
         } else {
           await apiRequest('/politicas', { method: 'POST', body: JSON.stringify(body) })
-          toast_jja.exito('Política de préstamo creada correctamente.')
+          mostrarModal({ mensaje: 'Política de préstamo creada correctamente.', tipo: 'success' })
         }
       }
       setModalVisible_jja(false)
       cargarDatos_jja()
     } catch (err) {
-      toast_jja.error('Error: ' + err.message)
+      mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' })
     }
     finally { setGuardando_jja(false) }
   }
@@ -154,10 +156,10 @@ const ConfiguracionPage_jja = () => {
             ? `/tipos-activos/${fila.id_tipo_jja}`
             : `/politicas/${fila.id_politica_jja}`
           await apiRequest(endpoint, { method: 'DELETE' })
-          toast_jja.exito(`${estipoTab ? 'Tipo' : 'Política'} eliminado correctamente.`)
           cargarDatos_jja()
+          mostrarModal({ mensaje: `${estipoTab ? 'Tipo' : 'Política'} eliminado correctamente.`, tipo: 'success' })
         } catch (err) {
-          toast_jja.error('Error: ' + err.message)
+          mostrarModal({ mensaje: 'Error: ' + err.message, tipo: 'error' })
         }
         setConfirmar_jja(prev => ({ ...prev, visible: false }))
       },

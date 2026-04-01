@@ -9,6 +9,8 @@
 class ActivoController_jja extends Controller_jja
 {
     private ActivoModel_jja $modelo_jja;
+    private AuditoriaModel_jja $auditoria_jja;
+    private ?object $payload_jja = null;
 
     // Estados validos del activo
     private const ESTADOS_VALIDOS = ['disponible', 'en_proceso_prestamo', 'en_reparacion', 'perdido'];
@@ -16,6 +18,7 @@ class ActivoController_jja extends Controller_jja
     public function __construct()
     {
         $this->modelo_jja = new ActivoModel_jja();
+        $this->auditoria_jja = new AuditoriaModel_jja();
     }
 
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
@@ -54,6 +57,7 @@ class ActivoController_jja extends Controller_jja
                 // Crear activo (solo admin/encargado)
                 if ($seg1_jja === null) {
                     Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+                    $this->payload_jja = $payload_jja;
                     $this->crear_jja();
                     break;
                 }
@@ -70,6 +74,7 @@ class ActivoController_jja extends Controller_jja
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                 if (!$this->validarId_jja($seg0_jja))
                     $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                $this->payload_jja = $payload_jja;
                 $this->actualizar_jja((int)$seg0_jja);
                 break;
 
@@ -78,6 +83,7 @@ class ActivoController_jja extends Controller_jja
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                 if (!$this->validarId_jja($seg0_jja))
                     $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                $this->payload_jja = $payload_jja;
                 if ($seg1_jja === 'estado') {
                     $this->actualizarEstado_jja((int)$seg0_jja);
                 }
@@ -93,6 +99,7 @@ class ActivoController_jja extends Controller_jja
                 Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
                 if (!$this->validarId_jja($seg0_jja))
                     $this->responder_jja(false, null, 'ID de activo invalido.', 400);
+                $this->payload_jja = $payload_jja;
                 $this->eliminar_jja((int)$seg0_jja);
                 break;
 
@@ -164,6 +171,17 @@ class ActivoController_jja extends Controller_jja
             if (isset($res_jja['id_activo_jja']) && isset($body_jja['publicado'])) {
                 $this->modelo_jja->publicar_jja((int)$res_jja['id_activo_jja'], (int)$body_jja['publicado']);
             }
+
+            // ── Registrar auditoría con usuario real ──
+            $idUsr = $this->payload_jja->id ?? null;
+            $idActivo = $res_jja['id_activo_jja'] ?? 0;
+            try {
+                $this->auditoria_jja->registrar_jja(
+                    'activos_jja', (int)$idActivo, 'INSERT',
+                    null, null, null, $idUsr ? (int)$idUsr : null, null,
+                    'Creó el activo "' . trim($body_jja['nombre']) . '" en el inventario'
+                );
+            } catch (\Throwable $e) { /* no romper flujo */ }
         }
         catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
@@ -212,6 +230,16 @@ class ActivoController_jja extends Controller_jja
         if (isset($body_jja['publicado'])) {
             $this->modelo_jja->publicar_jja($id_jja, (int)$body_jja['publicado']);
         }
+
+        // ── Registrar auditoría con usuario real ──
+        $idUsr = $this->payload_jja->id ?? null;
+        try {
+            $this->auditoria_jja->registrar_jja(
+                'activos_jja', $id_jja, 'UPDATE',
+                null, null, null, $idUsr ? (int)$idUsr : null, null,
+                'Editó la información del activo "' . trim($body_jja['nombre']) . '"'
+            );
+        } catch (\Throwable $e) { /* no romper flujo */ }
 
         $this->responder_jja(true, null, 'Activo actualizado correctamente.');
     }
@@ -349,9 +377,21 @@ class ActivoController_jja extends Controller_jja
 
         try {
             $res_jja = $this->modelo_jja->eliminar_jja($id_jja);
-            ($res_jja['filas_afectadas'] ?? 0) < 1
-                ? $this->responder_jja(false, null, "Activo con ID {$id_jja} no pudo ser eliminado.", 400)
-                : $this->responder_jja(true, null, 'Activo eliminado del inventario.');
+            if (($res_jja['filas_afectadas'] ?? 0) < 1) {
+                $this->responder_jja(false, null, "Activo con ID {$id_jja} no pudo ser eliminado.", 400);
+            }
+
+            // ── Registrar auditoría con usuario real ──
+            $idUsr = $this->payload_jja->id ?? null;
+            try {
+                $this->auditoria_jja->registrar_jja(
+                    'activos_jja', $id_jja, 'DELETE',
+                    null, null, null, $idUsr ? (int)$idUsr : null, null,
+                    'Eliminó el activo "' . ($activo['nombre_jja'] ?? $activo['nombre_activo_jja'] ?? 'ID:'.$id_jja) . '" del inventario'
+                );
+            } catch (\Throwable $e) { /* no romper flujo */ }
+
+            $this->responder_jja(true, null, 'Activo eliminado del inventario.');
         }
         catch (PDOException $e_jja) {
             $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)

@@ -1685,14 +1685,27 @@ END
         ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_AUDITORIA_jja`()
 BEGIN
-    SELECT `id_auditoria_jja`, `tabla_afectada_jja`, `id_registro_afectado_jja`,
-           `accion_jja`, `campo_modificado_jja`, `valor_anterior_jja`, `valor_nuevo_jja`,
-           `id_usuario_responsable_jja`, `fecha_accion_jja`, `ip_origen_jja`, `descripcion_jja`
-    FROM `auditoria_jja`
-    ORDER BY `fecha_accion_jja` DESC
+    SELECT a.`id_auditoria_jja`,
+           a.`tabla_afectada_jja`,
+           a.`id_registro_afectado_jja`,
+           a.`accion_jja`,
+           a.`campo_modificado_jja`,
+           a.`valor_anterior_jja`,
+           a.`valor_nuevo_jja`,
+           a.`id_usuario_responsable_jja`,
+           a.`fecha_accion_jja`,
+           a.`ip_origen_jja`,
+           a.`descripcion_jja`,
+           COALESCE(CONCAT(u.`nombre_jja`, ' ', u.`apellido_jja`), 'Sistema') AS `nombre_usuario_jja`,
+           COALESCE(r.`nombre_rol_jja`, 'Sistema') AS `rol_usuario_jja`,
+           u.`imagen_jja` AS `imagen_usuario_jja`
+    FROM `auditoria_jja` a
+    LEFT JOIN `usuarios_jja` u ON a.`id_usuario_responsable_jja` = u.`id_usuario_jja`
+    LEFT JOIN `roles_jja` r ON u.`id_rol_jja` = r.`id_rol_jja`
+    ORDER BY a.`fecha_accion_jja` DESC
     LIMIT 1000;
 END
-", "SP: SP_LEER_AUDITORIA_jja", $cnt_sp_jja, $errores_jja);
+", "SP: SP_LEER_AUDITORIA_jja (con JOIN usuarios y roles)", $cnt_sp_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_LEER_AUDITORIA_TABLA_jja`(IN p_tabla_jja VARCHAR(100))
@@ -1835,8 +1848,14 @@ END
 
         $triggers_drop_jja = [
             'TR_AUDITORIA_ACTIVO_UPDATE_jja',
+            'TR_AUDITORIA_ACTIVO_INSERT_jja',
             'TR_AUDITORIA_PRESTAMO_UPDATE_jja',
+            'TR_AUDITORIA_PRESTAMO_INSERT_jja',
             'TR_AUDITORIA_USUARIO_UPDATE_jja',
+            'TR_AUDITORIA_USUARIO_INSERT_jja',
+            'TR_AUDITORIA_SANCION_INSERT_jja',
+            'TR_AUDITORIA_SANCION_UPDATE_jja',
+            'TR_AUDITORIA_SOLICITUD_INSERT_jja',
             'TR_HISTORIAL_PRESTAMO_DEVOLUCION_jja',
         ];
         foreach ($triggers_drop_jja as $trig_jja) {
@@ -1910,7 +1929,91 @@ BEGIN
 END
 ", "Trigger: TR_AUDITORIA_USUARIO_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
 
-        // Trigger 4: Registro automático en historial al cerrar un préstamo
+        // Trigger 4.1: NOTA - Auditoría de INSERT en activos se maneja desde el controller
+        //              con el usuario real del JWT (ActivoController_jja)
+
+        // Trigger 4.2: Auditoría INSERT en usuarios (nuevo usuario creado)
+        ejecutar_jja($pdo_jja, "
+CREATE TRIGGER `TR_AUDITORIA_USUARIO_INSERT_jja`
+AFTER INSERT ON `usuarios_jja`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `auditoria_jja`
+        (`tabla_afectada_jja`, `id_registro_afectado_jja`, `accion_jja`,
+         `descripcion_jja`)
+    VALUES
+        ('usuarios_jja', NEW.`id_usuario_jja`, 'INSERT',
+         CONCAT('Nuevo usuario registrado: ', NEW.`nombre_jja`, ' ', NEW.`apellido_jja`, ' (C.I.: ', NEW.`cedula_jja`, ')'));
+END
+", "Trigger: TR_AUDITORIA_USUARIO_INSERT_jja", $cnt_triggers_jja, $errores_jja);
+
+        // Trigger 4.3: Auditoría INSERT en préstamos (nuevo préstamo creado)
+        ejecutar_jja($pdo_jja, "
+CREATE TRIGGER `TR_AUDITORIA_PRESTAMO_INSERT_jja`
+AFTER INSERT ON `prestamos_jja`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `auditoria_jja`
+        (`tabla_afectada_jja`, `id_registro_afectado_jja`, `accion_jja`,
+         `id_usuario_responsable_jja`, `descripcion_jja`)
+    VALUES
+        ('prestamos_jja', NEW.`id_prestamo_jja`, 'INSERT',
+         NEW.`id_encargado_jja`,
+         CONCAT('Nuevo préstamo registrado (ID activo: ', NEW.`id_activo_jja`, ', Usuario: ', NEW.`id_usuario_jja`, ')'));
+END
+", "Trigger: TR_AUDITORIA_PRESTAMO_INSERT_jja", $cnt_triggers_jja, $errores_jja);
+
+        // Trigger 4.4: Auditoría INSERT en lista_negra (nueva sanción)
+        ejecutar_jja($pdo_jja, "
+CREATE TRIGGER `TR_AUDITORIA_SANCION_INSERT_jja`
+AFTER INSERT ON `lista_negra_jja`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `auditoria_jja`
+        (`tabla_afectada_jja`, `id_registro_afectado_jja`, `accion_jja`,
+         `id_usuario_responsable_jja`, `descripcion_jja`)
+    VALUES
+        ('lista_negra_jja', NEW.`id_sancion_jja`, 'INSERT',
+         NEW.`creado_por_jja`,
+         CONCAT('Nueva sanción aplicada al usuario ID: ', NEW.`id_usuario_jja`, '. Motivo: ', LEFT(NEW.`motivo_jja`, 100)));
+END
+", "Trigger: TR_AUDITORIA_SANCION_INSERT_jja", $cnt_triggers_jja, $errores_jja);
+
+        // Trigger 4.5: Auditoría UPDATE en lista_negra (sanción levantada)
+        ejecutar_jja($pdo_jja, "
+CREATE TRIGGER `TR_AUDITORIA_SANCION_UPDATE_jja`
+AFTER UPDATE ON `lista_negra_jja`
+FOR EACH ROW
+BEGIN
+    IF OLD.`activa_jja` <> NEW.`activa_jja` THEN
+        INSERT INTO `auditoria_jja`
+            (`tabla_afectada_jja`, `id_registro_afectado_jja`, `accion_jja`,
+             `campo_modificado_jja`, `valor_anterior_jja`, `valor_nuevo_jja`, `descripcion_jja`)
+        VALUES
+            ('lista_negra_jja', NEW.`id_sancion_jja`, 'UPDATE',
+             'activa_jja', OLD.`activa_jja`, NEW.`activa_jja`,
+             CONCAT(IF(NEW.`activa_jja` = 0, 'Sanción levantada', 'Sanción reactivada'), ' para el usuario ID: ', NEW.`id_usuario_jja`));
+    END IF;
+END
+", "Trigger: TR_AUDITORIA_SANCION_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
+
+        // Trigger 4.6: Auditoría INSERT en solicitudes de préstamo de activos
+        ejecutar_jja($pdo_jja, "
+CREATE TRIGGER `TR_AUDITORIA_SOLICITUD_INSERT_jja`
+AFTER INSERT ON `solicitudes_prestamo_activos_jja`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `auditoria_jja`
+        (`tabla_afectada_jja`, `id_registro_afectado_jja`, `accion_jja`,
+         `id_usuario_responsable_jja`, `descripcion_jja`)
+    VALUES
+        ('solicitudes_prestamo_activos_jja', NEW.`id_solicitud_activo_jja`, 'INSERT',
+         NEW.`id_cliente_jja`,
+         CONCAT('Nueva solicitud de préstamo para el activo ID: ', NEW.`id_activo_jja`));
+END
+", "Trigger: TR_AUDITORIA_SOLICITUD_INSERT_jja", $cnt_triggers_jja, $errores_jja);
+
+        // Trigger 5: Registro automático en historial al cerrar un préstamo
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_HISTORIAL_PRESTAMO_DEVOLUCION_jja`
 AFTER UPDATE ON `prestamos_jja`
@@ -1925,6 +2028,7 @@ BEGIN
     END IF;
 END
 ", "Trigger: TR_HISTORIAL_PRESTAMO_DEVOLUCION_jja (registro automático de vencimiento)", $cnt_triggers_jja, $errores_jja);
+
 
         // ══════════════════════════════════════════════════════════════
 // 6. DATOS SEMILLA (SEED DATA)
