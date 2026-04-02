@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libwebp-dev \
     libfreetype6-dev \
+    libonig-dev \
     unzip \
     curl \
     && docker-php-ext-configure gd \
