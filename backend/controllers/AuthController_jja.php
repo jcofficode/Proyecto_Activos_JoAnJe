@@ -250,6 +250,10 @@ class AuthController_jja extends Controller_jja
             $codigo_jja
         );
 
+        if (!$envio_jja['exito']) {
+            $this->responder_jja(false, null, 'Usuario registrado en la DB, pero falló el envío de correo: ' . $envio_jja['mensaje'], 500);
+        }
+
         $this->responder_jja(true, null, 'Has solicitado registro. Revisa tu correo electrónico para obtener el PIN de acceso.', 200);
     }
 }
