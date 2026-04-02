@@ -27,10 +27,10 @@ class CorreoService_jja
         $this->mailer_jja->SMTPAuth   = true;
         $this->mailer_jja->Username   = $_ENV['SMTP_USER']   ?? '';
         $this->mailer_jja->Password   = $_ENV['SMTP_PASS']   ?? '';
-        $this->mailer_jja->Port       = (int)($_ENV['SMTP_PORT'] ?? 465);
-        $this->mailer_jja->SMTPSecure = strtolower($_ENV['SMTP_SECURE'] ?? 'ssl') === 'tls'
-            ? PHPMailer::ENCRYPTION_STARTTLS
-            : PHPMailer::ENCRYPTION_SMTPS;
+        
+        // Forzando puerto 587 y TLS para evitar bloqueos de Firewall en Datacenters (Railway)
+        $this->mailer_jja->Port       = 587;
+        $this->mailer_jja->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $this->mailer_jja->CharSet    = 'UTF-8';
         $this->mailer_jja->isHTML(true);
 
