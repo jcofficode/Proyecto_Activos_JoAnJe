@@ -10,45 +10,29 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     unzip \
     curl \
-    && docker-php-ext-configure gd \
-        --with-freetype \
-        --with-jpeg \
-        --with-webp \
-    && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        zip \
-        gd \
-        mbstring \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install pdo pdo_mysql zip gd mbstring \
+    && a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# ── Habilitar mod_rewrite (para .htaccess) ───────────────────
-RUN a2enmod rewrite
 
 # ── Instalar Composer ────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # ── Directorio de trabajo ────────────────────────────────────
 WORKDIR /var/www/html
-
-# ── Copiar aplicación ────────────────────────────────────────
 COPY . .
 
-# ── Instalar dependencias PHP (sin dev, optimizado) ──────────
+# ── Instalar dependencias ────────────────────────────────────
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# ── Permisos para carpeta de uploads ────────────────────────
+# ── Permisos y Configuración ─────────────────────────────────
 RUN mkdir -p uploads/activos uploads/perfiles \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/uploads
+    && chmod -R 755 /var/www/html/uploads \
+    && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# ── Habilitar AllowOverride para .htaccess ───────────────────
-RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
-
-# ── Entrypoint para ajustar PORT de Railway ──────────────────
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 80
-
-ENTRYPOINT ["docker-entrypoint.sh"]
+# Railway usa puertos dinámicos, esto es vital
+CMD ["docker-entrypoint.sh"]
