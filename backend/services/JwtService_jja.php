@@ -28,11 +28,14 @@ class JwtService_jja
         string $rol_jja,
         bool   $debeCambiarClave_jja = false
     ): string {
-        $ahora_jja = time();
+        $ahora_jja = (int) time();
+        $horas = (int) $this->horas_jja;
+        $exp_jja = $ahora_jja + ($horas * 3600);
+        
         return JWT::encode([
             'iss'               => 'JoAnJe-Coders-API',
             'iat'               => $ahora_jja,
-            'exp'               => $ahora_jja + ($this->horas_jja * 3600),
+            'exp'               => $exp_jja,
             'id'                => $id_jja,
             'cedula'            => $cedula_jja,
             'correo'            => $correo_jja,
