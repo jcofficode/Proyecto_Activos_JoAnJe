@@ -1,5 +1,8 @@
 // utils/api.js — Helper para llamadas API con JWT
-export const API_URL_JC = 'http://localhost:8000/api/v1'
+import { API_URL_JC } from '../api.config.js'
+
+// Re-exportar para que los componentes que importan desde aquí sigan funcionando
+export { API_URL_JC }
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = sessionStorage.getItem('token_jja')

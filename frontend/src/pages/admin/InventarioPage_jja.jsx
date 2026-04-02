@@ -5,6 +5,7 @@
 // ============================================================
 import React, { useState, useEffect } from 'react'
 import { apiRequest } from '../../utils/api'
+import { API_BASE_JC } from '../../api.config'
 import { useToast_jja } from '../../context/ToastContext_jja'
 import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
@@ -75,14 +76,14 @@ const InventarioPage_jja = () => {
       clave: 'nombre_jja', titulo: 'Activo', render: (val, fila) => {
         let imgUrl = null;
         if (fila.imagenes_jja && Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0) {
-          imgUrl = `http://localhost:8000${fila.imagenes_jja[0]}`;
+          imgUrl = `${API_BASE_JC}${fila.imagenes_jja[0]}`;
         } else if (typeof fila.imagenes_jja === 'string') {
           // Por si el backend no lo devolvió como array sino como string decodificable
           try {
             const arr = JSON.parse(fila.imagenes_jja);
-            if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
-            else imgUrl = `http://localhost:8000${fila.imagenes_jja}`;
-          } catch (e) { imgUrl = `http://localhost:8000${fila.imagenes_jja}`; }
+            if (Array.isArray(arr) && arr.length > 0) imgUrl = `${API_BASE_JC}${arr[0]}`;
+            else imgUrl = `${API_BASE_JC}${fila.imagenes_jja}`;
+          } catch (e) { imgUrl = `${API_BASE_JC}${fila.imagenes_jja}`; }
         }
 
         return (
@@ -158,7 +159,7 @@ const InventarioPage_jja = () => {
       codigo_nfc: fila.codigo_nfc_jja || '',
     })
     setImagenFichero_jja(null)
-    setImagenPrevia_jja(fila.imagenes_jja ? `http://localhost:8000${fila.imagenes_jja}` : null)
+    setImagenPrevia_jja(fila.imagenes_jja ? `${API_BASE_JC}${fila.imagenes_jja}` : null)
     setModalVisible_jja(true)
   }
 

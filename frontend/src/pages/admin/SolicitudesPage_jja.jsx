@@ -9,8 +9,9 @@ import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
 import { IconoCheck_jja, IconoCerrar_jja, IconoQR_jja } from '../../components/ui_jja/Iconos_jja'
+import { API_BASE_JC } from '../../api.config'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = API_BASE_JC
 
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(fila) {

@@ -16,8 +16,9 @@ import {
   IconoSancion_jja, IconoCheck_jja, IconoUsuarios_jja,
   IconoAlertaTriangulo_jja, IconoReloj_jja,
 } from '../../components/ui_jja/Iconos_jja'
+import { API_BASE_JC } from '../../api.config'
 
-const API_BASE_JJA = 'http://localhost:8000'
+const API_BASE_JJA = API_BASE_JC
 
 const ListaNegraPage_jja = () => {
   const { mostrarModal } = useModal_jja()

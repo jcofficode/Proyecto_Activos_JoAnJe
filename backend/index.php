@@ -9,7 +9,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 // ── 2. Variables de entorno (.env via phpdotenv) ─────────────
 $dotenv_jja = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv_jja->load();
+$dotenv_jja->safeLoad();
 
 // ── 3. Autoloader de clases propias (Core/Controllers/Models/Services) ──
 require_once __DIR__ . '/Core/Autoloader_jja.php';

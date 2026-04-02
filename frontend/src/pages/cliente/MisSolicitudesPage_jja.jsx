@@ -14,8 +14,9 @@ import {
   IconoSolicitudes_jja, IconoCancelar_jja, IconoReloj_jja,
   IconoCheck_jja, IconoCerrar_jja,
 } from '../../components/ui_jja/Iconos_jja'
+import { API_BASE_JC } from '../../api.config'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = API_BASE_JC
 
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(s) {

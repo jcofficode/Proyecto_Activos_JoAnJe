@@ -12,8 +12,10 @@ import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import { useModal_jja } from '../../context/ModalContext_jja'
 import { IconoPlus_jja, IconoEditar_jja, IconoEliminar_jja } from '../../components/ui_jja/Iconos_jja'
 
+import { API_BASE_JC } from '../../api.config'
+
 const COLORES_ROL = { administrador: '#4f46e5', encargado: '#10b981', cliente: '#f59e0b' }
-const API_BASE_JJA = 'http://localhost:8000'
+const API_BASE_JJA = API_BASE_JC
 
 const UsuariosPage_jja = () => {
   const { mostrarModal } = useModal_jja()

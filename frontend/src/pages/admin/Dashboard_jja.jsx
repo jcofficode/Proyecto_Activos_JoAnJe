@@ -16,8 +16,9 @@ import {
   IconoUsuarios_jja, IconoPlus_jja, IconoQR_jja,
   IconoChevronDer_jja,
 } from '../../components/ui_jja/Iconos_jja'
+import { API_BASE_JC } from '../../api.config'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = API_BASE_JC
 
 // ── Colores para avatares ────────────────────────────────────
 const COLORES_AVATAR = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']

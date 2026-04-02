@@ -11,8 +11,9 @@ import {
   IconoAlertas_jja, IconoReloj_jja,
   IconoAlertaTriangulo_jja, IconoCheck_jja,
 } from '../../components/ui_jja/Iconos_jja'
+import { API_BASE_JC } from '../../api.config'
 
-const API_BASE_JJA = 'http://localhost:8000'
+const API_BASE_JJA = API_BASE_JC
 
 const AlertasPage_jja = () => {
   const [tabActivo_jja, setTabActivo_jja] = useState('vencidos')
