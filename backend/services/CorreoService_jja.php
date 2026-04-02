@@ -24,22 +24,25 @@ class CorreoService_jja
         $this->mailer_jja->SMTPDebug  = SMTP::DEBUG_OFF;
         $this->mailer_jja->Timeout    = 10; // Evita que se quede infinitamente cargando en Railway
         $hostOriginal = $_ENV['SMTP_HOST'] ?? 'smtp.gmail.com';
-        // Forzamos resolver a IPv4 puro evadiendo la red IPv6 de Railway que bloquea el timeout
-        $this->mailer_jja->Host       = gethostbyname($hostOriginal);
+        // Volvemos a usar el dominio original, pero obligaremos al socket a usar IPv4
+        $this->mailer_jja->Host       = $hostOriginal;
         $this->mailer_jja->SMTPAuth   = true;
         $this->mailer_jja->Username   = $_ENV['SMTP_USER']   ?? '';
         $this->mailer_jja->Password   = $_ENV['SMTP_PASS']   ?? '';
         
-        // Forzando puerto 587 y TLS para evitar bloqueos de Firewall
+        // Forzando puerto 587 y TLS
         $this->mailer_jja->Port       = 587;
         $this->mailer_jja->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         
-        // Evitamos que SSL falle porque ahora la Host es una IP, no el dominio
+        // El truco definitivo: Forzar el origen a IPv4 (0.0.0.0) para que evada los huecos de IPv6
         $this->mailer_jja->SMTPOptions = array(
+            'socket' => array(
+                'bindto' => '0.0.0.0:0'
+            ),
             'ssl' => array(
-                'peer_name' => $hostOriginal,
-                'verify_peer' => true,
-                'verify_peer_name' => true,
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
             )
         );
         $this->mailer_jja->CharSet    = 'UTF-8';
