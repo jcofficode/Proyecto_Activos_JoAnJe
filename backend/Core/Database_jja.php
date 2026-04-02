@@ -10,11 +10,11 @@ class Database_jja
 
     private function __construct()
     {
-        $host_jja    = $_ENV['DB_HOST'] ?? 'localhost';
-        $puerto_jja  = $_ENV['DB_PORT'] ?? '3306';
-        $db_jja      = $_ENV['DB_NAME'] ?? 'gestion_activos_jja';
-        $usuario_jja = $_ENV['DB_USER'] ?? 'root';
-        $clave_jja   = $_ENV['DB_PASS'] ?? '';
+        $host_jja    = $_ENV['DB_HOST']  ?? $_ENV['MYSQLHOST']     ?? getenv('DB_HOST') ?: getenv('MYSQLHOST') ?: 'localhost';
+        $puerto_jja  = $_ENV['DB_PORT']  ?? $_ENV['MYSQLPORT']     ?? getenv('DB_PORT') ?: getenv('MYSQLPORT') ?: '3306';
+        $db_jja      = $_ENV['DB_NAME']  ?? $_ENV['MYSQLDATABASE'] ?? getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'gestion_activos_jja';
+        $usuario_jja = $_ENV['DB_USER']  ?? $_ENV['MYSQLUSER']     ?? getenv('DB_USER') ?: getenv('MYSQLUSER') ?: 'root';
+        $clave_jja   = $_ENV['DB_PASS']  ?? $_ENV['MYSQLPASSWORD'] ?? getenv('DB_PASS') ?: getenv('MYSQLPASSWORD') ?: '';
 
         $dsn_jja = "mysql:host={$host_jja};port={$puerto_jja};dbname={$db_jja};charset=utf8mb4";
 

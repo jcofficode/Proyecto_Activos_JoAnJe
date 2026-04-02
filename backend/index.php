@@ -11,6 +11,19 @@ require_once __DIR__ . '/vendor/autoload.php';
 $dotenv_jja = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv_jja->safeLoad();
 
+// ── 2b. Garantizar que las env vars del sistema estén en $_ENV ────────
+//    Railway inyecta variables a nivel de sistema (getenv), pero Apache
+//    no las pone en $_ENV automáticamente. Este bridge las copia.
+foreach (['APP_ENV', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS',
+          'JWT_SECRET', 'JWT_EXPIRA_HORAS', 'CORS_ORIGIN',
+          'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_SECURE',
+          'MAIL_FROM', 'MAIL_NAME',
+          'MYSQLHOST', 'MYSQLPORT', 'MYSQLDATABASE', 'MYSQLUSER', 'MYSQLPASSWORD'] as $k_jja) {
+    if (!isset($_ENV[$k_jja]) && ($v_jja = getenv($k_jja)) !== false) {
+        $_ENV[$k_jja] = $v_jja;
+    }
+}
+
 // ── 3. Autoloader de clases propias (Core/Controllers/Models/Services) ──
 require_once __DIR__ . '/Core/Autoloader_jja.php';
 
