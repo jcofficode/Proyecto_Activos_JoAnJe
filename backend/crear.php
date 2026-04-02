@@ -453,7 +453,7 @@
         require __DIR__ . '/vendor/autoload.php';
 
         $dotenv_jja = Dotenv\Dotenv::createImmutable(__DIR__);
-        $dotenv_jja->load();
+        $dotenv_jja->safeload();
 
         $cnt_tablas_jja   = 0;
         $cnt_sp_jja       = 0;
