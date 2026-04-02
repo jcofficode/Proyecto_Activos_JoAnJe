@@ -494,11 +494,11 @@
         // ══════════════════════════════════════════════════════
         seccion_jja('1', 'Conexión y Creación de la Base de Datos');
 
-        $host_jja = $_ENV['DB_HOST'];
-        $port_jja = $_ENV['DB_PORT'];
-        $user_jja = $_ENV['DB_USER'];
-        $pass_jja = $_ENV['DB_PASS'];
-        $db_jja   = $_ENV['DB_NAME'];
+        $host_jja = $_ENV['DB_HOST'] ?? $_ENV['MYSQLHOST']     ?? getenv('DB_HOST') ?: getenv('MYSQLHOST') ?: 'localhost';
+        $port_jja = $_ENV['DB_PORT'] ?? $_ENV['MYSQLPORT']     ?? getenv('DB_PORT') ?: getenv('MYSQLPORT') ?: '3306';
+        $user_jja = $_ENV['DB_USER'] ?? $_ENV['MYSQLUSER']     ?? getenv('DB_USER') ?: getenv('MYSQLUSER') ?: 'root';
+        $pass_jja = $_ENV['DB_PASS'] ?? $_ENV['MYSQLPASSWORD'] ?? getenv('DB_PASS') ?: getenv('MYSQLPASSWORD') ?: '';
+        $db_jja   = $_ENV['DB_NAME'] ?? $_ENV['MYSQLDATABASE'] ?? getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'gestion_activos_jja';
 
         try {
             $pdo_jja = new PDO("mysql:host={$host_jja};port={$port_jja}", $user_jja, $pass_jja);
