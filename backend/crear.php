@@ -512,7 +512,8 @@
 
         try {
             $pdo_jja->exec("CREATE DATABASE IF NOT EXISTS `{$db_jja}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            mostrar_jja('ok', '✅', "Base de datos <strong>{$db_jja}</strong> creada o ya existe.");
+            $pdo_jja->exec("ALTER DATABASE `{$db_jja}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            mostrar_jja('ok', '✅', "Base de datos <strong>{$db_jja}</strong> creada y forzada a utf8mb4_unicode_ci.");
             $pdo_jja->exec("USE `{$db_jja}`");
             $pdo_jja->exec("SET time_zone = '-04:00'");
         } catch (PDOException $e) {
