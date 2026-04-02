@@ -23,6 +23,7 @@ foreach (['APP_ENV', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS',
         $_ENV[$k_jja] = $v_jja;
     }
 }
+$_ENV['APP_ENV'] = 'development'; // TEMPORAL PARA VER EL ERROR
 
 // ── 3. Autoloader de clases propias (Core/Controllers/Models/Services) ──
 require_once __DIR__ . '/Core/Autoloader_jja.php';
