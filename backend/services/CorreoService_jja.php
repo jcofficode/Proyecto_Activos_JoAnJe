@@ -22,6 +22,7 @@ class CorreoService_jja
     {
         $this->mailer_jja->isSMTP();
         $this->mailer_jja->SMTPDebug  = SMTP::DEBUG_OFF;
+        $this->mailer_jja->Timeout    = 10; // Evita que se quede infinitamente cargando en Railway
         $this->mailer_jja->Host       = $_ENV['SMTP_HOST']   ?? 'smtp.gmail.com';
         $this->mailer_jja->SMTPAuth   = true;
         $this->mailer_jja->Username   = $_ENV['SMTP_USER']   ?? '';
