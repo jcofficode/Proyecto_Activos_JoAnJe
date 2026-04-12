@@ -3,7 +3,7 @@
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useRef } from 'react'
-import { apiRequest, API_URL_JC } from '../../utils/api'
+import { apiRequest } from '../../utils/api'
 import useAuth_jja from '../../hooks/useAuth_jja'
 import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
@@ -67,8 +67,7 @@ const PerfilPage_jja = () => {
     finally { setGuardando_jja(false) }
   }
 
-  const apiUrlBase = API_URL_JC.replace('/api/v1', '')
-  const avatarUrl = usuario?.imagen ? `${apiUrlBase}${usuario.imagen}` : null
+  const avatarUrl = usuario?.imagen || null
 
   const manejarEntradaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(true) }
   const manejarSalidaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(false) }
@@ -86,7 +85,7 @@ const PerfilPage_jja = () => {
       const formData = new FormData()
       formData.append('imagen', archivo)
       
-      const res = await apiRequest(`/usuarios/${usuario.id}/imagen`, {
+      const res = await apiRequest(`/archivos/perfil/${usuario.id}`, {
         method: 'POST',
         body: formData,
       })
