@@ -10,6 +10,7 @@ spl_autoload_register(function (string $clase_jja) {
         __DIR__ . '/../controllers',
         __DIR__ . '/../models',
         __DIR__ . '/../services',
+        __DIR__ . '/../traits',
     ];
     foreach ($rutas_jja as $ruta_jja) {
         $archivo_jja = "{$ruta_jja}/{$clase_jja}.php";
