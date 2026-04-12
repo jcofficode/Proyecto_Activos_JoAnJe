@@ -74,15 +74,8 @@ const InventarioPage_jja = () => {
     {
       clave: 'nombre_jja', titulo: 'Activo', render: (val, fila) => {
         let imgUrl = null;
-        if (fila.imagenes_jja && Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0) {
-          imgUrl = `http://localhost:8000${fila.imagenes_jja[0]}`;
-        } else if (typeof fila.imagenes_jja === 'string') {
-          // Por si el backend no lo devolvió como array sino como string decodificable
-          try {
-            const arr = JSON.parse(fila.imagenes_jja);
-            if (Array.isArray(arr) && arr.length > 0) imgUrl = `http://localhost:8000${arr[0]}`;
-            else imgUrl = `http://localhost:8000${fila.imagenes_jja}`;
-          } catch (e) { imgUrl = `http://localhost:8000${fila.imagenes_jja}`; }
+        if (Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0) {
+          imgUrl = fila.imagenes_jja[0];
         }
 
         return (
@@ -158,7 +151,7 @@ const InventarioPage_jja = () => {
       codigo_nfc: fila.codigo_nfc_jja || '',
     })
     setImagenFichero_jja(null)
-    setImagenPrevia_jja(fila.imagenes_jja ? `http://localhost:8000${fila.imagenes_jja}` : null)
+    setImagenPrevia_jja(Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0 ? fila.imagenes_jja[0] : null)
     setModalVisible_jja(true)
   }
 
@@ -190,7 +183,7 @@ const InventarioPage_jja = () => {
       if (imagenFichero_jja && idActivo) {
         const formData = new FormData();
         formData.append('imagen', imagenFichero_jja);
-        await apiRequest(`/activos/${idActivo}/imagen`, { method: 'POST', body: formData });
+        await apiRequest(`/archivos/activo/${idActivo}`, { method: 'POST', body: formData });
       }
 
       setModalVisible_jja(false)
