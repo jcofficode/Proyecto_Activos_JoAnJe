@@ -53,4 +53,18 @@ class Controller_jja
     {
         return isset($id_jja) && ctype_digit((string)$id_jja) && (int)$id_jja > 0;
     }
+
+    /**
+     * Extrae el mensaje de SIGNAL de MySQL de una excepción PDO.
+     * Si no coincide el patrón, retorna el mensaje de fallback.
+     */
+    protected function extraerMensajeSP_jja(
+        string $errorMsg_jja,
+        string $fallback_jja = 'Error al procesar la solicitud.'
+    ): string {
+        if (preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $errorMsg_jja, $m_jja)) {
+            return $m_jja[1];
+        }
+        return $fallback_jja;
+    }
 }
