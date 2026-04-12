@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
-import { apiRequest, API_URL_JC } from '../../utils/api'
+import { apiRequest } from '../../utils/api'
 import { useModal_jja } from '../../context/ModalContext_jja'
 
 export default function ProductForm({ onSave, initial = null, onCancel = null }) {
@@ -79,15 +79,9 @@ export default function ProductForm({ onSave, initial = null, onCancel = null })
       // Si se subió una imagen, enviarla al endpoint de imagenes del activo
       const nuevoId = res.datos?.id_activo_jja || res.datos?.id || (initial && (initial.id_activo_jja || initial.id)) || null
       if (imagen && nuevoId) {
-        const form = new FormData()
-        form.append('imagen', imagen)
-        await fetch(`${API_URL_JC}/activos/${nuevoId}/imagen`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${sessionStorage.getItem('token_jja')}`
-          },
-          body: form
-        })
+        const form_jja = new FormData()
+        form_jja.append('imagen', imagen)
+        await apiRequest(`/archivos/activo/${nuevoId}`, { method: 'POST', body: form_jja })
       }
       onSave(res && res.datos ? res.datos : null)
       setNombre('')
