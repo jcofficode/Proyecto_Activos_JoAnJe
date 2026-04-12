@@ -36,16 +36,8 @@ class UsuarioController_jja extends Controller_jja
                 break;
 
             case 'POST':
-                if ($id_jja !== null && isset($segmentos_jja[1]) && $segmentos_jja[1] === 'imagen') {
-                    if (!$this->validarId_jja($id_jja)) {
-                        $this->responder_jja(false, null, 'ID de usuario invalido.', 400);
-                    }
-                    $this->actualizarImagen_jja((int)$id_jja, $payload_jja);
-                }
-                else {
-                    Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
-                    $this->crear_jja();
-                }
+                Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN]);
+                $this->crear_jja();
                 break;
 
             case 'PUT':
@@ -174,58 +166,6 @@ class UsuarioController_jja extends Controller_jja
         ], 'Usuario creado. Se envio la clave temporal al correo.', 201);
     }
 
-    private function actualizarImagen_jja(int $id_jja, object $payload_jja): void
-    {
-        if ($payload_jja->rol !== Middleware_jja::ROL_ADMIN && (int)$payload_jja->id !== $id_jja) {
-            $this->responder_jja(false, null, 'No tienes permisos para actualizar esta imagen.', 403);
-        }
-
-        if (!isset($_FILES['imagen'])) {
-            $this->responder_jja(false, null, 'No se ha proporcionado ninguna imagen.', 400);
-        }
-
-        $archivo = $_FILES['imagen'];
-
-        if ($archivo['error'] !== UPLOAD_ERR_OK) {
-            $this->responder_jja(false, null, 'Error al subir la imagen. Codigo: ' . $archivo['error'], 400);
-        }
-
-        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['jpg', 'jpeg', 'png', 'webp'];
-
-        if (!in_array($extension, $permitidas)) {
-            $this->responder_jja(false, null, 'Formato no permitido. Solo JPG, PNG, WEBP.', 400);
-        }
-
-        if ($archivo['size'] > 2 * 1024 * 1024) {
-            $this->responder_jja(false, null, 'La imagen no debe superar los 2MB.', 400);
-        }
-
-        // Se guarda en la carpeta del backend (para que el propio backend lo sirva en PROD)
-        $directorio = __DIR__ . '/../uploads/perfiles/';
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0777, true);
-        }
-
-        $nombreArchivo = 'perfil_' . $id_jja . '_' . time() . '.' . $extension;
-        $rutaCompleta = $directorio . $nombreArchivo;
-
-        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
-            $rutaRelativa = '/uploads/perfiles/' . $nombreArchivo;
-            try {
-                $this->modelo_jja->actualizarImagen_jja($id_jja, $rutaRelativa);
-                $this->responder_jja(true, ['imagen' => $rutaRelativa], 'Imagen de perfil actualizada correctamente.', 200);
-            }
-            catch (PDOException $e_jja) {
-                $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage());
-                $this->responder_jja(false, null, $msg_jja, 409);
-            }
-        }
-        else {
-            $this->responder_jja(false, null, 'No se pudo guardar la imagen en el servidor.', 500);
-        }
-    }
-
     private function actualizar_jja(int $id_jja): void
     {
         $body_jja = $this->obtenerBody_jja();
@@ -292,12 +232,4 @@ class UsuarioController_jja extends Controller_jja
         $this->responder_jja(true, null, 'Usuario eliminado correctamente.', 200);
     }
 
-    /** Extrae el mensaje de SIGNAL de MySQL del mensaje de excepcion PDO. */
-    private function extraerMensajeSP_jja(string $errorMsg_jja): string
-    {
-        if (preg_match('/SQLSTATE\[45000\]: <<Unknown error>>: \d+ (.+)/', $errorMsg_jja, $m_jja)) {
-            return $m_jja[1];
-        }
-        return 'Error al procesar la solicitud.';
-    }
 }
