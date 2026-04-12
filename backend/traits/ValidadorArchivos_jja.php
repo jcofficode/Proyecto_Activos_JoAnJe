@@ -59,7 +59,7 @@ trait ValidadorArchivos_jja
         string $nombre_jja
     ): void {
         if (!is_dir($directorio_jja)) {
-            mkdir($directorio_jja, 0777, true);
+            mkdir($directorio_jja, 0755, true);
         }
         if (!move_uploaded_file($tmpName_jja, $directorio_jja . $nombre_jja)) {
             $this->responder_jja(false, null, 'No se pudo guardar el archivo en el servidor.', 500);
