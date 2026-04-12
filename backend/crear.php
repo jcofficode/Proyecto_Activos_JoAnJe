@@ -950,6 +950,7 @@ CREATE TABLE IF NOT EXISTS `solicitudes_devolucion_productos_jja` (
             'SP_CREAR_POLITICA_jja','SP_LEER_POLITICAS_jja','SP_LEER_POLITICA_TIPO_jja','SP_ACTUALIZAR_POLITICA_jja','SP_ELIMINAR_POLITICA_jja',
             'SP_CREAR_ACTIVO_jja','SP_LEER_ACTIVOS_jja','SP_LEER_ACTIVO_ID_jja','SP_LEER_ACTIVO_QR_jja','SP_LEER_ACTIVO_NFC_jja',
             'SP_ACTUALIZAR_ACTIVO_jja','SP_ACTUALIZAR_ESTADO_ACTIVO_jja','SP_ELIMINAR_ACTIVO_jja',
+            'SP_PUBLICAR_ACTIVO_jja','SP_GUARDAR_IMAGENES_ACTIVO_jja',
             'SP_REGISTRAR_PRESTAMO_jja','SP_REGISTRAR_DEVOLUCION_jja','SP_LEER_PRESTAMOS_jja','SP_LEER_PRESTAMO_ID_jja',
             'SP_LEER_PRESTAMOS_USUARIO_jja','SP_LEER_PRESTAMOS_ACTIVOS_jja','SP_LEER_PRESTAMOS_POR_ACTIVO_jja',
             'SP_LEER_PRESTAMOS_VENCIDOS_jja','SP_MARCAR_PRESTAMO_PERDIDO_jja','SP_ACTUALIZAR_VENCIDOS_jja',
@@ -1034,11 +1035,11 @@ BEGIN
     ELSE INSERT INTO `activos_jja` (`nombre_jja`,`codigo_qr_jja`,`codigo_nfc_jja`,`id_tipo_jja`,`ubicacion_jja`,`descripcion_jja`) VALUES (p_nombre_jja,p_codigo_qr_jja,p_codigo_nfc_jja,p_id_tipo_jja,p_ubicacion_jja,p_descripcion_jja); SELECT LAST_INSERT_ID() AS `id_activo_jja`; END IF;
 END", "SP: SP_CREAR_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
 
-        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_ACTIVOS_jja`() BEGIN SELECT actv.`id_activo_jja`,actv.`nombre_jja`,actv.`codigo_qr_jja`,actv.`codigo_nfc_jja`,actv.`id_tipo_jja`,tipo.`nombre_tipo_jja`,actv.`ubicacion_jja`,actv.`descripcion_jja`,actv.`estado_jja`,actv.`estado_registro_jja`,actv.`creado_en_jja` FROM `activos_jja` actv INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`=tipo.`id_tipo_jja` WHERE actv.`estado_registro_jja`=1 ORDER BY actv.`nombre_jja`; END", "SP: SP_LEER_ACTIVOS_jja", $cnt_sp_jja, $errores_jja);
+        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_ACTIVOS_jja`() BEGIN SELECT actv.`id_activo_jja`,actv.`nombre_jja`,actv.`codigo_qr_jja`,actv.`codigo_nfc_jja`,actv.`id_tipo_jja`,tipo.`nombre_tipo_jja`,actv.`ubicacion_jja`,actv.`descripcion_jja`,actv.`estado_jja`,actv.`estado_registro_jja`,actv.`creado_en_jja`,actv.`imagenes_jja`,actv.`publicado_jja` FROM `activos_jja` actv INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`=tipo.`id_tipo_jja` WHERE actv.`estado_registro_jja`=1 ORDER BY actv.`nombre_jja`; END", "SP: SP_LEER_ACTIVOS_jja", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_ACTIVO_ID_jja`(IN p_id_jja INT UNSIGNED) BEGIN SELECT actv.`id_activo_jja`,actv.`nombre_jja`,actv.`codigo_qr_jja`,actv.`codigo_nfc_jja`,actv.`id_tipo_jja`,tipo.`nombre_tipo_jja`,actv.`ubicacion_jja`,actv.`descripcion_jja`,actv.`estado_jja`,actv.`creado_en_jja` FROM `activos_jja` actv INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`=tipo.`id_tipo_jja` WHERE actv.`id_activo_jja`=p_id_jja AND actv.`estado_registro_jja`=1; END", "SP: SP_LEER_ACTIVO_ID_jja", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_ACTIVO_QR_jja`(IN p_qr_jja VARCHAR(50)) BEGIN SELECT actv.`id_activo_jja`,actv.`nombre_jja`,actv.`codigo_qr_jja`,actv.`codigo_nfc_jja`,actv.`id_tipo_jja`,tipo.`nombre_tipo_jja`,actv.`ubicacion_jja`,actv.`descripcion_jja`,actv.`estado_jja` FROM `activos_jja` actv INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`=tipo.`id_tipo_jja` WHERE actv.`codigo_qr_jja`=p_qr_jja AND actv.`estado_registro_jja`=1; END", "SP: SP_LEER_ACTIVO_QR_jja (escaneo QR)", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_ACTIVO_NFC_jja`(IN p_nfc_jja VARCHAR(50)) BEGIN SELECT actv.`id_activo_jja`,actv.`nombre_jja`,actv.`codigo_qr_jja`,actv.`codigo_nfc_jja`,actv.`id_tipo_jja`,tipo.`nombre_tipo_jja`,actv.`ubicacion_jja`,actv.`descripcion_jja`,actv.`estado_jja` FROM `activos_jja` actv INNER JOIN `tipos_activos_jja` tipo ON actv.`id_tipo_jja`=tipo.`id_tipo_jja` WHERE actv.`codigo_nfc_jja`=p_nfc_jja AND actv.`estado_registro_jja`=1; END", "SP: SP_LEER_ACTIVO_NFC_jja (lectura NFC)", $cnt_sp_jja, $errores_jja);
-        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_ACTUALIZAR_ACTIVO_jja`(IN p_id_jja INT UNSIGNED, IN p_nombre_jja VARCHAR(200), IN p_id_tipo_jja INT UNSIGNED, IN p_ubicacion_jja VARCHAR(150), IN p_descripcion_jja TEXT) BEGIN UPDATE `activos_jja` SET `nombre_jja`=p_nombre_jja,`id_tipo_jja`=p_id_tipo_jja,`ubicacion_jja`=p_ubicacion_jja,`descripcion_jja`=p_descripcion_jja WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1; SELECT ROW_COUNT() AS `filas_afectadas`; END", "SP: SP_ACTUALIZAR_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
+        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_ACTUALIZAR_ACTIVO_jja`(IN p_id_jja INT UNSIGNED, IN p_nombre_jja VARCHAR(200), IN p_codigo_nfc_jja VARCHAR(50), IN p_id_tipo_jja INT UNSIGNED, IN p_ubicacion_jja VARCHAR(150), IN p_descripcion_jja TEXT) BEGIN UPDATE `activos_jja` SET `nombre_jja`=p_nombre_jja,`codigo_nfc_jja`=p_codigo_nfc_jja,`id_tipo_jja`=p_id_tipo_jja,`ubicacion_jja`=p_ubicacion_jja,`descripcion_jja`=p_descripcion_jja WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1; SELECT ROW_COUNT() AS `filas_afectadas`; END", "SP: SP_ACTUALIZAR_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_ACTUALIZAR_ESTADO_ACTIVO_jja`(IN p_id_jja INT UNSIGNED, IN p_estado_jja ENUM('disponible','prestado','en_proceso_prestamo','mantenimiento','dañado','perdido')) BEGIN UPDATE `activos_jja` SET `estado_jja`=p_estado_jja WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1; SELECT ROW_COUNT() AS `filas_afectadas`; END", "SP: SP_ACTUALIZAR_ESTADO_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "
 CREATE PROCEDURE `SP_ELIMINAR_ACTIVO_jja`(IN p_id_jja INT UNSIGNED)
@@ -1048,6 +1049,25 @@ BEGIN
     IF v_prestado > 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar un activo con un préstamo activo.';
     ELSE UPDATE `activos_jja` SET `estado_registro_jja`=0 WHERE `id_activo_jja`=p_id_jja; SELECT ROW_COUNT() AS `filas_afectadas`; END IF;
 END", "SP: SP_ELIMINAR_ACTIVO_jja (soft delete · valida préstamo activo)", $cnt_sp_jja, $errores_jja);
+
+        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_PUBLICAR_ACTIVO_jja`(IN p_id_jja INT UNSIGNED, IN p_valor_jja TINYINT(1)) BEGIN UPDATE `activos_jja` SET `publicado_jja`=p_valor_jja,`actualizado_en_jja`=CURRENT_TIMESTAMP WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1; SELECT ROW_COUNT() AS `filas_afectadas`; END", "SP: SP_PUBLICAR_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
+
+        ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_GUARDAR_IMAGENES_ACTIVO_jja`(IN p_id_jja INT UNSIGNED, IN p_nueva_ruta_jja VARCHAR(500))
+BEGIN
+    DECLARE v_imagenes_jja JSON;
+    SELECT `imagenes_jja` INTO v_imagenes_jja FROM `activos_jja`
+        WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1;
+    IF v_imagenes_jja IS NULL OR JSON_LENGTH(v_imagenes_jja)=0 THEN
+        SET v_imagenes_jja = JSON_ARRAY(p_nueva_ruta_jja);
+    ELSE
+        SET v_imagenes_jja = JSON_ARRAY_APPEND(v_imagenes_jja, '$', p_nueva_ruta_jja);
+    END IF;
+    UPDATE `activos_jja`
+        SET `imagenes_jja`=v_imagenes_jja, `actualizado_en_jja`=CURRENT_TIMESTAMP
+        WHERE `id_activo_jja`=p_id_jja AND `estado_registro_jja`=1;
+    SELECT ROW_COUNT() AS `filas_afectadas`;
+END", "SP: SP_GUARDAR_IMAGENES_ACTIVO_jja", $cnt_sp_jja, $errores_jja);
 
         // PRÉSTAMOS (completos con transacciones)
         ejecutar_jja($pdo_jja, "
