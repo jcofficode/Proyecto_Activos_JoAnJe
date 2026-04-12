@@ -2,9 +2,10 @@
 // SolicitudesPage_jja.jsx — Gestión de Solicitudes + Escaneo
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { apiRequest } from '../../utils/api'
 import { useToast_jja } from '../../context/ToastContext_jja'
+import { AuthContext_jja } from '../../context/AuthContext_jja'
 import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
@@ -31,6 +32,7 @@ function resolverImgUsuario(path) {
 }
 
 const SolicitudesPage_jja = () => {
+  const { usuario } = useContext(AuthContext_jja)
   const [tabActivo_jja, setTabActivo_jja] = useState('prestamos')
   const [solicitudes_jja, setSolicitudes_jja] = useState([])
   const [devoluciones_jja, setDevoluciones_jja] = useState([])
@@ -43,7 +45,12 @@ const SolicitudesPage_jja = () => {
   const [motivoRechazo_jja, setMotivoRechazo_jja] = useState('')
 
   // ── Modal QR (paso 2 de aprobación) ───────────────────────
-  const [modalQR_jja, setModalQR_jja] = useState({ visible: false, idActivo: null, nombreActivo: '' })
+  const [modalQR_jja, setModalQR_jja] = useState({
+    visible: false, modo: 'entrega',
+    idActivo: null, idSolicitud: null, idEncargado: null, nombreActivo: '',
+    // Devolución
+    idPrestamo: null, idSolicitudDevolucion: null,
+  })
 
   useEffect(() => { cargarDatos_jja() }, [])
 
@@ -83,10 +90,33 @@ const SolicitudesPage_jja = () => {
       setModalQR_jja({
         visible: true,
         idActivo: fila.id_activo_jja,
+        idSolicitud: fila.id_solicitud_jja,
+        idEncargado: usuario?.id || null,
         nombreActivo: fila.producto_nombre || fila.nombre_activo_jja || `Activo #${fila.id_activo_jja}`,
       })
     } catch (err) {
       toast_jja.error('Error al aprobar solicitud: ' + err.message)
+    }
+  }
+
+  // ── Aprobar devolución: paso 1 (avanzar estado) + paso 2 (modal QR) ─
+  async function aprobarDevolucion_jja(id, fila) {
+    try {
+      await apiRequest(`/solicitudes-devolucion/${id}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: 'en_proceso' }),
+      })
+      setModalQR_jja({
+        visible: true, modo: 'devolucion',
+        idActivo: fila.id_activo_jja || null,
+        idSolicitud: null,
+        idEncargado: usuario?.id || null,
+        nombreActivo: fila.activo_nombre || fila.producto_nombre || `Activo #${fila.id_activo_jja || ''}`,
+        idPrestamo: fila.id_prestamo_jja,
+        idSolicitudDevolucion: fila.id_solicitud_devolucion_jja,
+      })
+    } catch (err) {
+      toast_jja.error('Error al aprobar devolución: ' + err.message)
     }
   }
 
@@ -97,9 +127,13 @@ const SolicitudesPage_jja = () => {
       aprobarPrestamo_jja(id, fila)
       return
     }
+    // Aprobación de devolución va por flujo QR
+    if (tipo === 'devoluciones' && estado === 'aprobada') {
+      aprobarDevolucion_jja(id, fila)
+      return
+    }
 
     let estadoBackend = estado
-    if (tipo === 'devoluciones' && estado === 'aprobada') estadoBackend = 'en_proceso'
     setMotivoRechazo_jja('')
 
     setConfirmar_jja({
@@ -130,9 +164,14 @@ const SolicitudesPage_jja = () => {
 
   // ── Éxito del escaneo QR ───────────────────────────────────
   function manejarExitoQR_jja(res) {
-    const mensaje = res?.datos?.message || res?.mensaje || 'Entrega confirmada.'
-    toast_jja.exito(`Entrega confirmada: ${mensaje}`)
-    setModalQR_jja({ visible: false, idActivo: null, nombreActivo: '' })
+    const esDevolucion = modalQR_jja.modo === 'devolucion'
+    const nombreActivo = res?.nombre_activo || modalQR_jja.nombreActivo || ''
+    if (esDevolucion) {
+      toast_jja.exito(`Devolución confirmada: el activo "${nombreActivo}" ha sido devuelto correctamente.`)
+    } else {
+      toast_jja.exito(`Entrega confirmada: el activo "${nombreActivo}" ha sido entregado exitosamente.`)
+    }
+    setModalQR_jja({ visible: false, modo: 'entrega', idActivo: null, idSolicitud: null, idEncargado: null, nombreActivo: '', idPrestamo: null, idSolicitudDevolucion: null })
     cargarDatos_jja()
   }
 
@@ -336,14 +375,19 @@ const SolicitudesPage_jja = () => {
         )}
       </ConfirmModal_jja>
 
-      {/* Modal QR — Paso 2: confirmar entrega física */}
+      {/* Modal QR — Paso 2: confirmar entrega o devolución física */}
       <ModalEscaneoQR_jja
         visible={modalQR_jja.visible}
+        modo={modalQR_jja.modo}
         idActivo_jja={modalQR_jja.idActivo}
+        idSolicitud_jja={modalQR_jja.idSolicitud}
+        idEncargado_jja={modalQR_jja.idEncargado}
         nombreActivo_jja={modalQR_jja.nombreActivo}
+        idPrestamo_jja={modalQR_jja.idPrestamo}
+        idSolicitudDevolucion_jja={modalQR_jja.idSolicitudDevolucion}
         onExito={manejarExitoQR_jja}
         onCerrar={() => {
-          setModalQR_jja({ visible: false, idActivo: null, nombreActivo: '' })
+          setModalQR_jja({ visible: false, modo: 'entrega', idActivo: null, idSolicitud: null, idEncargado: null, nombreActivo: '', idPrestamo: null, idSolicitudDevolucion: null })
           cargarDatos_jja()
         }}
       />

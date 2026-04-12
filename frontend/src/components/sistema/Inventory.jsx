@@ -3,7 +3,8 @@ import ProductForm from './ProductForm'
 import { qrImageUrl, qrDataForProduct } from '../../utils/qr'
 import Card from '../ui/Card'
 import Button from '../ui/Button'
-import { apiRequest, API_URL_JC } from '../../utils/api'
+import { apiRequest } from '../../utils/api'
+import { API_URL_JC } from '../../api.config.js'
 import { useModal_jja } from '../../context/ModalContext_jja'
 
 function ProductRow({ p, onLoan, onEdit, onDelete, onPublish }) {

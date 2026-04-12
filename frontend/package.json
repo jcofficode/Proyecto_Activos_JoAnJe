@@ -13,6 +13,7 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "leaflet": "^1.9.4",
+    "pusher-js": "^8.5.0",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.1",

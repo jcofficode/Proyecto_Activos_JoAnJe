@@ -1183,7 +1183,67 @@ END", "SP: SP_AUTO_SANCIONAR_VENCIDOS_jja (sancionar automáticamente)", $cnt_sp
 
         // AUDITORÍA
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_REGISTRAR_AUDITORIA_jja`(IN p_tabla_jja VARCHAR(100), IN p_id_registro_jja INT UNSIGNED, IN p_accion_jja ENUM('INSERT','UPDATE','DELETE'), IN p_campo_jja VARCHAR(100), IN p_valor_ant_jja TEXT, IN p_valor_nuevo_jja TEXT, IN p_id_usuario_jja INT UNSIGNED, IN p_ip_jja VARCHAR(45), IN p_descripcion_jja TEXT) BEGIN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`id_usuario_responsable_jja`,`ip_origen_jja`,`descripcion_jja`) VALUES (p_tabla_jja,p_id_registro_jja,p_accion_jja,p_campo_jja,p_valor_ant_jja,p_valor_nuevo_jja,p_id_usuario_jja,p_ip_jja,p_descripcion_jja); END", "SP: SP_REGISTRAR_AUDITORIA_jja", $cnt_sp_jja, $errores_jja);
-        ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_AUDITORIA_jja`() BEGIN SELECT a.`id_auditoria_jja`,a.`tabla_afectada_jja`,a.`id_registro_afectado_jja`,a.`accion_jja`,a.`campo_modificado_jja`,a.`valor_anterior_jja`,a.`valor_nuevo_jja`,a.`id_usuario_responsable_jja`,a.`fecha_accion_jja`,a.`ip_origen_jja`,a.`descripcion_jja`,COALESCE(CONCAT(u.`nombre_jja`,' ',u.`apellido_jja`),'Sistema') AS `nombre_usuario_jja`,COALESCE(r.`nombre_rol_jja`,'Sistema') AS `rol_usuario_jja`,u.`imagen_jja` AS `imagen_usuario_jja` FROM `auditoria_jja` a LEFT JOIN `usuarios_jja` u ON a.`id_usuario_responsable_jja`=u.`id_usuario_jja` LEFT JOIN `roles_jja` r ON u.`id_rol_jja`=r.`id_rol_jja` ORDER BY a.`fecha_accion_jja` DESC LIMIT 1000; END", "SP: SP_LEER_AUDITORIA_jja (con JOIN usuarios y roles)", $cnt_sp_jja, $errores_jja);
+        ejecutar_jja($pdo_jja, "
+CREATE PROCEDURE `SP_LEER_AUDITORIA_jja`()
+BEGIN
+    SELECT
+        a.`id_auditoria_jja`,
+        a.`tabla_afectada_jja`,
+        a.`id_registro_afectado_jja`,
+        a.`accion_jja`,
+        a.`campo_modificado_jja`,
+        a.`valor_anterior_jja`,
+        a.`valor_nuevo_jja`,
+        a.`id_usuario_responsable_jja`,
+        a.`fecha_accion_jja`,
+        a.`ip_origen_jja`,
+        a.`descripcion_jja`,
+        /* ── Usuario responsable (quién ejecutó la acción) ── */
+        COALESCE(CONCAT(u.`nombre_jja`,' ',u.`apellido_jja`),'Sistema') AS `nombre_usuario_jja`,
+        COALESCE(r.`nombre_rol_jja`,'Sistema')                         AS `rol_usuario_jja`,
+        u.`imagen_jja`                                                  AS `imagen_usuario_jja`,
+        /* ── Entidad afectada: Activo ── */
+        act.`nombre_jja`                                                AS `nombre_activo_jja`,
+        /* ── Entidad afectada: Usuario ── */
+        CONCAT(u_af.`nombre_jja`,' ',u_af.`apellido_jja`)              AS `nombre_usuario_afectado_jja`,
+        /* ── Entidad afectada: Préstamo → activo, cliente, encargado ── */
+        act_p.`nombre_jja`                                              AS `nombre_activo_prestamo_jja`,
+        CONCAT(u_cli.`nombre_jja`,' ',u_cli.`apellido_jja`)            AS `nombre_cliente_prestamo_jja`,
+        CONCAT(u_enc.`nombre_jja`,' ',u_enc.`apellido_jja`)            AS `nombre_encargado_prestamo_jja`,
+        /* ── Entidad afectada: Sanción → usuario sancionado ── */
+        CONCAT(u_san.`nombre_jja`,' ',u_san.`apellido_jja`)            AS `nombre_sancionado_jja`,
+        LEFT(ln.`motivo_jja`,120)                                       AS `motivo_sancion_jja`,
+        /* ── Entidad afectada: Solicitud → cliente, activo ── */
+        CONCAT(u_sol.`nombre_jja`,' ',u_sol.`apellido_jja`)            AS `nombre_cliente_solicitud_jja`,
+        act_sol.`nombre_jja`                                            AS `nombre_activo_solicitud_jja`
+    FROM `auditoria_jja` a
+    /* Responsable */
+    LEFT JOIN `usuarios_jja` u   ON a.`id_usuario_responsable_jja` = u.`id_usuario_jja`
+    LEFT JOIN `roles_jja`    r   ON u.`id_rol_jja`                 = r.`id_rol_jja`
+    /* Activo directo */
+    LEFT JOIN `activos_jja`  act ON a.`tabla_afectada_jja`='activos_jja'
+                                 AND a.`id_registro_afectado_jja` = act.`id_activo_jja`
+    /* Usuario directo */
+    LEFT JOIN `usuarios_jja` u_af ON a.`tabla_afectada_jja`='usuarios_jja'
+                                  AND a.`id_registro_afectado_jja` = u_af.`id_usuario_jja`
+    /* Préstamo → activo + cliente + encargado */
+    LEFT JOIN `prestamos_jja` p      ON a.`tabla_afectada_jja`='prestamos_jja'
+                                      AND a.`id_registro_afectado_jja` = p.`id_prestamo_jja`
+    LEFT JOIN `activos_jja`   act_p  ON p.`id_activo_jja`    = act_p.`id_activo_jja`
+    LEFT JOIN `usuarios_jja`  u_cli  ON p.`id_usuario_jja`   = u_cli.`id_usuario_jja`
+    LEFT JOIN `usuarios_jja`  u_enc  ON p.`id_encargado_jja` = u_enc.`id_usuario_jja`
+    /* Sanción → usuario sancionado */
+    LEFT JOIN `lista_negra_jja` ln    ON a.`tabla_afectada_jja`='lista_negra_jja'
+                                       AND a.`id_registro_afectado_jja` = ln.`id_sancion_jja`
+    LEFT JOIN `usuarios_jja`    u_san ON ln.`id_usuario_jja` = u_san.`id_usuario_jja`
+    /* Solicitud → cliente + activo */
+    LEFT JOIN `solicitudes_prestamo_activos_jja` sol ON a.`tabla_afectada_jja`='solicitudes_prestamo_activos_jja'
+                                                      AND a.`id_registro_afectado_jja` = sol.`id_solicitud_activo_jja`
+    LEFT JOIN `usuarios_jja` u_sol   ON sol.`id_cliente_jja` = u_sol.`id_usuario_jja`
+    LEFT JOIN `activos_jja`  act_sol ON sol.`id_activo_jja`  = act_sol.`id_activo_jja`
+    ORDER BY a.`fecha_accion_jja` DESC
+    LIMIT 1000;
+END", "SP: SP_LEER_AUDITORIA_jja (con JOIN usuarios, roles y entidades relacionadas)", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_AUDITORIA_TABLA_jja`(IN p_tabla_jja VARCHAR(100)) BEGIN SELECT `id_auditoria_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`id_usuario_responsable_jja`,`fecha_accion_jja`,`descripcion_jja` FROM `auditoria_jja` WHERE `tabla_afectada_jja`=p_tabla_jja ORDER BY `fecha_accion_jja` DESC; END", "SP: SP_LEER_AUDITORIA_TABLA_jja", $cnt_sp_jja, $errores_jja);
         ejecutar_jja($pdo_jja, "CREATE PROCEDURE `SP_LEER_AUDITORIA_USUARIO_jja`(IN p_id_usuario_jja INT UNSIGNED) BEGIN SELECT `id_auditoria_jja`,`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`fecha_accion_jja`,`descripcion_jja` FROM `auditoria_jja` WHERE `id_usuario_responsable_jja`=p_id_usuario_jja ORDER BY `fecha_accion_jja` DESC; END", "SP: SP_LEER_AUDITORIA_USUARIO_jja", $cnt_sp_jja, $errores_jja);
 
@@ -1223,20 +1283,40 @@ END", "SP: SP_REPORTE_PRESTAMOS_jja (filtros por fecha, tipo y usuario)", $cnt_s
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_ACTIVO_UPDATE_jja` AFTER UPDATE ON `activos_jja` FOR EACH ROW
 BEGIN
-    IF OLD.`estado_jja`<>NEW.`estado_jja` THEN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`) VALUES ('activos_jja',NEW.`id_activo_jja`,'UPDATE','estado_jja',OLD.`estado_jja`,NEW.`estado_jja`,CONCAT('Cambio automático de estado en activo: ',NEW.`nombre_jja`)); END IF;
-    IF OLD.`estado_registro_jja`<>NEW.`estado_registro_jja` THEN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`) VALUES ('activos_jja',NEW.`id_activo_jja`,'DELETE','estado_registro_jja',OLD.`estado_registro_jja`,NEW.`estado_registro_jja`,CONCAT('Soft-delete aplicado al activo: ',NEW.`nombre_jja`)); END IF;
+    IF OLD.`estado_jja`<>NEW.`estado_jja` THEN
+        INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`)
+        VALUES ('activos_jja',NEW.`id_activo_jja`,'UPDATE','estado_jja',OLD.`estado_jja`,NEW.`estado_jja`,
+            CONCAT('El sistema cambió automáticamente el estado de \"',NEW.`nombre_jja`,'\" de ',OLD.`estado_jja`,' a ',NEW.`estado_jja`));
+    END IF;
+    IF OLD.`estado_registro_jja`<>NEW.`estado_registro_jja` THEN
+        INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`)
+        VALUES ('activos_jja',NEW.`id_activo_jja`,'DELETE','estado_registro_jja',OLD.`estado_registro_jja`,NEW.`estado_registro_jja`,
+            CONCAT('Se eliminó el activo \"',NEW.`nombre_jja`,'\" del inventario'));
+    END IF;
 END", "Trigger: TR_AUDITORIA_ACTIVO_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_PRESTAMO_UPDATE_jja` AFTER UPDATE ON `prestamos_jja` FOR EACH ROW
 BEGIN
-    IF OLD.`estado_prestamo_jja`<>NEW.`estado_prestamo_jja` THEN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`) VALUES ('prestamos_jja',NEW.`id_prestamo_jja`,'UPDATE','estado_prestamo_jja',OLD.`estado_prestamo_jja`,NEW.`estado_prestamo_jja`,CONCAT('Cambio de estado del préstamo ID: ',NEW.`id_prestamo_jja`)); END IF;
+    DECLARE v_activo VARCHAR(200);
+    DECLARE v_cliente VARCHAR(200);
+    IF OLD.`estado_prestamo_jja`<>NEW.`estado_prestamo_jja` THEN
+        SELECT `nombre_jja` INTO v_activo FROM `activos_jja` WHERE `id_activo_jja`=NEW.`id_activo_jja` LIMIT 1;
+        SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_cliente FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_usuario_jja` LIMIT 1;
+        INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`)
+        VALUES ('prestamos_jja',NEW.`id_prestamo_jja`,'UPDATE','estado_prestamo_jja',OLD.`estado_prestamo_jja`,NEW.`estado_prestamo_jja`,
+            CONCAT('El préstamo de \"',COALESCE(v_activo,'activo desconocido'),'\" para ',COALESCE(v_cliente,'usuario desconocido'),' cambió de ',OLD.`estado_prestamo_jja`,' a ',NEW.`estado_prestamo_jja`));
+    END IF;
 END", "Trigger: TR_AUDITORIA_PRESTAMO_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_USUARIO_UPDATE_jja` AFTER UPDATE ON `usuarios_jja` FOR EACH ROW
 BEGIN
-    IF OLD.`estado_registro_jja`<>NEW.`estado_registro_jja` THEN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`) VALUES ('usuarios_jja',NEW.`id_usuario_jja`,'DELETE','estado_registro_jja',OLD.`estado_registro_jja`,NEW.`estado_registro_jja`,CONCAT('Soft-delete aplicado al usuario: ',NEW.`cedula_jja`)); END IF;
+    IF OLD.`estado_registro_jja`<>NEW.`estado_registro_jja` THEN
+        INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`)
+        VALUES ('usuarios_jja',NEW.`id_usuario_jja`,'DELETE','estado_registro_jja',OLD.`estado_registro_jja`,NEW.`estado_registro_jja`,
+            CONCAT('Se desactivó la cuenta del usuario ',NEW.`nombre_jja`,' ',NEW.`apellido_jja`,' (C.I.: ',NEW.`cedula_jja`,')'));
+    END IF;
 END", "Trigger: TR_AUDITORIA_USUARIO_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
@@ -1248,25 +1328,51 @@ END", "Trigger: TR_AUDITORIA_USUARIO_INSERT_jja", $cnt_triggers_jja, $errores_jj
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_PRESTAMO_INSERT_jja` AFTER INSERT ON `prestamos_jja` FOR EACH ROW
 BEGIN
-    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`) VALUES ('prestamos_jja',NEW.`id_prestamo_jja`,'INSERT',NEW.`id_encargado_jja`,CONCAT('Nuevo préstamo registrado (ID activo: ',NEW.`id_activo_jja`,', Usuario: ',NEW.`id_usuario_jja`,')'));
+    DECLARE v_activo VARCHAR(200);
+    DECLARE v_cliente VARCHAR(200);
+    DECLARE v_encargado VARCHAR(200);
+    SELECT `nombre_jja` INTO v_activo FROM `activos_jja` WHERE `id_activo_jja`=NEW.`id_activo_jja` LIMIT 1;
+    SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_cliente FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_usuario_jja` LIMIT 1;
+    SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_encargado FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_encargado_jja` LIMIT 1;
+    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`)
+    VALUES ('prestamos_jja',NEW.`id_prestamo_jja`,'INSERT',NEW.`id_encargado_jja`,
+        CONCAT(COALESCE(v_encargado,'Un encargado'),' aprobó el préstamo de \"',COALESCE(v_activo,'activo'),'\" para el cliente ',COALESCE(v_cliente,'desconocido')));
 END", "Trigger: TR_AUDITORIA_PRESTAMO_INSERT_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_SANCION_INSERT_jja` AFTER INSERT ON `lista_negra_jja` FOR EACH ROW
 BEGIN
-    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`) VALUES ('lista_negra_jja',NEW.`id_sancion_jja`,'INSERT',NEW.`creado_por_jja`,CONCAT('Nueva sanción aplicada al usuario ID: ',NEW.`id_usuario_jja`,'. Motivo: ',LEFT(NEW.`motivo_jja`,100)));
+    DECLARE v_sancionado VARCHAR(200);
+    DECLARE v_admin VARCHAR(200);
+    SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_sancionado FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_usuario_jja` LIMIT 1;
+    SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_admin FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`creado_por_jja` LIMIT 1;
+    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`)
+    VALUES ('lista_negra_jja',NEW.`id_sancion_jja`,'INSERT',NEW.`creado_por_jja`,
+        CONCAT(COALESCE(v_admin,'Un administrador'),' aplicó una sanción a ',COALESCE(v_sancionado,'un usuario'),'. Motivo: ',LEFT(NEW.`motivo_jja`,120)));
 END", "Trigger: TR_AUDITORIA_SANCION_INSERT_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_SANCION_UPDATE_jja` AFTER UPDATE ON `lista_negra_jja` FOR EACH ROW
 BEGIN
-    IF OLD.`activa_jja`<>NEW.`activa_jja` THEN INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`) VALUES ('lista_negra_jja',NEW.`id_sancion_jja`,'UPDATE','activa_jja',OLD.`activa_jja`,NEW.`activa_jja`,CONCAT(IF(NEW.`activa_jja`=0,'Sanción levantada','Sanción reactivada'),' para el usuario ID: ',NEW.`id_usuario_jja`)); END IF;
+    DECLARE v_sancionado VARCHAR(200);
+    IF OLD.`activa_jja`<>NEW.`activa_jja` THEN
+        SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_sancionado FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_usuario_jja` LIMIT 1;
+        INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`campo_modificado_jja`,`valor_anterior_jja`,`valor_nuevo_jja`,`descripcion_jja`)
+        VALUES ('lista_negra_jja',NEW.`id_sancion_jja`,'UPDATE','activa_jja',OLD.`activa_jja`,NEW.`activa_jja`,
+            CONCAT(IF(NEW.`activa_jja`=0,'Se levantó la sanción','Se reactivó la sanción'),' de ',COALESCE(v_sancionado,'un usuario')));
+    END IF;
 END", "Trigger: TR_AUDITORIA_SANCION_UPDATE_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "
 CREATE TRIGGER `TR_AUDITORIA_SOLICITUD_INSERT_jja` AFTER INSERT ON `solicitudes_prestamo_activos_jja` FOR EACH ROW
 BEGIN
-    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`) VALUES ('solicitudes_prestamo_activos_jja',NEW.`id_solicitud_activo_jja`,'INSERT',NEW.`id_cliente_jja`,CONCAT('Nueva solicitud de préstamo para el activo ID: ',NEW.`id_activo_jja`));
+    DECLARE v_cliente VARCHAR(200);
+    DECLARE v_activo VARCHAR(200);
+    SELECT CONCAT(`nombre_jja`,' ',`apellido_jja`) INTO v_cliente FROM `usuarios_jja` WHERE `id_usuario_jja`=NEW.`id_cliente_jja` LIMIT 1;
+    SELECT `nombre_jja` INTO v_activo FROM `activos_jja` WHERE `id_activo_jja`=NEW.`id_activo_jja` LIMIT 1;
+    INSERT INTO `auditoria_jja` (`tabla_afectada_jja`,`id_registro_afectado_jja`,`accion_jja`,`id_usuario_responsable_jja`,`descripcion_jja`)
+    VALUES ('solicitudes_prestamo_activos_jja',NEW.`id_solicitud_activo_jja`,'INSERT',NEW.`id_cliente_jja`,
+        CONCAT(COALESCE(v_cliente,'Un cliente'),' solicitó el préstamo de \"',COALESCE(v_activo,'un activo'),'\"'));
 END", "Trigger: TR_AUDITORIA_SOLICITUD_INSERT_jja", $cnt_triggers_jja, $errores_jja);
 
         ejecutar_jja($pdo_jja, "

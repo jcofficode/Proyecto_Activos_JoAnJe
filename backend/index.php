@@ -87,8 +87,10 @@ $mapa_jja = [
     'solicitudes-devolucion' => 'SolicitudDevolucionController_jja',
     'ofertas' => 'OfertaController_jja',
     'transacciones' => 'TransaccionController_jja',
-    'escaneo'       => 'EscaneoController_jja',
-    'archivos'      => 'ArchivoController_jja',
+    'escaneo'           => 'EscaneoController_jja',
+    'archivos'          => 'ArchivoController_jja',
+    'confirmar-entrega'    => 'ConfirmarEntregaController_jja',
+    'confirmar-devolucion' => 'ConfirmarDevolucionController_jja',
 ];
 
 $clase_jja = $mapa_jja[$recurso_jja] ?? null;

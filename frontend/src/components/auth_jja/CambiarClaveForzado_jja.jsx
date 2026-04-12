@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_URL_JC } from '../../utils/api'
+import { API_URL_JC } from '../../api.config.js'
 import useAuth_jja from '../../hooks/useAuth_jja'
 
 const CambiarClaveForzado_jja = () => {

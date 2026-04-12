@@ -6,7 +6,7 @@ import React, { useContext } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ThemeContext_jja } from '../../context/ThemeContext_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
-import { API_URL_JC } from '../../utils/api'
+import { API_URL_JC } from '../../api.config.js'
 import { useNotificaciones_jja } from '../../context/NotificacionContext_jja'
 import logoDefault from '../../assets/JoanjeCoders.png'
 import {
