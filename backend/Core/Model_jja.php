@@ -35,4 +35,22 @@ class Model_jja
         $filas_jja = $this->ejecutarSP_jja($sp_jja, $params_jja);
         return $filas_jja[0] ?? null;
     }
+
+    /**
+     * Decodifica un campo JSON en cada fila del array.
+     * Modifica $filas_jja por referencia.
+     * Si el valor es null o vacío, asigna array vacío.
+     */
+    protected function decodificarJsonCampo_jja(array &$filas_jja, string $campo_jja): void
+    {
+        foreach ($filas_jja as &$fila_jja) {
+            $valor_jja = $fila_jja[$campo_jja] ?? null;
+            if ($valor_jja) {
+                $decoded_jja = json_decode($valor_jja, true);
+                $fila_jja[$campo_jja] = is_array($decoded_jja) ? $decoded_jja : [$valor_jja];
+            } else {
+                $fila_jja[$campo_jja] = [];
+            }
+        }
+    }
 }
