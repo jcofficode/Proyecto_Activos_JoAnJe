@@ -46,14 +46,6 @@ class ActivoController_jja extends Controller_jja
                 break;
 
             case 'POST':
-                // Soportar POST /activos/{id}/imagen para subir imagen del activo
-                if ($seg1_jja === 'imagen' && $seg0_jja !== null) {
-                    if (!$this->validarId_jja($seg0_jja))
-                        $this->responder_jja(false, null, 'ID de activo invalido.', 400);
-                    $this->subirImagen_jja((int)$seg0_jja);
-                    break;
-                }
-
                 // Crear activo (solo admin/encargado)
                 if ($seg1_jja === null) {
                     Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
@@ -184,8 +176,7 @@ class ActivoController_jja extends Controller_jja
             } catch (\Throwable $e) { /* no romper flujo */ }
         }
         catch (PDOException $e_jja) {
-            $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
-                ? $m_jja[1] : 'Error al registrar el activo.';
+            $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage(), 'Error al registrar el activo.');
             $this->responder_jja(false, null, $msg_jja, 409);
         }
 
@@ -313,55 +304,6 @@ class ActivoController_jja extends Controller_jja
         $this->responder_jja(true, $sol, 'Solicitud de préstamo creada. El activo ha sido reservado.', 201);
     }
 
-    /** POST /activos/{id}/imagen => subir imagen del activo */
-    private function subirImagen_jja(int $id_jja): void
-    {
-        $payload_jja = Middleware_jja::autenticar_jja();
-        Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
-
-        if (!isset($_FILES['imagen'])) {
-            $this->responder_jja(false, null, 'No se ha proporcionado ninguna imagen.', 400);
-        }
-
-        $archivo = $_FILES['imagen'];
-        if ($archivo['error'] !== UPLOAD_ERR_OK) {
-            $this->responder_jja(false, null, 'Error al subir la imagen. Codigo: ' . $archivo['error'], 400);
-        }
-
-        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['jpg', 'jpeg', 'png', 'webp'];
-        if (!in_array($extension, $permitidas)) {
-            $this->responder_jja(false, null, 'Formato no permitido. Solo JPG, PNG, WEBP.', 400);
-        }
-
-        if ($archivo['size'] > 4 * 1024 * 1024) {
-            $this->responder_jja(false, null, 'La imagen no debe superar los 4MB.', 400);
-        }
-
-        // Se guarda en la carpeta del backend (para que el propio backend lo sirva en PROD)
-        $directorio = __DIR__ . '/../uploads/activos/';
-        if (!is_dir($directorio))
-            mkdir($directorio, 0777, true);
-
-        $nombreArchivo = 'activo_' . $id_jja . '_' . time() . '.' . $extension;
-        $rutaCompleta = $directorio . $nombreArchivo;
-
-        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
-            $rutaRelativa = '/uploads/activos/' . $nombreArchivo;
-            try {
-                $this->modelo_jja->guardarImagenes_jja($id_jja, $rutaRelativa);
-                $this->responder_jja(true, ['imagen' => $rutaRelativa], 'Imagen del activo subida correctamente.', 200);
-            }
-            catch (PDOException $e_jja) {
-                $msg_jja = 'Error al actualizar imagen del activo.';
-                $this->responder_jja(false, null, $msg_jja, 500);
-            }
-        }
-        else {
-            $this->responder_jja(false, null, 'No se pudo guardar la imagen en el servidor.', 500);
-        }
-    }
-
     private function eliminar_jja(int $id_jja): void
     {
         $activo = $this->modelo_jja->buscarPorId_jja($id_jja);
@@ -394,8 +336,7 @@ class ActivoController_jja extends Controller_jja
             $this->responder_jja(true, null, 'Activo eliminado del inventario.');
         }
         catch (PDOException $e_jja) {
-            $msg_jja = preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $e_jja->getMessage(), $m_jja)
-                ? $m_jja[1] : 'No se puede eliminar el activo.';
+            $msg_jja = $this->extraerMensajeSP_jja($e_jja->getMessage(), 'No se puede eliminar el activo.');
             $this->responder_jja(false, null, $msg_jja, 409);
         }
     }
