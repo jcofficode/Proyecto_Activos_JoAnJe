@@ -4,7 +4,7 @@
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useEffect, useRef } from 'react'
-import { apiRequest, API_URL_JC } from '../../utils/api'
+import { apiRequest } from '../../utils/api'
 import useAuth_jja from '../../hooks/useAuth_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
@@ -107,7 +107,7 @@ const PerfilCompartidoPage_jja = () => {
         setSubiendoImagen_jja(true)
         const formData = new FormData()
         formData.append('imagen', imagenSeleccionada_jja)
-        const resImg = await apiRequest(`/usuarios/${usuario.id}/imagen`, {
+        const resImg = await apiRequest(`/archivos/perfil/${usuario.id}`, {
           method: 'POST',
           body: formData,
         })
@@ -157,8 +157,7 @@ const PerfilCompartidoPage_jja = () => {
   const iniciales = `${(usuario?.nombre || '')[0] || ''}${(usuario?.apellido || '')[0] || ''}`.toUpperCase()
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i); return h }
   const colorAvatar = COLORES[Math.abs(hashStr(usuario?.nombre || '')) % COLORES.length]
-  const apiUrlBase = API_URL_JC.replace('/api/v1', '')
-  const avatarUrl = usuario?.imagen ? `${apiUrlBase}${usuario.imagen}` : null
+  const avatarUrl = usuario?.imagen || null
 
   // Manejo de la subida de imagen de perfil
   const manejarEntradaArrastre_jja = (e) => { e.preventDefault(); e.stopPropagation(); setDragOver_jja(true) }
