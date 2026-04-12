@@ -15,19 +15,16 @@ import {
   IconoCheck_jja, IconoCerrar_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
-const API_BASE = 'http://localhost:8000'
-
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(s) {
-  if (s.imagenes_jja && Array.isArray(s.imagenes_jja) && s.imagenes_jja.length > 0) {
-    return `${API_BASE}${s.imagenes_jja[0]}`
-  }
-  if (typeof s.imagenes_jja === 'string') {
+  const imgs = s.imagenes_jja
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) return imgs[0]
+  if (typeof imgs === 'string') {
     try {
-      const arr = JSON.parse(s.imagenes_jja)
-      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
-      return `${API_BASE}${s.imagenes_jja}`
-    } catch { return `${API_BASE}${s.imagenes_jja}` }
+      const arr = JSON.parse(imgs)
+      if (Array.isArray(arr) && arr.length > 0) return arr[0]
+      return imgs
+    } catch { return imgs }
   }
   return null
 }

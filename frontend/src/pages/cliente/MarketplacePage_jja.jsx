@@ -4,7 +4,7 @@
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useEffect, useMemo } from 'react'
-import { apiRequest, API_URL_JC } from '../../utils/api'
+import { apiRequest } from '../../utils/api'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import BotonAccion_jja from '../../components/ui_jja/BotonAccion_jja'
 import ActionModal_jja from '../../components/ui_jja/ActionModal_jja'
@@ -68,15 +68,11 @@ const MarketplacePage_jja = () => {
 
   // Extraer imagen del activo
   function obtenerImagen(activo) {
-    // Derivar URL base del backend (quitar /api/v1 de API_URL_JC)
-    const BACKEND_URL = API_URL_JC.replace(/\/api\/v1\/?$/, '')
     try {
       if (!activo.imagenes_jja) return null
       let imgs = activo.imagenes_jja
       if (typeof imgs === 'string') imgs = JSON.parse(imgs)
-      if (Array.isArray(imgs) && imgs.length > 0) {
-        return `${BACKEND_URL}${imgs[0]}`
-      }
+      if (Array.isArray(imgs) && imgs.length > 0) return imgs[0]
     } catch (e) { /* silenciar */ }
     return null
   }

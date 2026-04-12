@@ -18,30 +18,25 @@ import {
   IconoChevronDer_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
-const API_BASE = 'http://localhost:8000'
-
 // ── Colores para avatares ────────────────────────────────────
 const COLORES_AVATAR = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
 
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(fila) {
   const imgs = fila.imagenes_jja
-  if (imgs && Array.isArray(imgs) && imgs.length > 0) {
-    return `${API_BASE}${imgs[0]}`
-  }
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) return imgs[0]
   if (typeof imgs === 'string') {
     try {
       const arr = JSON.parse(imgs)
-      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
-      return `${API_BASE}${imgs}`
-    } catch { return `${API_BASE}${imgs}` }
+      if (Array.isArray(arr) && arr.length > 0) return arr[0]
+      return imgs
+    } catch { return imgs }
   }
   return null
 }
 
 function resolverImgUsuario(path) {
-  if (!path) return null
-  return `${API_BASE}${path}`
+  return path || null
 }
 
 const DashboardEncargado_jja = () => {

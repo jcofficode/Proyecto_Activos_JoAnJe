@@ -16,20 +16,16 @@ import {
   IconoAlertaTriangulo_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
-const API_BASE = 'http://localhost:8000'
-
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(raw) {
   const imgs = raw?.imagenes_jja
-  if (imgs && Array.isArray(imgs) && imgs.length > 0) {
-    return `${API_BASE}${imgs[0]}`
-  }
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) return imgs[0]
   if (typeof imgs === 'string') {
     try {
       const arr = JSON.parse(imgs)
-      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
-      return `${API_BASE}${imgs}`
-    } catch { return `${API_BASE}${imgs}` }
+      if (Array.isArray(arr) && arr.length > 0) return arr[0]
+      return imgs
+    } catch { return imgs }
   }
   return null
 }

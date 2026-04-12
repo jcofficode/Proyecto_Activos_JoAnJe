@@ -8,29 +8,26 @@ import { useToast_jja } from '../../context/ToastContext_jja'
 import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
 import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
-import { IconoCheck_jja, IconoCerrar_jja, IconoQR_jja } from '../../components/ui_jja/Iconos_jja'
-
-const API_BASE = 'http://localhost:8000'
+import ModalEscaneoQR_jja from '../../components/ui_jja/ModalEscaneoQR_jja'
+import { IconoCheck_jja, IconoCerrar_jja } from '../../components/ui_jja/Iconos_jja'
 
 // Helper para resolver URL de imagen de activo
 function resolverImgActivo(fila) {
-  if (fila.imagenes_jja && Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0) {
-    return `${API_BASE}${fila.imagenes_jja[0]}`
-  }
-  if (typeof fila.imagenes_jja === 'string') {
+  const imgs = fila.imagenes_jja
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) return imgs[0]
+  if (typeof imgs === 'string') {
     try {
-      const arr = JSON.parse(fila.imagenes_jja)
-      if (Array.isArray(arr) && arr.length > 0) return `${API_BASE}${arr[0]}`
-      return `${API_BASE}${fila.imagenes_jja}`
-    } catch { return `${API_BASE}${fila.imagenes_jja}` }
+      const arr = JSON.parse(imgs)
+      if (Array.isArray(arr) && arr.length > 0) return arr[0]
+      return imgs
+    } catch { return imgs }
   }
   return null
 }
 
 // Helper para resolver URL de imagen de usuario/cliente
 function resolverImgUsuario(path) {
-  if (!path) return null
-  return `${API_BASE}${path}`
+  return path || null
 }
 
 const SolicitudesPage_jja = () => {
@@ -41,13 +38,12 @@ const SolicitudesPage_jja = () => {
   const [cargando_jja, setCargando_jja] = useState(true)
   const toast_jja = useToast_jja()
 
-  // ── Escaneo ─────────────────────────────────────────────────
-  const [escaneoId_jja, setEscaneoId_jja] = useState('')
-  const [escaneando_jja, setEscaneando_jja] = useState(false)
-
   // ── Confirm modal ──────────────────────────────────────────
   const [confirmar_jja, setConfirmar_jja] = useState({ visible: false, titulo: '', mensaje: '', onConfirmar: null, accion: '' })
   const [motivoRechazo_jja, setMotivoRechazo_jja] = useState('')
+
+  // ── Modal QR (paso 2 de aprobación) ───────────────────────
+  const [modalQR_jja, setModalQR_jja] = useState({ visible: false, idActivo: null, nombreActivo: '' })
 
   useEffect(() => { cargarDatos_jja() }, [])
 
@@ -77,19 +73,39 @@ const SolicitudesPage_jja = () => {
     return []
   }
 
-  // ── Cambiar estado (Aprobar/Rechazar) ──────────────────────
-  async function cambiarEstado_jja(tipo, id, estado, tipoItemBackend = null) {
-    let estadoBackend = estado;
-    if ((tipo === 'prestamos' || tipo === 'devoluciones') && estado === 'aprobada') {
-      estadoBackend = 'en_proceso';
+  // ── Aprobar préstamo: paso 1 (avanzar estado) + paso 2 (modal QR) ─
+  async function aprobarPrestamo_jja(id, fila) {
+    try {
+      await apiRequest(`/solicitudes-prestamo/${id}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: 'en_proceso' }),
+      })
+      setModalQR_jja({
+        visible: true,
+        idActivo: fila.id_activo_jja,
+        nombreActivo: fila.producto_nombre || fila.nombre_activo_jja || `Activo #${fila.id_activo_jja}`,
+      })
+    } catch (err) {
+      toast_jja.error('Error al aprobar solicitud: ' + err.message)
     }
-    const accion = estado === 'aprobada' ? 'aprobar' : 'rechazar'
-    if (estado !== 'aprobada') setMotivoRechazo_jja('')
+  }
+
+  // ── Rechazar / cambiar estado (devoluciones) ───────────────
+  async function cambiarEstado_jja(tipo, id, estado, tipoItemBackend = null, fila = null) {
+    // Aprobación de préstamo va por flujo QR
+    if (tipo === 'prestamos' && estado === 'aprobada') {
+      aprobarPrestamo_jja(id, fila)
+      return
+    }
+
+    let estadoBackend = estado
+    if (tipo === 'devoluciones' && estado === 'aprobada') estadoBackend = 'en_proceso'
+    setMotivoRechazo_jja('')
 
     setConfirmar_jja({
       visible: true,
-      titulo: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} solicitud?`,
-      mensaje: `Esta acción cambiará el estado de la solicitud a "${estado}".`,
+      titulo: estado === 'aprobada' ? '¿Aprobar solicitud?' : '¿Rechazar solicitud?',
+      mensaje: `Esta acción cambiará el estado de la solicitud.`,
       accion: estado,
       onConfirmar: async (motivo) => {
         try {
@@ -100,13 +116,9 @@ const SolicitudesPage_jja = () => {
           }
           await apiRequest(endpoints[tipo], {
             method: 'PATCH',
-            body: JSON.stringify({
-              estado: estadoBackend,
-              tipo: tipoItemBackend,
-              observaciones_jja: motivo
-            })
+            body: JSON.stringify({ estado: estadoBackend, tipo: tipoItemBackend, observaciones_jja: motivo })
           })
-          toast_jja.exito(`Solicitud de ${tipo === 'prestamos' ? 'préstamo' : 'devolución'} enviada a ${estadoBackend === 'en_proceso' ? 'proceso' : estado}.`)
+          toast_jja.exito(`Solicitud ${estado === 'aprobada' ? 'aprobada' : 'rechazada'} correctamente.`)
           cargarDatos_jja()
         } catch (err) {
           toast_jja.error('Error: ' + err.message)
@@ -116,31 +128,12 @@ const SolicitudesPage_jja = () => {
     })
   }
 
-  // ── Escaneo de activo ──────────────────────────────────────
-  const manejarEscaneo_jja = async (e) => {
-    if (e.key !== 'Enter' || !escaneoId_jja.trim()) return
-    setEscaneando_jja(true)
-    try {
-      const respuesta = await apiRequest('/escaneo', {
-        method: 'POST',
-        body: JSON.stringify({ id_activo: escaneoId_jja.trim() }),
-      })
-
-      const accion = respuesta?.datos?.action || respuesta?.action || 'procesado'
-      const mensaje = respuesta?.datos?.message || respuesta?.mensaje || 'Operación realizada.'
-
-      if (respuesta?.exito || respuesta?.status === 'success') {
-        toast_jja.exito(`✅ ${mensaje} (${accion === 'entrega' ? 'Entrega' : accion === 'devolucion' ? 'Devolución' : accion})`)
-        cargarDatos_jja()
-      } else {
-        toast_jja.error(mensaje)
-      }
-    } catch (err) {
-      toast_jja.error('Error al escanear: ' + err.message)
-    } finally {
-      setEscaneoId_jja('')
-      setEscaneando_jja(false)
-    }
+  // ── Éxito del escaneo QR ───────────────────────────────────
+  function manejarExitoQR_jja(res) {
+    const mensaje = res?.datos?.message || res?.mensaje || 'Entrega confirmada.'
+    toast_jja.exito(`Entrega confirmada: ${mensaje}`)
+    setModalQR_jja({ visible: false, idActivo: null, nombreActivo: '' })
+    cargarDatos_jja()
   }
 
   // Formato fecha/hora
@@ -292,33 +285,17 @@ const SolicitudesPage_jja = () => {
         </div>
       </div>
 
-      {/* ── Input de Escaneo + Tabs ───────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div className="tabs-jja" style={{ marginBottom: 0 }}>
-          {tabs_jja.map(t => (
-            <button
-              key={t.clave}
-              className={`tab-btn-jja ${tabActivo_jja === t.clave ? 'activo-jja' : ''}`}
-              onClick={() => setTabActivo_jja(t.clave)}
-            >
-              {t.label} {t.count > 0 && <span className="sidebar-item-badge-jja" style={{ marginLeft: 6 }}>{t.count}</span>}
-            </button>
-          ))}
-        </div>
-
-        {/* Input de Escaneo */}
-        <div className="escaneo-input-wrapper-jja">
-          <span className="escaneo-icono-jja"><IconoQR_jja /></span>
-          <input
-            type="text"
-            placeholder="Escanear activo (ID)..."
-            value={escaneoId_jja}
-            onChange={(e) => setEscaneoId_jja(e.target.value)}
-            onKeyDown={manejarEscaneo_jja}
-            disabled={escaneando_jja}
-            autoComplete="off"
-          />
-        </div>
+      {/* ── Tabs ─────────────────────────────────────────────── */}
+      <div className="tabs-jja" style={{ marginBottom: 16 }}>
+        {tabs_jja.map(t => (
+          <button
+            key={t.clave}
+            className={`tab-btn-jja ${tabActivo_jja === t.clave ? 'activo-jja' : ''}`}
+            onClick={() => setTabActivo_jja(t.clave)}
+          >
+            {t.label} {t.count > 0 && <span className="sidebar-item-badge-jja" style={{ marginLeft: 6 }}>{t.count}</span>}
+          </button>
+        ))}
       </div>
 
       <DataTable_jja
@@ -328,8 +305,8 @@ const SolicitudesPage_jja = () => {
         placeholderBusqueda="Buscar solicitud..."
         acciones={(fila) => (fila.estado_jja || '') === 'pendiente' ? (
           <>
-            <button className="datatable-accion-btn-jja aprobar-jja" title="Aprobar" onClick={() => cambiarEstado_jja(tabActivo_jja, fila[keyId_jja], 'aprobada', fila.tipo_jja)}><IconoCheck_jja /></button>
-            <button className="datatable-accion-btn-jja eliminar-jja" title="Rechazar" onClick={() => cambiarEstado_jja(tabActivo_jja, fila[keyId_jja], 'rechazada', fila.tipo_jja)}><IconoCerrar_jja /></button>
+            <button className="datatable-accion-btn-jja aprobar-jja" title="Aprobar" onClick={() => cambiarEstado_jja(tabActivo_jja, fila[keyId_jja], 'aprobada', fila.tipo_jja, fila)}><IconoCheck_jja /></button>
+            <button className="datatable-accion-btn-jja eliminar-jja" title="Rechazar" onClick={() => cambiarEstado_jja(tabActivo_jja, fila[keyId_jja], 'rechazada', fila.tipo_jja, fila)}><IconoCerrar_jja /></button>
           </>
         ) : <StatusBadge_jja estado={fila.estado_jja} conPunto={false} />}
       />
@@ -358,6 +335,18 @@ const SolicitudesPage_jja = () => {
           </div>
         )}
       </ConfirmModal_jja>
+
+      {/* Modal QR — Paso 2: confirmar entrega física */}
+      <ModalEscaneoQR_jja
+        visible={modalQR_jja.visible}
+        idActivo_jja={modalQR_jja.idActivo}
+        nombreActivo_jja={modalQR_jja.nombreActivo}
+        onExito={manejarExitoQR_jja}
+        onCerrar={() => {
+          setModalQR_jja({ visible: false, idActivo: null, nombreActivo: '' })
+          cargarDatos_jja()
+        }}
+      />
     </div>
   )
 }
