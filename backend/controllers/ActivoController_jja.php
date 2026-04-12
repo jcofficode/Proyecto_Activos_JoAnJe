@@ -349,7 +349,7 @@ class ActivoController_jja extends Controller_jja
         if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
             $rutaRelativa = '/uploads/activos/' . $nombreArchivo;
             try {
-                $this->modelo_jja->actualizarImagenes_jja($id_jja, $rutaRelativa);
+                $this->modelo_jja->guardarImagenes_jja($id_jja, $rutaRelativa);
                 $this->responder_jja(true, ['imagen' => $rutaRelativa], 'Imagen del activo subida correctamente.', 200);
             }
             catch (PDOException $e_jja) {

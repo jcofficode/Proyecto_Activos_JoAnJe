@@ -7,37 +7,17 @@ class ActivoModel_jja extends Model_jja
 {
     public function listar_jja(): array
     {
-        $rows = $this->ejecutarSP_jja('SP_LEER_ACTIVOS_jja');
-        if (!is_array($rows)) return [];
-
-        // Enriquecer cada activo con el campo imagenes_jja (JSON) y publicado_jja si existe
-        $stmt = $this->db_jja->prepare("SELECT imagenes_jja, publicado_jja FROM activos_jja WHERE id_activo_jja = :id AND estado_registro_jja = 1");
-        foreach ($rows as &$r) {
-            try {
-                $stmt->execute([':id' => $r['id_activo_jja']]);
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($row && !empty($row['imagenes_jja'])) {
-                    $decoded = json_decode($row['imagenes_jja'], true);
-                    $r['imagenes_jja'] = is_array($decoded) ? $decoded : [$row['imagenes_jja']];
-                } else {
-                    $r['imagenes_jja'] = [];
-                }
-                // publicado_jja puede venir como '0'/'1' o NULL
-                $r['publicado_jja'] = isset($row['publicado_jja']) ? (int)$row['publicado_jja'] : 0;
-            } catch (\Throwable) {
-                $r['imagenes_jja'] = [];
-            }
-        }
-        return $rows;
+        $filas_jja = $this->ejecutarSP_jja('SP_LEER_ACTIVOS_jja');
+        if (empty($filas_jja)) return [];
+        $this->decodificarJsonCampo_jja($filas_jja, 'imagenes_jja');
+        return $filas_jja;
     }
 
-    /** Publicar o despublicar un activo (0/1). */
+    /** Publica o despublica un activo (0/1). */
     public function publicar_jja(int $id_jja, int $valor_jja): array
     {
-        $sql = "UPDATE activos_jja SET publicado_jja = :pub, actualizado_en_jja = CURRENT_TIMESTAMP WHERE id_activo_jja = :id";
-        $stmt = $this->db_jja->prepare($sql);
-        $stmt->execute([':pub' => $valor_jja ? 1 : 0, ':id' => $id_jja]);
-        return ['filas_afectadas' => $stmt->rowCount()];
+        $res_jja = $this->ejecutarSPUno_jja('SP_PUBLICAR_ACTIVO_jja', [$id_jja, $valor_jja ? 1 : 0]);
+        return $res_jja ?? ['filas_afectadas' => 0];
     }
 
     public function buscarPorId_jja(int $id_jja): ?array
@@ -84,26 +64,14 @@ class ActivoModel_jja extends Model_jja
         ?string $ubicacion_jja,
         ?string $descripcion_jja
     ): array {
-        // El SP actual espera: (p_id_jja, p_nombre_jja, p_id_tipo_jja, p_ubicacion_jja, p_descripcion_jja)
         $res_jja = $this->ejecutarSPUno_jja('SP_ACTUALIZAR_ACTIVO_jja', [
             $id_jja,
             $nombre_jja,
+            $codigoNFC_jja,
             $idTipo_jja,
             $ubicacion_jja,
             $descripcion_jja
         ]);
-
-        // Si se proporcionó codigo NFC, actualizarlo por separado (no parte del SP)
-        if ($codigoNFC_jja !== null) {
-            try {
-                $sql = "UPDATE activos_jja SET codigo_nfc_jja = :nfc, actualizado_en_jja = CURRENT_TIMESTAMP WHERE id_activo_jja = :id";
-                $stmt = $this->db_jja->prepare($sql);
-                $stmt->execute([':nfc' => $codigoNFC_jja, ':id' => $id_jja]);
-            } catch (\Throwable) {
-                // ignore secondary update error
-            }
-        }
-
         return $res_jja ?? [];
     }
 
@@ -123,23 +91,13 @@ class ActivoModel_jja extends Model_jja
         return $res_jja ?? ['filas_afectadas' => 0];
     }
 
-    /** Actualiza el array JSON de 'imagenes_jja' (agrega una ruta). */
-    public function actualizarImagenes_jja(int $id_jja, string $ruta_jja): array
+    /**
+     * Agrega una nueva URL al array JSON de imagenes_jja del activo.
+     * El SP maneja JSON_ARRAY_APPEND internamente.
+     */
+    public function guardarImagenes_jja(int $id_jja, string $ruta_jja): array
     {
-        $sql = "SELECT imagenes_jja FROM activos_jja WHERE id_activo_jja = :id AND estado_registro_jja = 1";
-        $stmt = $this->db_jja->prepare($sql);
-        $stmt->execute([':id' => $id_jja]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $imagenes = [];
-        if ($row && !empty($row['imagenes_jja'])) {
-            $decoded = json_decode($row['imagenes_jja'], true);
-            if (is_array($decoded)) $imagenes = $decoded;
-        }
-        $imagenes[] = $ruta_jja;
-
-        $sql2 = "UPDATE activos_jja SET imagenes_jja = :imagenes, actualizado_en_jja = CURRENT_TIMESTAMP WHERE id_activo_jja = :id";
-        $stmt2 = $this->db_jja->prepare($sql2);
-        $stmt2->execute([':imagenes' => json_encode($imagenes, JSON_UNESCAPED_UNICODE), ':id' => $id_jja]);
-        return ['filas_afectadas' => $stmt2->rowCount()];
+        $res_jja = $this->ejecutarSPUno_jja('SP_GUARDAR_IMAGENES_ACTIVO_jja', [$id_jja, $ruta_jja]);
+        return $res_jja ?? ['filas_afectadas' => 0];
     }
 }
