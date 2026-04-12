@@ -88,6 +88,7 @@ $mapa_jja = [
     'ofertas' => 'OfertaController_jja',
     'transacciones' => 'TransaccionController_jja',
     'escaneo'       => 'EscaneoController_jja',
+    'archivos'      => 'ArchivoController_jja',
 ];
 
 $clase_jja = $mapa_jja[$recurso_jja] ?? null;
