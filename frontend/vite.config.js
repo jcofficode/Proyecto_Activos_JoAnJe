@@ -1,10 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
+import sirv from 'sirv'
+
+// Plugin: sirve frontend/uploads/ como /uploads/ en el servidor de desarrollo
+const servirUploads_jja = () => ({
+  name: 'servir-uploads-jja',
+  configureServer(servidor_jja) {
+    servidor_jja.middlewares.use(
+      '/uploads',
+      sirv(path.resolve(__dirname, 'uploads'), { dev: true, etag: true })
+    )
+  }
+})
 
 export default defineConfig({
   plugins: [
     react(),
+    servirUploads_jja(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['src/assets/JoanjeCoders.png'],
