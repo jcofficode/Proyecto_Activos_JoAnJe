@@ -1,0 +1,7 @@
+# Ignorar archivos subidos por usuarios; mantener solo la estructura de carpetas
+*
+!.gitignore
+!activos/
+!activos/.gitkeep
+!perfiles/
+!perfiles/.gitkeep
