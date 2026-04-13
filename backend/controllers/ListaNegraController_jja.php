@@ -30,6 +30,19 @@ class ListaNegraController_jja extends Controller_jja
 
         switch ($metodo_jja) {
             case 'GET':
+                // ── Listar clientes para el select de agregar sanción ──
+                if ($seg0_jja === 'clientes') {
+                    Middleware_jja::autorizar_jja($payload_jja, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
+                    $usuarioModelo_jja = new UsuarioModel_jja();
+                    $todos_jja = $usuarioModelo_jja->listar_jja();
+                    $clientes_jja = array_values(array_filter($todos_jja, function ($u) {
+                        return ($u['nombre_rol_jja'] ?? '') === 'cliente'
+                            || ($u['id_rol_jja'] ?? 0) == 3;
+                    }));
+                    $this->responder_jja(true, $clientes_jja, 'Lista de clientes.');
+                    break;
+                }
+
                 // ── Verificar sanción propia (cualquier usuario autenticado) ──
                 if ($seg0_jja === 'verificar') {
                     $idUsuario_jja = (int) $payload_jja->id;

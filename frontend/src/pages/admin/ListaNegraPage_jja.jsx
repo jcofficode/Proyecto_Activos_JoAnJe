@@ -76,13 +76,9 @@ const ListaNegraPage_jja = () => {
   async function cargarUsuarios_jja() {
     setCargandoUsuarios_jja(true)
     try {
-      const resp_jja = await apiRequest('/usuarios')
+      const resp_jja = await apiRequest('/lista-negra/clientes')
       const datos_jja = Array.isArray(resp_jja) ? resp_jja : (Array.isArray(resp_jja?.datos) ? resp_jja.datos : [])
-      // Filtrar solo clientes (rol_id 3 = cliente)
-      const clientes_jja = datos_jja.filter(u =>
-        u.nombre_rol_jja === 'cliente' || u.id_rol_jja === 3 || u.id_rol_jja === '3'
-      )
-      setUsuarios_jja(clientes_jja)
+      setUsuarios_jja(datos_jja)
     } catch (err_jja) {
       console.error('Error al cargar usuarios:', err_jja)
     } finally {

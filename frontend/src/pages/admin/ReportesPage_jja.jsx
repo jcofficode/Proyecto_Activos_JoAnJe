@@ -470,8 +470,8 @@ const ReportesPage_jja = () => {
         .kpi-card-jja:nth-child(4) { animation-delay: 0.2s; --accent-color: #ef4444; }
         .chart-card-jja { transition: all 0.3s ease; }
         .chart-card-jja:hover { transform: translateY(-3px); box-shadow: 0 16px 40px -12px rgba(0,0,0,0.1); }
-        .export-btn-jja { background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; transition: all 0.3s; cursor: pointer; font-size: 0.92rem; font-family: inherit; letter-spacing: 0.01em; }
-        .export-btn-jja:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -4px rgba(15,23,42,0.4); background: linear-gradient(135deg, #1e293b, #334155); }
+        .export-btn-jja { background: linear-gradient(135deg, #ff6b35, #7b2fff); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; transition: all 0.3s; cursor: pointer; font-size: 0.92rem; font-family: inherit; letter-spacing: 0.01em; }
+        .export-btn-jja:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -4px rgba(15,23,42,0.4); background: #00bcd4; }
         .export-btn-jja:active { transform: scale(0.97); }
       `}</style>
 
@@ -565,15 +565,15 @@ const ReportesPage_jja = () => {
               {/* Tasa Devolución */}
               <div className="chart-card-jja" style={{
                 ...estilos.cardBox, flex: 1, display: 'flex', flexDirection: 'column',
-                justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                borderColor: '#334155', color: '#fff', position: 'relative', overflow: 'hidden'
+                justifyContent: 'center', background: 'linear-gradient(135deg, #ff6b35, #7b2fff)',
+                borderColor: '#ffffffff', color: '#fff', position: 'relative', overflow: 'hidden'
               }}>
                 <div style={{
                   position: 'absolute', top: -30, right: -30, width: 120, height: 120,
                   borderRadius: '50%', background: 'rgba(34,197,94,0.08)'
                 }}></div>
                 <div style={{
-                  fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700,
+                  fontSize: '0.78rem', color: '#ffffffff', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.08em'
                 }}>Tasa de Devolución</div>
                 <div style={{
