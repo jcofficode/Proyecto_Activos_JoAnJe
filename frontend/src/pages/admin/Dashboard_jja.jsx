@@ -265,7 +265,7 @@ const Dashboard_jja = () => {
                           <div className="mini-lista-nombre-jja">{nombreUsuario}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                             {activoImg && (
-                              <img src={activoImg} alt="Activo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
+                              <img src={activoImg} alt="Activo" style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'contain', background: '#f1f5f9' }} />
                             )}
                             <span className="mini-lista-detalle-jja">{nombreActivo}</span>
                           </div>
@@ -321,7 +321,7 @@ const Dashboard_jja = () => {
                           <div className="mini-lista-nombre-jja">{nombreCliente}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                             {activoImg && (
-                              <img src={activoImg} alt="Activo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
+                              <img src={activoImg} alt="Activo" style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'contain', background: '#f1f5f9' }} />
                             )}
                             <span className="mini-lista-detalle-jja">{nombreActivo} · x{s.cantidad_jja || 1}</span>
                           </div>

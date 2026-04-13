@@ -96,7 +96,7 @@ const InventarioPage_jja = () => {
                 src={imgUrl}
                 alt={val}
                 className="datatable-avatar-jja"
-                style={{ objectFit: 'cover', border: '2px solid var(--border-color-jja)' }}
+                style={{ objectFit: 'contain', border: '2px solid var(--border-color-jja)', background: '#f1f5f9' }}
                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex') }}
               />
             ) : null}

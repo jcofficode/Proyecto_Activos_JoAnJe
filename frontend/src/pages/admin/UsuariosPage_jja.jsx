@@ -43,12 +43,12 @@ const UsuariosPage_jja = () => {
     finally { setCargando_jja(false) }
   }
 
-  // IDs de usuarios con préstamo activo
+  // IDs de usuarios con préstamo activo o pendiente
   const idsConPrestamo_jja = useMemo(() => {
     const ids = new Set()
     prestamos_jja.forEach(p => {
       const estado = (p.estado_prestamo_jja || p.estado || '').toLowerCase()
-      if (estado === 'activo' || estado === 'en_proceso') {
+      if (estado === 'activo' || estado === 'en_proceso' || estado === 'pendiente') {
         ids.add(p.id_usuario_jja)
       }
     })

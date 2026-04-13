@@ -217,7 +217,7 @@ const MisSolicitudesPage_jja = () => {
           {solicitudesFiltradas_jja.map(s => {
             const imgUrl = resolverImgActivo(s)
             return (
-              <div key={s.id_solicitud_jja} className="solicitud-card-jja">
+              <div key={`${s.tipo_jja || 'prestamo'}-${s.id_solicitud_jja}`} className="solicitud-card-jja">
                 <div className="solicitud-card-contenido-jja">
                   {/* Imagen del activo o Icono estado */}
                   {imgUrl ? (
@@ -225,9 +225,10 @@ const MisSolicitudesPage_jja = () => {
                       src={imgUrl}
                       alt="Activo"
                       style={{
-                        width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0,
+                        width: 68, height: 68, borderRadius: 10, objectFit: 'contain', flexShrink: 0,
                         border: '2px solid var(--borde-jja)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        background: '#f1f5f9'
                       }}
                     />
                   ) : (
