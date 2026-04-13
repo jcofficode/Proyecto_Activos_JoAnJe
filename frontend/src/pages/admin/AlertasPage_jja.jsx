@@ -12,7 +12,6 @@ import {
   IconoAlertaTriangulo_jja, IconoCheck_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
-const API_BASE_JJA = 'http://localhost:8000'
 
 const AlertasPage_jja = () => {
   const [tabActivo_jja, setTabActivo_jja] = useState('vencidos')
@@ -102,7 +101,7 @@ const AlertasPage_jja = () => {
 
   function obtenerImagenUsuario(fila) {
     const img = fila.usuario_imagen || fila.usuario_imagen_jja
-    if (img) return `${API_BASE_JJA}${img}`
+    if (img) return img
     return null
   }
 

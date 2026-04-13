@@ -17,7 +17,6 @@ import {
   IconoAlertaTriangulo_jja, IconoReloj_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
-const API_BASE_JJA = 'http://localhost:8000'
 
 const ListaNegraPage_jja = () => {
   const { mostrarModal } = useModal_jja()
@@ -205,7 +204,7 @@ const ListaNegraPage_jja = () => {
       clave: 'usuario_jja',
       titulo: 'Usuario',
       render: (v, f) => {
-        const imgUrl_jja = f.imagen_usuario_jja ? `${API_BASE_JJA}${f.imagen_usuario_jja}` : null
+        const imgUrl_jja = f.imagen_usuario_jja || null
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {imgUrl_jja ? (
@@ -213,16 +212,16 @@ const ListaNegraPage_jja = () => {
                 src={imgUrl_jja}
                 alt={v}
                 style={{
-                  width: 36, height: 36, borderRadius: '50%',
+                  width: 42, height: 42, borderRadius: '50%',
                   objectFit: 'cover', flexShrink: 0,
                   border: (f.activa_jja === 1 || f.activa_jja === '1')
                     ? '2px solid #dc2626'
-                    : '2px solid var(--borde-jja)',
+                    : '2px solid var(--border-color-jja)',
                 }}
               />
             ) : (
               <div style={{
-                width: 36, height: 36, borderRadius: '50%',
+                width: 42, height: 42, borderRadius: '50%',
                 background: (f.activa_jja === 1 || f.activa_jja === '1')
                   ? 'linear-gradient(135deg, #dc2626, #991b1b)'
                   : 'linear-gradient(135deg, #64748b, #475569)',

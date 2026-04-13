@@ -8,25 +8,32 @@
 
 /* ── Variables CSS (personalizables via ThemeContext) ───────── */
 :root {
-  /* Colores principales */
-  --color-primario-jja: #4f46e5;
-  --color-primario-hover-jja: #4338ca;
-  --color-primario-light-jja: #e0e7ff;
-  --color-secundario-jja: #0ea5e9;
+  /* Colores principales — sincronizados con Landing Page */
+  --color-primario-jja: #0056b3;
+  --color-primario-hover-jja: #004494;
+  --color-primario-light-jja: #e0edff;
+  --color-secundario-jja: #00bcd4;
 
-  /* Sidebar — Paleta azul profesional acorde a la Landing */
-  --sidebar-bg-jja: linear-gradient(180deg, #0a192f 0%, #112a4a 100%);
-  --sidebar-bg-hover-jja: rgba(255, 255, 255, 0.08);
-  --sidebar-text-jja: #a1b0c0;
+  /* Paleta extendida Landing */
+  --color-acento-jja: #9c27b0;
+  --color-acento-light-jja: #f3e5f5;
+  --color-naranja-jja: #ff9800;
+  --color-naranja-light-jja: #fff3e0;
+  --color-fondo-claro-jja: #f8f9fa;
+
+  /* Sidebar — Azul profundo profesional (Landing header style) con acentos paleta */
+  --sidebar-bg-jja: linear-gradient(180deg, #0d2137 0%, #133a5c 40%, #1a5276 70%, #1e6890 100%);
+  --sidebar-bg-hover-jja: rgba(0, 188, 212, 0.10);
+  --sidebar-text-jja: #a8c8e8;
   --sidebar-text-active-jja: #ffffff;
-  --sidebar-active-bg-jja: rgba(42, 93, 168, 0.45);
+  --sidebar-active-bg-jja: rgba(0, 188, 212, 0.18);
   --sidebar-width-jja: 260px;
   --sidebar-collapsed-jja: 0px;
 
-  /* Header */
+  /* Header — Fondo blanco con acento naranja/morado Landing */
   --header-height-jja: 70px;
   --header-bg-jja: #ffffff;
-  --header-border-jja: #e5e7eb;
+  --header-border-jja: rgba(123, 47, 255, 0.12);
 
   /* Fondo */
   --bg-principal-jja: #f1f5f9;
@@ -54,15 +61,15 @@
   --color-info-jja: #3b82f6;
   --color-info-bg-jja: #dbeafe;
 
-  /* KPI colors */
-  --kpi-1-jja: #4f46e5;
-  --kpi-1-bg-jja: #eef2ff;
-  --kpi-2-jja: #10b981;
-  --kpi-2-bg-jja: #d1fae5;
-  --kpi-3-jja: #f59e0b;
-  --kpi-3-bg-jja: #fef3c7;
-  --kpi-4-jja: #3b82f6;
-  --kpi-4-bg-jja: #dbeafe;
+  /* KPI colors — alineados con paleta Landing */
+  --kpi-1-jja: #ff6b35;
+  --kpi-1-bg-jja: #fff3ed;
+  --kpi-2-jja: #7b2fff;
+  --kpi-2-bg-jja: #f3e8ff;
+  --kpi-3-jja: #00bcd4;
+  --kpi-3-bg-jja: #e0f7fa;
+  --kpi-4-jja: #ff9800;
+  --kpi-4-bg-jja: #fff3e0;
 
   /* Sombras */
   --sombra-sm-jja: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -128,12 +135,12 @@
 }
 
 .sidebar-brand-logo-jja {
-  width: 38px;
-  height: 38px;
+  width: 50px;
+  height: 50px;
   border-radius: 10px;
   object-fit: contain;
   background: rgba(255, 255, 255, 0.1);
-  padding: 4px;
+  padding: 0;
   flex-shrink: 0;
 }
 
@@ -145,7 +152,7 @@
 .sidebar-brand-nombre-jja {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -153,7 +160,7 @@
 
 .sidebar-brand-subtitulo-jja {
   font-size: 0.70rem;
-  color: rgba(199, 210, 254, 0.6);
+  color: #00bcd4;
   margin-top: 1px;
 }
 
@@ -167,7 +174,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(199, 210, 254, 0.45);
+  color: #ff9800;
   padding: 0 8px;
   margin-bottom: 2px;
 }
@@ -241,9 +248,9 @@
   left: -10px;
   width: 4px;
   height: 22px;
-  background: #3b82f6;
+  background: #00bcd4;
   border-radius: 0 4px 4px 0;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
 }
 
 .sidebar-item-icono-jja {
@@ -303,16 +310,16 @@
 }
 
 .sidebar-avatar-jja {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.78rem;
   color: white;
-  background: linear-gradient(135deg, var(--color-primario-jja), var(--color-secundario-jja));
+  background: linear-gradient(135deg, #ff6b35, #7b2fff);
   flex-shrink: 0;
 }
 
@@ -324,7 +331,7 @@
 .sidebar-usuario-nombre-jja {
   font-size: 0.8rem;
   font-weight: 600;
-  color: white;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,7 +339,7 @@
 
 .sidebar-usuario-rol-jja {
   font-size: 0.68rem;
-  color: rgba(199, 210, 254, 0.55);
+  color: #00bcd4;
   text-transform: capitalize;
 }
 
@@ -362,7 +369,8 @@
 .header-sistema-jja {
   height: var(--header-height-jja);
   background: var(--header-bg-jja);
-  border-bottom: 1px solid var(--header-border-jja);
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, #ff6b35, #7b2fff) 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -370,7 +378,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: var(--sombra-sm-jja);
+  box-shadow: 0 2px 12px rgba(123, 47, 255, 0.08);
 }
 
 .header-izq-jja {
@@ -584,8 +592,8 @@
 }
 
 .header-avatar-jja {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -593,9 +601,9 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: white;
-  background: linear-gradient(135deg, #1a3d6e, #2a5da8);
+  background: linear-gradient(135deg, #ff6b35, #7b2fff);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(26, 61, 110, 0.25);
+  box-shadow: 0 2px 8px rgba(123, 47, 255, 0.3);
   transition: transform var(--transicion-jja);
 }
 
@@ -839,30 +847,30 @@
 
 /* Variantes */
 .btn-primario-jja {
-  background: var(--color-primario-jja);
+  background: linear-gradient(90deg, #ff6b35, #7b2fff);
   color: white;
 }
 
 .btn-primario-jja:hover {
-  background: var(--color-primario-hover-jja);
+  background: linear-gradient(90deg, #e05520, #5a1fd1);
 }
 
 .btn-exito-jja {
-  background: var(--color-exito-jja);
+  background: var(--color-secundario-jja);
   color: white;
 }
 
 .btn-exito-jja:hover {
-  background: #059669;
+  background: #00a0b4;
 }
 
 .btn-advertencia-jja {
-  background: var(--color-advertencia-jja);
+  background: var(--color-naranja-jja);
   color: white;
 }
 
 .btn-advertencia-jja:hover {
-  background: #d97706;
+  background: #e68900;
 }
 
 .btn-error-jja {
@@ -875,12 +883,12 @@
 }
 
 .btn-info-jja {
-  background: var(--color-info-jja);
+  background: var(--color-acento-jja);
   color: white;
 }
 
 .btn-info-jja:hover {
-  background: #2563eb;
+  background: #7b1fa2;
 }
 
 .btn-ghost-jja {
@@ -1074,22 +1082,23 @@
 }
 
 .datatable-avatar-jja {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
   color: white;
   flex-shrink: 0;
 }
 
 .datatable-avatar-img-jja {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
@@ -1208,6 +1217,110 @@
 
 .datatable-accion-btn-jja.aprobar-jja {
   color: var(--color-exito-jja);
+}
+
+/* Botones deshabilitados (activo prestado / usuario con préstamo) */
+.datatable-accion-btn-jja:disabled,
+.datatable-accion-btn-jja.bloqueado-jja {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+/* ── Sortable column headers ─────────────────────────────────── */
+.datatable-th-sortable-jja {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+.datatable-th-sortable-jja:hover {
+  color: var(--color-primario-jja);
+}
+.datatable-sort-icon-jja {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 4px;
+  color: var(--border-color-jja);
+  flex-shrink: 0;
+}
+.datatable-sort-icon-jja svg {
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.datatable-sort-icon-jja svg.activa-jja {
+  color: var(--color-primario-jja);
+  opacity: 1;
+}
+
+/* ── Filtros select junto a búsqueda ─────────────────────────── */
+.datatable-filtros-jja {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.datatable-filtro-select-jja {
+  padding: 7px 12px;
+  border: 1px solid var(--border-color-jja);
+  border-radius: var(--border-radius-sm-jja);
+  font-size: 0.82rem;
+  font-family: var(--fuente-jja);
+  background: white;
+  color: var(--texto-primario-jja);
+  cursor: pointer;
+  outline: none;
+  transition: var(--transicion-jja);
+  min-width: 140px;
+}
+.datatable-filtro-select-jja:focus {
+  border-color: var(--color-primario-jja);
+  box-shadow: 0 0 0 3px var(--color-primario-light-jja);
+}
+
+/* ── Badge de Rol en Header ──────────────────────────────────── */
+.header-rol-badge-jja {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+.header-rol-badge-jja.admin-jja {
+  background: rgba(123, 47, 255, 0.12);
+  color: #7b2fff;
+  border: 1px solid rgba(123, 47, 255, 0.25);
+}
+.header-rol-badge-jja.encargado-jja {
+  background: rgba(255, 107, 53, 0.12);
+  color: #e05520;
+  border: 1px solid rgba(255, 107, 53, 0.25);
+}
+.header-rol-badge-jja.cliente-jja {
+  background: rgba(0, 188, 212, 0.12);
+  color: #00838f;
+  border: 1px solid rgba(0, 188, 212, 0.25);
+}
+
+/* ── Imagen placeholder premium ──────────────────────────────── */
+.img-placeholder-jja {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: var(--texto-terciario-jja);
+  font-size: 0.7rem;
+  border-radius: inherit;
 }
 
 /* ══════════════════════════════════════════════════════════════

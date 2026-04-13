@@ -2,7 +2,7 @@
 // SolicitudesPage_jja.jsx — Gestión de Solicitudes + Escaneo
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useMemo } from 'react'
 import { apiRequest } from '../../utils/api'
 import { useToast_jja } from '../../context/ToastContext_jja'
 import { AuthContext_jja } from '../../context/AuthContext_jja'
@@ -12,7 +12,7 @@ import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
 import ModalEscaneoQR_jja from '../../components/ui_jja/ModalEscaneoQR_jja'
 import { IconoCheck_jja, IconoCerrar_jja } from '../../components/ui_jja/Iconos_jja'
 
-// Helper para resolver URL de imagen de activo
+// Helper para resolver URL de imagen de activo (rutas relativas servidas por Vite)
 function resolverImgActivo(fila) {
   const imgs = fila.imagenes_jja
   if (imgs && Array.isArray(imgs) && imgs.length > 0) return imgs[0]
@@ -28,12 +28,14 @@ function resolverImgActivo(fila) {
 
 // Helper para resolver URL de imagen de usuario/cliente
 function resolverImgUsuario(path) {
-  return path || null
+  if (!path) return null
+  return path
 }
 
 const SolicitudesPage_jja = () => {
   const { usuario } = useContext(AuthContext_jja)
   const [tabActivo_jja, setTabActivo_jja] = useState('prestamos')
+  const [filtroEstado_jja, setFiltroEstado_jja] = useState('')
   const [solicitudes_jja, setSolicitudes_jja] = useState([])
   const [devoluciones_jja, setDevoluciones_jja] = useState([])
   const [devolucionesProd_jja, setDevolucionesProd_jja] = useState([])
@@ -216,9 +218,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {clienteImg ? (
-              <img src={clienteImg} alt="Cliente" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+              <img src={clienteImg} alt="Cliente" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.75rem' }}>
+              <div className="datatable-avatar-jja" style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
                 {nombre[0].toUpperCase()}
               </div>
             )}
@@ -275,9 +277,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {solImg ? (
-              <img src={solImg} alt="Solicitante" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+              <img src={solImg} alt="Solicitante" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.75rem' }}>
+              <div className="datatable-avatar-jja" style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
                 {nombre[0].toUpperCase()}
               </div>
             )}
@@ -310,7 +312,12 @@ const SolicitudesPage_jja = () => {
     { clave: 'devoluciones', label: 'Devoluciones Activos', count: devoluciones_jja.filter(d => (d.estado_jja || '') === 'pendiente').length },
   ]
 
-  const datosActivos_jja = tabActivo_jja === 'prestamos' ? solicitudes_jja : tabActivo_jja === 'devoluciones' ? devoluciones_jja : devolucionesProd_jja
+  // Filtrar por estado seleccionado
+  const datosBase_jja = tabActivo_jja === 'prestamos' ? solicitudes_jja : tabActivo_jja === 'devoluciones' ? devoluciones_jja : devolucionesProd_jja
+  const datosActivos_jja = useMemo(() => {
+    if (!filtroEstado_jja) return datosBase_jja
+    return datosBase_jja.filter(d => (d.estado_jja || '').toLowerCase() === filtroEstado_jja)
+  }, [datosBase_jja, filtroEstado_jja])
   const colsActivas_jja = tabActivo_jja === 'prestamos' ? colsSolicitudes_jja : colsDevoluciones_jja
 
   const keyId_jja = tabActivo_jja === 'prestamos' ? 'id_solicitud_jja' : tabActivo_jja === 'devoluciones' ? 'id_solicitud_devolucion_jja' : 'id_solicitud_devolucion_producto_jja'
@@ -342,6 +349,20 @@ const SolicitudesPage_jja = () => {
         datos={datosActivos_jja}
         cargando={cargando_jja}
         placeholderBusqueda="Buscar solicitud..."
+        filtros={
+          <select
+            className="datatable-filtro-select-jja"
+            value={filtroEstado_jja}
+            onChange={(e) => setFiltroEstado_jja(e.target.value)}
+          >
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_proceso">En Proceso</option>
+            <option value="aprobada">Aprobada</option>
+            <option value="rechazada">Rechazada</option>
+            <option value="completada">Completada</option>
+          </select>
+        }
         acciones={(fila) => (fila.estado_jja || '') === 'pendiente' ? (
           <>
             <button className="datatable-accion-btn-jja aprobar-jja" title="Aprobar" onClick={() => cambiarEstado_jja(tabActivo_jja, fila[keyId_jja], 'aprobada', fila.tipo_jja, fila)}><IconoCheck_jja /></button>

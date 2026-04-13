@@ -20,17 +20,7 @@ function ProductRow({ p, onLoan, onEdit, onDelete, onPublish }) {
     }
   } catch (e) { imagenSrc = null }
 
-  // ajustar ruta si es relativa (por ejemplo '/uploads/...') — en dev Vite sirve desde public/
-  if (imagenSrc && imagenSrc.startsWith('/')) {
-    // Asegurar URL absoluta para evitar ambigüedades entre backend/frontend origin
-    try {
-      const origin = window?.location?.origin || ''
-      if (origin) imagenSrc = origin.replace(/\/$/, '') + imagenSrc
-    } catch (e) { /* ignore */ }
-  } else if (imagenSrc && !imagenSrc.startsWith('http')) {
-    // fallback: prefijar con API_URL_JC
-    imagenSrc = API_URL_JC.replace(/\/$/, '') + imagenSrc
-  }
+  // Las rutas relativas /uploads/... son servidas por Vite directamente
 
   return (
     <Card className="product-row">

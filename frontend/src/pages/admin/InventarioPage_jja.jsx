@@ -1,6 +1,6 @@
 // ============================================================
-// InventarioPage_jja.jsx — Gestión de Inventario de Activos
-// Con códigos QR/NFC visibles y generación de QR
+// InventarioPage_jja.jsx — Gestion de Inventario de Activos
+// Con codigos QR/NFC visibles y generacion de QR
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useEffect } from 'react'
@@ -22,7 +22,10 @@ const ESTADO_COLORES = {
   dañado: '#ef4444', perdido: '#6b7280', en_proceso_prestamo: '#f59e0b'
 }
 
-// ── Generador simple de QR con API pública ───────────────────
+// Estados que bloquean edicion/eliminacion
+const ESTADOS_BLOQUEADOS = ['prestado', 'en_proceso_prestamo']
+
+// ── Generador simple de QR con API publica ───────────────────
 const generarUrlQR = (texto, tamaño = 180) =>
   `https://api.qrserver.com/v1/create-qr-code/?size=${tamaño}x${tamaño}&data=${encodeURIComponent(texto)}&margin=8&format=svg`
 
@@ -32,6 +35,9 @@ const InventarioPage_jja = () => {
   const [cargando_jja, setCargando_jja] = useState(true)
   const toast_jja = useToast_jja()
   const [confirmarElim_jja, setConfirmarElim_jja] = useState({ visible: false, fila: null })
+
+  // Filtro por estado
+  const [filtroEstado_jja, setFiltroEstado_jja] = useState('')
 
   // Modal Crear/Editar
   const [modalVisible_jja, setModalVisible_jja] = useState(false)
@@ -69,6 +75,11 @@ const InventarioPage_jja = () => {
     finally { setCargando_jja(false) }
   }
 
+  // Filtrar por estado
+  const activosFiltrados_jja = filtroEstado_jja
+    ? activos_jja.filter(a => (a.estado_jja || '').toLowerCase() === filtroEstado_jja)
+    : activos_jja
+
   // ── Columnas de la tabla ───────────────────────────────────
   const columnas = [
     {
@@ -81,8 +92,15 @@ const InventarioPage_jja = () => {
         return (
           <div className="datatable-avatar-celda-jja">
             {imgUrl ? (
-              <img src={imgUrl} alt={val} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-            ) : (
+              <img
+                src={imgUrl}
+                alt={val}
+                className="datatable-avatar-jja"
+                style={{ objectFit: 'cover', border: '2px solid var(--border-color-jja)' }}
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex') }}
+              />
+            ) : null}
+            {!imgUrl && (
               <div className="datatable-avatar-jja" style={{ background: ESTADO_COLORES[fila.estado_jja] || '#94a3b8' }}>
                 {(val || '?')[0].toUpperCase()}
               </div>
@@ -96,7 +114,7 @@ const InventarioPage_jja = () => {
       }
     },
     {
-      clave: 'codigo_qr_jja', titulo: 'QR / NFC', ancho: 200, render: (val, fila) => (
+      clave: 'codigo_qr_jja', titulo: 'QR / NFC', ancho: 200, sortable: false, render: (val, fila) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Mini QR */}
           <img
@@ -118,14 +136,14 @@ const InventarioPage_jja = () => {
         </div>
       )
     },
-    { clave: 'ubicacion_jja', titulo: 'Ubicación', render: (val) => val || '—' },
+    { clave: 'ubicacion_jja', titulo: 'Ubicacion', render: (val) => val || '—' },
     {
       clave: 'estado_jja', titulo: 'Estado', render: (val) => <StatusBadge_jja estado={val} />
     },
     {
       clave: 'publicado_jja', titulo: 'Publicado', render: (val) => (
         <span style={{ color: val ? 'var(--color-exito-jja)' : 'var(--texto-terciario-jja)', fontWeight: 600, fontSize: '0.82rem' }}>
-          {val ? 'Sí' : 'No'}
+          {val ? 'Si' : 'No'}
         </span>
       )
     },
@@ -141,6 +159,7 @@ const InventarioPage_jja = () => {
   }
 
   const abrirEditar = (fila) => {
+    if (ESTADOS_BLOQUEADOS.includes(fila.estado_jja)) return
     setEditando_jja(fila)
     setForm_jja({
       nombre: fila.nombre_jja || '',
@@ -179,7 +198,7 @@ const InventarioPage_jja = () => {
         idActivo = res?.datos?.id_activo_jja || editando_jja?.id_activo_jja;
       }
 
-      // Subir imagen si se seleccionó una _jja
+      // Subir imagen si se selecciono una _jja
       if (imagenFichero_jja && idActivo) {
         const formData = new FormData();
         formData.append('imagen', imagenFichero_jja);
@@ -194,14 +213,7 @@ const InventarioPage_jja = () => {
   }
 
   const handleEliminar = async (fila) => {
-    if (fila.estado_jja === 'prestado' || fila.estado_jja === 'en_proceso_prestamo') {
-      setModalAlerta_jja({
-        visible: true,
-        titulo: 'Acción no permitida',
-        mensaje: 'No se puede eliminar un activo que está en proceso de préstamo o está prestado.'
-      })
-      return
-    }
+    if (ESTADOS_BLOQUEADOS.includes(fila.estado_jja)) return
     setConfirmarElim_jja({ visible: true, fila })
   }
 
@@ -224,7 +236,7 @@ const InventarioPage_jja = () => {
     const extension = file.name.split('.').pop().toLowerCase();
     const permitidas = ['jpg', 'jpeg', 'png', 'webp'];
     if (!permitidas.includes(extension)) {
-      setModalAlerta_jja({ visible: true, titulo: 'Archivo no permitido', mensaje: 'Solo se aceptan imágenes con extensión JPG, PNG o WEBP.' });
+      setModalAlerta_jja({ visible: true, titulo: 'Archivo no permitido', mensaje: 'Solo se aceptan imagenes con extension JPG, PNG o WEBP.' });
       return false;
     }
     return true;
@@ -275,7 +287,7 @@ const InventarioPage_jja = () => {
       <div className="pagina-header-jja">
         <div>
           <h1 className="pagina-titulo-jja">Inventario de Activos</h1>
-          <p className="pagina-subtitulo-jja">Gestión completa del inventario institucional con códigos QR y NFC</p>
+          <p className="pagina-subtitulo-jja">Gestion completa del inventario institucional con codigos QR y NFC</p>
         </div>
         <div className="pagina-acciones-jja">
           <BotonAccion_jja variante="primario" icono={<IconoPlus_jja />} onClick={abrirCrear}>
@@ -286,19 +298,47 @@ const InventarioPage_jja = () => {
 
       <DataTable_jja
         columnas={columnas}
-        datos={activos_jja}
+        datos={activosFiltrados_jja}
         cargando={cargando_jja}
-        placeholderBusqueda="Buscar activo por nombre, código QR, NFC o tipo..."
-        acciones={(fila) => (
-          <>
-            <button className="datatable-accion-btn-jja ver-jja" title="Ver QR / NFC" onClick={() => abrirDetalle(fila)}><IconoQR_jja /></button>
-            <button className="datatable-accion-btn-jja editar-jja" title="Editar" onClick={() => abrirEditar(fila)}><IconoEditar_jja /></button>
-            <button className="datatable-accion-btn-jja eliminar-jja" title="Eliminar" onClick={() => handleEliminar(fila)}><IconoEliminar_jja /></button>
-          </>
-        )}
+        placeholderBusqueda="Buscar activo por nombre, codigo QR, NFC o tipo..."
+        filtros={
+          <select
+            className="datatable-filtro-select-jja"
+            value={filtroEstado_jja}
+            onChange={(e) => setFiltroEstado_jja(e.target.value)}
+          >
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponible</option>
+            <option value="prestado">Prestado</option>
+            <option value="en_proceso_prestamo">En proceso</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="dañado">Dañado</option>
+            <option value="perdido">Perdido</option>
+          </select>
+        }
+        acciones={(fila) => {
+          const bloqueado = ESTADOS_BLOQUEADOS.includes(fila.estado_jja)
+          return (
+            <>
+              <button className="datatable-accion-btn-jja ver-jja" title="Ver QR / NFC" onClick={() => abrirDetalle(fila)}><IconoQR_jja /></button>
+              <button
+                className={`datatable-accion-btn-jja editar-jja`}
+                title={bloqueado ? 'No se puede editar: activo en prestamo' : 'Editar'}
+                onClick={() => abrirEditar(fila)}
+                disabled={bloqueado}
+              ><IconoEditar_jja /></button>
+              <button
+                className={`datatable-accion-btn-jja eliminar-jja`}
+                title={bloqueado ? 'No se puede eliminar: activo en prestamo' : 'Eliminar'}
+                onClick={() => handleEliminar(fila)}
+                disabled={bloqueado}
+              ><IconoEliminar_jja /></button>
+            </>
+          )
+        }}
       />
 
-      {/* ══ Modal Crear/Editar ════════════════════════════════ */}
+      {/* Modal Crear/Editar */}
       <ActionModal_jja
         visible={modalVisible_jja}
         titulo={editando_jja ? 'Editar Activo' : 'Nuevo Activo'}
@@ -316,14 +356,11 @@ const InventarioPage_jja = () => {
             opciones={tipos_jja.map(t => ({ valor: t.id_tipo_jja, etiqueta: t.nombre_tipo_jja }))}
           />
         </div>
-        <FormGroup_jja label="Ubicación" nombre="ubicacion" valor={form_jja.ubicacion} onChange={handleCambioForm} placeholder="Ej: Sala de Sistemas, Piso 2" />
-        <FormGroup_jja label="Descripción" nombre="descripcion" tipo="textarea" valor={form_jja.descripcion} onChange={handleCambioForm} placeholder="Descripción del activo..." />
+        <FormGroup_jja label="Ubicacion" nombre="ubicacion" valor={form_jja.ubicacion} onChange={handleCambioForm} placeholder="Ej: Sala de Sistemas, Piso 2" />
+        <FormGroup_jja label="Descripcion" nombre="descripcion" tipo="textarea" valor={form_jja.descripcion} onChange={handleCambioForm} placeholder="Descripcion del activo..." />
 
-        {/* Sección Imagen Drag & Drop _jja */}
-        <div
-          className="form-grupo-jja"
-          style={{ marginBottom: 16 }}
-        >
+        {/* Seccion Imagen Drag & Drop _jja */}
+        <div className="form-grupo-jja" style={{ marginBottom: 16 }}>
           <label className="form-label-jja">Imagen del activo</label>
           <div
             style={{
@@ -353,12 +390,12 @@ const InventarioPage_jja = () => {
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img
                   src={imagenPrevia_jja}
-                  alt="Previsualización de activo"
+                  alt="Previsualizacion de activo"
                   style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 6, display: 'block' }}
                 />
                 <button
                   type="button"
-                  style={{ position: 'absolute', top: -10, right: -10, background: 'var(--color-peligro-jja)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ position: 'absolute', top: -10, right: -10, background: 'var(--color-error-jja)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={(e) => { e.stopPropagation(); setImagenFichero_jja(null); setImagenPrevia_jja(null); document.getElementById('input-imagen-jja').value = ''; }}
                 >
                   &times;
@@ -371,22 +408,22 @@ const InventarioPage_jja = () => {
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
-                <div style={{ fontSize: '0.85rem', color: 'var(--texto-secundario-jja)' }}>Haz clic para seleccionar o arrastra una imagen aquí</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--texto-secundario-jja)' }}>Haz clic para seleccionar o arrastra una imagen aqui</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--texto-terciario-jja)', marginTop: 4 }}>(Formatos permitidos: JPG, PNG, WEBP)</div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Sección QR / NFC */}
+        {/* Seccion QR / NFC */}
         <div style={{ background: 'var(--bg-principal-jja)', borderRadius: 'var(--border-radius-sm-jja)', padding: 16, margin: '12px 0' }}>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--texto-primario-jja)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <IconoQR_jja style={{ fontSize: '1rem' }} /> Identificación QR / NFC
+            <IconoQR_jja style={{ fontSize: '1rem' }} /> Identificacion QR / NFC
           </div>
 
           {editando_jja ? (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--texto-secundario-jja)', marginBottom: 4 }}>Código QR (generado automáticamente)</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--texto-secundario-jja)', marginBottom: 4 }}>Codigo QR (generado automaticamente)</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <img
                   src={generarUrlQR(editando_jja.codigo_qr_jja, 64)}
@@ -397,19 +434,19 @@ const InventarioPage_jja = () => {
                   <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-primario-jja)' }}>
                     {editando_jja.codigo_qr_jja}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)' }}>Este código no se puede modificar</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--texto-terciario-jja)' }}>Este codigo no se puede modificar</div>
                 </div>
               </div>
             </div>
           ) : (
             <div style={{ fontSize: '0.78rem', color: 'var(--texto-secundario-jja)', background: 'var(--color-info-bg-jja)', padding: '8px 12px', borderRadius: 6, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               <IconoQR_jja style={{ fontSize: '0.95rem', color: 'var(--color-info-jja)' }} />
-              <span>El código QR se generará automáticamente al crear el activo (formato: ACTV-XXXXXXXX)</span>
+              <span>El codigo QR se generara automaticamente al crear el activo (formato: ACTV-XXXXXXXX)</span>
             </div>
           )}
 
           <FormGroup_jja
-            label="Código NFC (opcional)"
+            label="Codigo NFC (opcional)"
             nombre="codigo_nfc"
             valor={form_jja.codigo_nfc}
             onChange={handleCambioForm}
@@ -426,28 +463,26 @@ const InventarioPage_jja = () => {
         </div>
       </ActionModal_jja>
 
-      {/* ══ Modal Detalle QR/NFC ══════════════════════════════ */}
+      {/* Modal Detalle QR/NFC */}
       <ActionModal_jja
         visible={detalleVisible_jja}
-        titulo="Código QR / NFC del Activo"
+        titulo="Codigo QR / NFC del Activo"
         onCerrar={() => setDetalleVisible_jja(false)}
         sinFooter
         ancho="440px"
       >
         {activoDetalle_jja && (
           <div style={{ textAlign: 'center' }}>
-            {/* Nombre del activo */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{activoDetalle_jja.nombre_jja}</div>
               <div style={{ fontSize: '0.82rem', color: 'var(--texto-secundario-jja)' }}>
-                {activoDetalle_jja.nombre_tipo_jja} · {activoDetalle_jja.ubicacion_jja || 'Sin ubicación'}
+                {activoDetalle_jja.nombre_tipo_jja} · {activoDetalle_jja.ubicacion_jja || 'Sin ubicacion'}
               </div>
               <div style={{ marginTop: 6 }}>
                 <StatusBadge_jja estado={activoDetalle_jja.estado_jja} />
               </div>
             </div>
 
-            {/* QR Code visual */}
             <div style={{ background: 'white', display: 'inline-block', padding: 16, borderRadius: 12, border: '2px solid var(--border-color-jja)', boxShadow: 'var(--sombra-md-jja)', marginBottom: 16 }}>
               <img
                 src={generarUrlQR(activoDetalle_jja.codigo_qr_jja, 200)}
@@ -456,19 +491,17 @@ const InventarioPage_jja = () => {
               />
             </div>
 
-            {/* Código QR texto */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Código QR</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Codigo QR</div>
               <div style={{ fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-primario-jja)', background: 'var(--color-primario-light-jja)', padding: '6px 16px', borderRadius: 6, display: 'inline-block' }}>
                 {activoDetalle_jja.codigo_qr_jja}
               </div>
             </div>
 
-            {/* Código NFC */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Código NFC</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Codigo NFC</div>
               {activoDetalle_jja.codigo_nfc_jja ? (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#0ea5e9', background: '#e0f2fe', padding: '6px 16px', borderRadius: 6 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#00838f', background: '#e0f7fa', padding: '6px 16px', borderRadius: 6 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36" /><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58" /><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8" /><path d="M16.37 2a20.16 20.16 0 0 1 0 20" /></svg>
                   {activoDetalle_jja.codigo_nfc_jja}
                 </div>
@@ -477,7 +510,6 @@ const InventarioPage_jja = () => {
               )}
             </div>
 
-            {/* Botones de acción */}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <BotonAccion_jja
                 variante="primario"
@@ -490,21 +522,21 @@ const InventarioPage_jja = () => {
                 variante="ghost"
                 onClick={() => {
                   navigator.clipboard.writeText(activoDetalle_jja.codigo_qr_jja)
-                  toast_jja.exito('Código QR copiado al portapapeles')
+                  toast_jja.exito('Codigo QR copiado al portapapeles')
                 }}
               >
-                Copiar Código
+                Copiar Codigo
               </BotonAccion_jja>
             </div>
           </div>
         )}
       </ActionModal_jja>
 
-      {/* Modal Confirmar Eliminación */}
+      {/* Modal Confirmar Eliminacion */}
       <ConfirmModal_jja
         visible={confirmarElim_jja.visible}
-        titulo="¿Eliminar activo?"
-        mensaje={`Se eliminará "${confirmarElim_jja.fila?.nombre_jja || ''}" permanentemente.`}
+        titulo="Eliminar activo?"
+        mensaje={`Se eliminara "${confirmarElim_jja.fila?.nombre_jja || ''}" permanentemente.`}
         textoConfirmar="Eliminar"
         onConfirmar={ejecutarEliminar_jja}
         onCancelar={() => setConfirmarElim_jja({ visible: false, fila: null })}

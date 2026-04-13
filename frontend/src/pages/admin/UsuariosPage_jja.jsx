@@ -2,7 +2,7 @@
 // UsuariosPage_jja.jsx — Gestión de Usuarios
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { apiRequest } from '../../utils/api'
 import DataTable_jja from '../../components/ui_jja/DataTable_jja'
 import StatusBadge_jja from '../../components/ui_jja/StatusBadge_jja'
@@ -12,32 +12,54 @@ import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import { useModal_jja } from '../../context/ModalContext_jja'
 import { IconoPlus_jja, IconoEditar_jja, IconoEliminar_jja } from '../../components/ui_jja/Iconos_jja'
 
-const COLORES_ROL = { administrador: '#4f46e5', encargado: '#10b981', cliente: '#f59e0b' }
-const API_BASE_JJA = 'http://localhost:8000'
+const COLORES_ROL = { administrador: '#0056b3', encargado: '#00bcd4', cliente: '#ff9800' }
 
 const UsuariosPage_jja = () => {
   const { mostrarModal } = useModal_jja()
   const [usuarios_jja, setUsuarios_jja] = useState([])
   const [roles_jja, setRoles_jja] = useState([])
+  const [prestamos_jja, setPrestamos_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const [modalVisible_jja, setModalVisible_jja] = useState(false)
   const [editando_jja, setEditando_jja] = useState(null)
   const [form_jja, setForm_jja] = useState({ nombre: '', apellido: '', cedula: '', correo: '', telefono: '', contrasena: '', id_rol: '' })
   const [guardando_jja, setGuardando_jja] = useState(false)
+  const [filtroRol_jja, setFiltroRol_jja] = useState('')
 
   useEffect(() => { cargarDatos() }, [])
 
   async function cargarDatos() {
     try {
-      const [usersResp, rolesResp] = await Promise.all([
+      const [usersResp, rolesResp, prestamosResp] = await Promise.all([
         apiRequest('/usuarios'),
         apiRequest('/roles'),
+        apiRequest('/prestamos'),
       ])
       setUsuarios_jja(Array.isArray(usersResp) ? usersResp : usersResp?.datos || [])
       setRoles_jja(Array.isArray(rolesResp) ? rolesResp : rolesResp?.datos || [])
+      const pList = Array.isArray(prestamosResp) ? prestamosResp : prestamosResp?.datos || []
+      setPrestamos_jja(pList)
     } catch (err) { console.error(err) }
     finally { setCargando_jja(false) }
   }
+
+  // IDs de usuarios con préstamo activo
+  const idsConPrestamo_jja = useMemo(() => {
+    const ids = new Set()
+    prestamos_jja.forEach(p => {
+      const estado = (p.estado_prestamo_jja || p.estado || '').toLowerCase()
+      if (estado === 'activo' || estado === 'en_proceso') {
+        ids.add(p.id_usuario_jja)
+      }
+    })
+    return ids
+  }, [prestamos_jja])
+
+  // Filtrar usuarios por rol seleccionado
+  const usuariosFiltrados_jja = useMemo(() => {
+    if (!filtroRol_jja) return usuarios_jja
+    return usuarios_jja.filter(u => (u.nombre_rol_jja || '').toLowerCase() === filtroRol_jja)
+  }, [usuarios_jja, filtroRol_jja])
 
   const columnas = [
     {
@@ -46,7 +68,7 @@ const UsuariosPage_jja = () => {
         return (
           <div className="datatable-avatar-celda-jja">
             {fila.imagen_jja ? (
-              <img src={`${API_BASE_JJA}${fila.imagen_jja}`} alt={val} className="datatable-avatar-jja" style={{ objectFit: 'cover' }} />
+              <img src={fila.imagen_jja} alt={val} className="datatable-avatar-jja" style={{ objectFit: 'cover' }} />
             ) : (
               <div className="datatable-avatar-jja" style={{ background: COLORES_ROL[fila.nombre_rol_jja] || '#94a3b8' }}>{iniciales}</div>
             )}
@@ -70,6 +92,7 @@ const UsuariosPage_jja = () => {
   }
 
   const abrirEditar = (fila) => {
+    if (idsConPrestamo_jja.has(fila.id_usuario_jja)) return
     setEditando_jja(fila)
     setForm_jja({
       nombre: fila.nombre_jja || '', apellido: fila.apellido_jja || '',
@@ -104,6 +127,7 @@ const UsuariosPage_jja = () => {
   }
 
   const handleEliminar = (fila) => {
+    if (idsConPrestamo_jja.has(fila.id_usuario_jja)) return
     mostrarModal({
       titulo: 'Eliminar Usuario',
       mensaje: `¿Eliminar al usuario "${fila.nombre_jja} ${fila.apellido_jja}"?`,
@@ -136,15 +160,30 @@ const UsuariosPage_jja = () => {
 
       <DataTable_jja
         columnas={columnas}
-        datos={usuarios_jja}
+        datos={usuariosFiltrados_jja}
         cargando={cargando_jja}
         placeholderBusqueda="Buscar por nombre, cédula o correo..."
-        acciones={(fila) => (
-          <>
-            <button className="datatable-accion-btn-jja editar-jja" title="Editar" onClick={() => abrirEditar(fila)}><IconoEditar_jja /></button>
-            <button className="datatable-accion-btn-jja eliminar-jja" title="Eliminar" onClick={() => handleEliminar(fila)}><IconoEliminar_jja /></button>
-          </>
-        )}
+        filtros={
+          <select
+            className="datatable-filtro-select-jja"
+            value={filtroRol_jja}
+            onChange={(e) => setFiltroRol_jja(e.target.value)}
+          >
+            <option value="">Todos los roles</option>
+            <option value="administrador">Administrador</option>
+            <option value="encargado">Encargado</option>
+            <option value="cliente">Cliente</option>
+          </select>
+        }
+        acciones={(fila) => {
+          const bloqueado = idsConPrestamo_jja.has(fila.id_usuario_jja)
+          return (
+            <>
+              <button className="datatable-accion-btn-jja editar-jja" title={bloqueado ? 'Usuario con préstamo activo' : 'Editar'} disabled={bloqueado} onClick={() => abrirEditar(fila)}><IconoEditar_jja /></button>
+              <button className="datatable-accion-btn-jja eliminar-jja" title={bloqueado ? 'Usuario con préstamo activo' : 'Eliminar'} disabled={bloqueado} onClick={() => handleEliminar(fila)}><IconoEliminar_jja /></button>
+            </>
+          )
+        }}
       />
 
       <ActionModal_jja

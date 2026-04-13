@@ -6,7 +6,6 @@ import React, { useContext } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ThemeContext_jja } from '../../context/ThemeContext_jja'
 import useAuth_jja from '../../hooks/useAuth_jja'
-import { API_URL_JC } from '../../api.config.js'
 import { useNotificaciones_jja } from '../../context/NotificacionContext_jja'
 import logoDefault from '../../assets/JoanjeCoders.png'
 import {
@@ -92,8 +91,7 @@ const Sidebar_jja = ({ abierto = false, onCerrar }) => {
     ? `${(usuario.nombre || '')[0] || ''}${(usuario.apellido || '')[0] || ''}`.toUpperCase()
     : 'U'
 
-  const apiUrlBase = API_URL_JC.replace('/api/v1', '')
-  const avatarUrl = usuario?.imagen ? `${apiUrlBase}${usuario.imagen}` : null
+  const avatarUrl = usuario?.imagen || null
 
   const handleLogout = () => {
     logout()

@@ -18,6 +18,7 @@ import {
   IconoImagen_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
+
 const ITEMS_POR_PAGINA = 12
 
 const MarketplacePage_jja = () => {
@@ -34,6 +35,7 @@ const MarketplacePage_jja = () => {
   const [productoSeleccionado_jja, setProductoSeleccionado_jja] = useState(null)
   const [observaciones_jja, setObservaciones_jja] = useState('')
   const [enviando_jja, setEnviando_jja] = useState(false)
+  const [errorMotivo_jja, setErrorMotivo_jja] = useState('')
 
   // Modal de sanción bloqueante
   const [modalSancion_jja, setModalSancion_jja] = useState({ visible: false, motivo: '' })
@@ -94,6 +96,7 @@ const MarketplacePage_jja = () => {
     // No está sancionado — abrir modal de solicitud
     setProductoSeleccionado_jja(producto)
     setObservaciones_jja('')
+    setErrorMotivo_jja('')
     setModalVisible_jja(true)
   }
 
@@ -104,11 +107,16 @@ const MarketplacePage_jja = () => {
 
   const enviarSolicitud = async () => {
     if (!productoSeleccionado_jja) return
+    if (!observaciones_jja.trim()) {
+      setErrorMotivo_jja('El motivo de la solicitud es obligatorio.')
+      return
+    }
+    setErrorMotivo_jja('')
     setEnviando_jja(true)
     try {
       await apiRequest(`/activos/${productoSeleccionado_jja.id_activo_jja}/solicitudes`, {
         method: 'POST',
-        body: JSON.stringify({ observaciones: observaciones_jja || 'Solicitud desde marketplace' })
+        body: JSON.stringify({ observaciones: observaciones_jja.trim() })
       })
       setModalVisible_jja(false)
       // Mostrar confirmación visual y recargar la cuadrícula para actualizar el estado
@@ -325,15 +333,17 @@ const MarketplacePage_jja = () => {
               </div>
             </div>
 
-            {/* Observaciones */}
+            {/* Motivo (obligatorio) */}
             <FormGroup_jja
-              label="Observaciones / Motivo"
+              label="Motivo de la solicitud"
               nombre="observaciones"
               tipo="textarea"
               valor={observaciones_jja}
-              onChange={(_, v) => setObservaciones_jja(v)}
+              onChange={(_, v) => { setObservaciones_jja(v); if (v.trim()) setErrorMotivo_jja('') }}
               placeholder="Describe el motivo de tu solicitud..."
-              helper="Opcional: explica para qué necesitas este activo"
+              helper="Obligatorio: explica para qué necesitas este activo"
+              requerido
+              error={errorMotivo_jja}
             />
           </div>
         )}
