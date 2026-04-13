@@ -13,7 +13,7 @@ import FormGroup_jja from '../../components/ui_jja/FormGroup_jja'
 import { useModal_jja } from '../../context/ModalContext_jja'
 import {
   IconoPrestamo_jja, IconoDevolucion_jja, IconoReloj_jja,
-  IconoAlertaTriangulo_jja,
+  IconoAlertaTriangulo_jja, IconoBuscar_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
 // Helper para resolver URL de imagen de activo
@@ -41,6 +41,10 @@ const MisPrestamosPage_jja = () => {
   const [prestamos_jja, setPrestamos_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const [tabActivo_jja, setTabActivo_jja] = useState('activos')
+  const [busqueda_jja, setBusqueda_jja] = useState('')
+  const [fechaDesde_jja, setFechaDesde_jja] = useState('')
+  const [fechaHasta_jja, setFechaHasta_jja] = useState('')
+  const [orden_jja, setOrden_jja] = useState('reciente')
 
   // Modal devolución
   const [modalDevolucion_jja, setModalDevolucion_jja] = useState(false)
@@ -112,13 +116,33 @@ const MisPrestamosPage_jja = () => {
     return null
   }
 
-  // Filtrar por tab
+  // Filtrar por tab + búsqueda + fecha + orden
   const prestamosFiltrados_jja = useMemo(() => {
-    if (tabActivo_jja === 'todos') return prestamos_jja
-    if (tabActivo_jja === 'activos') return prestamos_jja.filter(p => p.estado === 'activo' || p.estado === 'vencido')
-    if (tabActivo_jja === 'devueltos') return prestamos_jja.filter(p => p.estado === 'devuelto')
-    return prestamos_jja
-  }, [prestamos_jja, tabActivo_jja])
+    let lista = prestamos_jja
+    if (tabActivo_jja === 'activos') lista = lista.filter(p => p.estado === 'activo' || p.estado === 'vencido')
+    else if (tabActivo_jja === 'devueltos') lista = lista.filter(p => p.estado === 'devuelto')
+
+    if (busqueda_jja.trim()) {
+      const term = busqueda_jja.toLowerCase()
+      lista = lista.filter(p => (p.nombre || '').toLowerCase().includes(term))
+    }
+    if (fechaDesde_jja) {
+      const desde = new Date(fechaDesde_jja); desde.setHours(0, 0, 0, 0)
+      lista = lista.filter(p => p.fechaPrestamo && new Date(p.fechaPrestamo) >= desde)
+    }
+    if (fechaHasta_jja) {
+      const hasta = new Date(fechaHasta_jja); hasta.setHours(23, 59, 59, 999)
+      lista = lista.filter(p => p.fechaPrestamo && new Date(p.fechaPrestamo) <= hasta)
+    }
+    lista = [...lista].sort((a, b) => {
+      if (orden_jja === 'reciente') return new Date(b.fechaPrestamo || 0) - new Date(a.fechaPrestamo || 0)
+      if (orden_jja === 'antiguo') return new Date(a.fechaPrestamo || 0) - new Date(b.fechaPrestamo || 0)
+      if (orden_jja === 'nombre_asc') return (a.nombre || '').localeCompare(b.nombre || '')
+      if (orden_jja === 'nombre_desc') return (b.nombre || '').localeCompare(a.nombre || '')
+      return 0
+    })
+    return lista
+  }, [prestamos_jja, tabActivo_jja, busqueda_jja, fechaDesde_jja, fechaHasta_jja, orden_jja])
 
   // Conteos
   const conteos_jja = useMemo(() => ({
@@ -191,6 +215,62 @@ const MisPrestamosPage_jja = () => {
         ))}
       </div>
 
+      {/* Filtros de búsqueda */}
+      <div className="filtros-busqueda-jja" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', margin: '16px 0' }}>
+        <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--texto-terciario-jja)', display: 'flex' }}>
+            <IconoBuscar_jja />
+          </span>
+          <input
+            type="text"
+            value={busqueda_jja}
+            onChange={(e) => setBusqueda_jja(e.target.value)}
+            placeholder="Buscar por nombre de activo..."
+            className="form-input-jja"
+            style={{ paddingLeft: 38, fontSize: '0.88rem' }}
+          />
+        </div>
+        <input
+          type="date"
+          value={fechaDesde_jja}
+          onChange={(e) => setFechaDesde_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem' }}
+          title="Desde fecha"
+        />
+        <input
+          type="date"
+          value={fechaHasta_jja}
+          onChange={(e) => setFechaHasta_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem' }}
+          title="Hasta fecha"
+        />
+        <select
+          value={orden_jja}
+          onChange={(e) => setOrden_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem', cursor: 'pointer' }}
+        >
+          <option value="reciente">Más reciente</option>
+          <option value="antiguo">Más antiguo</option>
+          <option value="nombre_asc">Nombre A-Z</option>
+          <option value="nombre_desc">Nombre Z-A</option>
+        </select>
+        {(busqueda_jja || fechaDesde_jja || fechaHasta_jja) && (
+          <button
+            onClick={() => { setBusqueda_jja(''); setFechaDesde_jja(''); setFechaHasta_jja('') }}
+            className="btn-jja btn-ghost-jja"
+            style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+          >
+            Limpiar
+          </button>
+        )}
+        <span style={{ fontSize: '0.82rem', color: 'var(--texto-terciario-jja)', marginLeft: 'auto' }}>
+          {prestamosFiltrados_jja.length} resultado{prestamosFiltrados_jja.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       {/* Lista de préstamos */}
       {cargando_jja ? (
         <div className="prestamos-lista-jja">
@@ -252,9 +332,10 @@ const MisPrestamosPage_jja = () => {
                       src={activoImg}
                       alt="Activo"
                       style={{
-                        width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0,
+                        width: 64, height: 64, borderRadius: 10, objectFit: 'contain', flexShrink: 0,
                         border: '2px solid var(--borde-jja)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        background: '#f1f5f9'
                       }}
                     />
                   ) : (
@@ -331,7 +412,7 @@ const MisPrestamosPage_jja = () => {
               {(() => {
                 const img = resolverImgActivo(prestamoDevolucion_jja.raw)
                 return img ? (
-                  <img src={img} alt="Activo" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '2px solid var(--borde-jja)' }} />
+                  <img src={img} alt="Activo" style={{ width: 60, height: 60, borderRadius: 10, objectFit: 'contain', border: '2px solid var(--borde-jja)', background: '#f1f5f9' }} />
                 ) : (
                   <IconoDevolucion_jja style={{ fontSize: '1.5rem', color: 'var(--color-info-jja)' }} />
                 )

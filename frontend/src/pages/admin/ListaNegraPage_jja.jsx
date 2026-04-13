@@ -77,7 +77,7 @@ const ListaNegraPage_jja = () => {
     setCargandoUsuarios_jja(true)
     try {
       const resp_jja = await apiRequest('/usuarios')
-      const datos_jja = Array.isArray(resp_jja) ? resp_jja : resp_jja?.datos || []
+      const datos_jja = Array.isArray(resp_jja) ? resp_jja : (Array.isArray(resp_jja?.datos) ? resp_jja.datos : [])
       // Filtrar solo clientes (rol_id 3 = cliente)
       const clientes_jja = datos_jja.filter(u =>
         u.nombre_rol_jja === 'cliente' || u.id_rol_jja === 3 || u.id_rol_jja === '3'
@@ -212,7 +212,7 @@ const ListaNegraPage_jja = () => {
                 src={imgUrl_jja}
                 alt={v}
                 style={{
-                  width: 42, height: 42, borderRadius: '50%',
+                  width: 50, height: 50, borderRadius: '50%',
                   objectFit: 'cover', flexShrink: 0,
                   border: (f.activa_jja === 1 || f.activa_jja === '1')
                     ? '2px solid #dc2626'
@@ -221,12 +221,12 @@ const ListaNegraPage_jja = () => {
               />
             ) : (
               <div style={{
-                width: 42, height: 42, borderRadius: '50%',
+                width: 50, height: 50, borderRadius: '50%',
                 background: (f.activa_jja === 1 || f.activa_jja === '1')
                   ? 'linear-gradient(135deg, #dc2626, #991b1b)'
                   : 'linear-gradient(135deg, #64748b, #475569)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0
+                color: '#fff', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0
               }}>
                 {(v || '??').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
               </div>

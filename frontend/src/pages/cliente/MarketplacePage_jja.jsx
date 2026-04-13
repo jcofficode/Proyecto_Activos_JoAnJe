@@ -28,6 +28,7 @@ const MarketplacePage_jja = () => {
   const [cargando_jja, setCargando_jja] = useState(true)
   const [busqueda_jja, setBusqueda_jja] = useState('')
   const [tipoFiltro_jja, setTipoFiltro_jja] = useState('')
+  const [orden_jja, setOrden_jja] = useState('nombre_asc')
   const [pagina_jja, setPagina_jja] = useState(1)
 
   // Modal de solicitud
@@ -143,8 +144,22 @@ const MarketplacePage_jja = () => {
     if (tipoFiltro_jja) {
       resultado = resultado.filter(p => String(p.id_tipo_jja) === tipoFiltro_jja)
     }
+    // Ordenamiento
+    resultado = [...resultado].sort((a, b) => {
+      switch (orden_jja) {
+        case 'nombre_asc': return (a.nombre_jja || '').localeCompare(b.nombre_jja || '')
+        case 'nombre_desc': return (b.nombre_jja || '').localeCompare(a.nombre_jja || '')
+        case 'reciente': return new Date(b.creado_en_jja || 0) - new Date(a.creado_en_jja || 0)
+        case 'antiguo': return new Date(a.creado_en_jja || 0) - new Date(b.creado_en_jja || 0)
+        case 'disponible': {
+          const prioridad = { 'disponible': 0, 'prestado': 1, 'mantenimiento': 2, 'inactivo': 3 }
+          return (prioridad[a.estado_jja] ?? 9) - (prioridad[b.estado_jja] ?? 9)
+        }
+        default: return 0
+      }
+    })
     return resultado
-  }, [productos_jja, busqueda_jja, tipoFiltro_jja])
+  }, [productos_jja, busqueda_jja, tipoFiltro_jja, orden_jja])
 
   // Paginación
   const totalPaginas = Math.ceil(productosFiltrados_jja.length / ITEMS_POR_PAGINA) || 1
@@ -183,6 +198,21 @@ const MarketplacePage_jja = () => {
             {tipos_jja.map(t => (
               <option key={t.id_tipo_jja} value={t.id_tipo_jja}>{t.nombre_tipo_jja}</option>
             ))}
+          </select>
+        </div>
+        <div className="marketplace-filtro-tipo-jja">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--texto-terciario-jja)' }}>
+            <path d="M11 5h10"/><path d="M11 9h7"/><path d="M11 13h4"/><path d="M3 17l3 3 3-3"/><path d="M6 18V4"/>
+          </svg>
+          <select
+            value={orden_jja}
+            onChange={(e) => { setOrden_jja(e.target.value); setPagina_jja(1) }}
+          >
+            <option value="nombre_asc">Nombre A-Z</option>
+            <option value="nombre_desc">Nombre Z-A</option>
+            <option value="reciente">Más reciente</option>
+            <option value="antiguo">Más antiguo</option>
+            <option value="disponible">Disponibles primero</option>
           </select>
         </div>
         <span className="marketplace-contador-jja">

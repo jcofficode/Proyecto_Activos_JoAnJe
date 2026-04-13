@@ -194,9 +194,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {imgUrl ? (
-              <img src={imgUrl} alt="Activo" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+              <img src={imgUrl} alt="Activo" className="datatable-avatar-jja" style={{ objectFit: 'contain', border: '2px solid var(--borde-jja)', background: '#f1f5f9' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
+              <div className="datatable-avatar-jja" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
                 {(v || f.nombre_activo_jja || f.activo_nombre || 'A')[0].toUpperCase()}
               </div>
             )}
@@ -218,9 +218,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {clienteImg ? (
-              <img src={clienteImg} alt="Cliente" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
+              <img src={clienteImg} alt="Cliente" style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
+              <div className="datatable-avatar-jja" style={{ borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
                 {nombre[0].toUpperCase()}
               </div>
             )}
@@ -256,9 +256,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {imgUrl ? (
-              <img src={imgUrl} alt="Activo" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+              <img src={imgUrl} alt="Activo" className="datatable-avatar-jja" style={{ objectFit: 'contain', border: '2px solid var(--borde-jja)', background: '#f1f5f9' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
+              <div className="datatable-avatar-jja" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', fontSize: '0.9rem' }}>
                 {(f.activo_nombre || f.producto_nombre || 'P')[0].toUpperCase()}
               </div>
             )}
@@ -277,9 +277,9 @@ const SolicitudesPage_jja = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {solImg ? (
-              <img src={solImg} alt="Solicitante" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
+              <img src={solImg} alt="Solicitante" style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--border-color-jja)' }} />
             ) : (
-              <div className="datatable-avatar-jja" style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
+              <div className="datatable-avatar-jja" style={{ borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '0.8rem' }}>
                 {nombre[0].toUpperCase()}
               </div>
             )}

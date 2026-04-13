@@ -1977,10 +1977,11 @@
 }
 
 .marketplace-card-img-jja {
-  height: 216px;
+  height: 240px;
   overflow: hidden;
   background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
   position: relative;
+  padding: 12px;
 }
 
 .marketplace-card-img-jja img {
@@ -2073,9 +2074,9 @@
 }
 
 .marketplace-modal-img-jja {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
 }

@@ -256,11 +256,17 @@ function getIniciales_jja(nombre) {
   return nombre.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
 }
 
+const ITEMS_POR_PAGINA_AUDIT = 20
+
 const AuditoriaPage_jja = () => {
   const [registros_jja, setRegistros_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const [busqueda_jja, setBusqueda_jja] = useState('')
   const [filtroAccion_jja, setFiltroAccion_jja] = useState('TODAS')
+  const [fechaDesde_jja, setFechaDesde_jja] = useState('')
+  const [fechaHasta_jja, setFechaHasta_jja] = useState('')
+  const [orden_jja, setOrden_jja] = useState('reciente')
+  const [pagina_jja, setPagina_jja] = useState(1)
   const toast_jja = useToast_jja()
 
   useEffect(() => { cargarDatos_jja() }, [])
@@ -295,13 +301,38 @@ const AuditoriaPage_jja = () => {
         return desc.includes(term) || usr.includes(term) || tbl.includes(term)
       })
     }
+    if (fechaDesde_jja) {
+      const desde = new Date(fechaDesde_jja)
+      desde.setHours(0, 0, 0, 0)
+      lista = lista.filter(r => r.fecha_accion_jja && new Date(r.fecha_accion_jja) >= desde)
+    }
+    if (fechaHasta_jja) {
+      const hasta = new Date(fechaHasta_jja)
+      hasta.setHours(23, 59, 59, 999)
+      lista = lista.filter(r => r.fecha_accion_jja && new Date(r.fecha_accion_jja) <= hasta)
+    }
+    // Ordenamiento
+    lista = [...lista].sort((a, b) => {
+      const fA = new Date(a.fecha_accion_jja || 0)
+      const fB = new Date(b.fecha_accion_jja || 0)
+      return orden_jja === 'reciente' ? fB - fA : fA - fB
+    })
     return lista
-  }, [registros_jja, filtroAccion_jja, busqueda_jja])
+  }, [registros_jja, filtroAccion_jja, busqueda_jja, fechaDesde_jja, fechaHasta_jja, orden_jja])
 
-  // Agrupar por fecha
+  // Paginación
+  const totalPaginas_jja = Math.ceil(registrosFiltrados_jja.length / ITEMS_POR_PAGINA_AUDIT) || 1
+  const paginaActual_jja = Math.min(pagina_jja, totalPaginas_jja)
+  const inicio_jja = (paginaActual_jja - 1) * ITEMS_POR_PAGINA_AUDIT
+  const registrosPagina_jja = registrosFiltrados_jja.slice(inicio_jja, inicio_jja + ITEMS_POR_PAGINA_AUDIT)
+
+  // Reset de pagina al cambiar filtros
+  useEffect(() => { setPagina_jja(1) }, [busqueda_jja, filtroAccion_jja, fechaDesde_jja, fechaHasta_jja, orden_jja])
+
+  // Agrupar por fecha (de la página actual)
   const gruposPorFecha_jja = useMemo(() => {
     const grupos = {}
-    registrosFiltrados_jja.forEach(reg => {
+    registrosPagina_jja.forEach(reg => {
       const fecha = reg.fecha_accion_jja
         ? new Date(reg.fecha_accion_jja).toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
         : 'Sin fecha'
@@ -309,7 +340,7 @@ const AuditoriaPage_jja = () => {
       grupos[fecha].push(reg)
     })
     return grupos
-  }, [registrosFiltrados_jja])
+  }, [registrosPagina_jja])
 
   // Conteos por accion
   const conteos_jja = useMemo(() => {
@@ -379,7 +410,7 @@ const AuditoriaPage_jja = () => {
 
       {/* ── Barra de busqueda y filtros ── */}
       <div style={estilos_jja.toolbarBox}>
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <svg style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input
             className="audit-search-jja"
@@ -389,7 +420,7 @@ const AuditoriaPage_jja = () => {
             placeholder="Buscar actividad: usuario, accion, modulo..."
           />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {[
             { key: 'TODAS', label: 'Todas', Icono: null },
             { key: 'INSERT', label: 'Creaciones', Icono: IconoCreacion_jja },
@@ -409,9 +440,63 @@ const AuditoriaPage_jja = () => {
         </div>
       </div>
 
+      {/* ── Filtros avanzados: fecha y ordenamiento ── */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap' }}>Desde:</label>
+          <input
+            type="date"
+            value={fechaDesde_jja}
+            onChange={(e) => setFechaDesde_jja(e.target.value)}
+            style={{
+              padding: '8px 12px', borderRadius: 10, border: '1px solid #e2e8f0',
+              fontSize: '0.85rem', background: '#fff', color: '#1e293b', fontFamily: 'inherit'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap' }}>Hasta:</label>
+          <input
+            type="date"
+            value={fechaHasta_jja}
+            onChange={(e) => setFechaHasta_jja(e.target.value)}
+            style={{
+              padding: '8px 12px', borderRadius: 10, border: '1px solid #e2e8f0',
+              fontSize: '0.85rem', background: '#fff', color: '#1e293b', fontFamily: 'inherit'
+            }}
+          />
+        </div>
+        <select
+          value={orden_jja}
+          onChange={(e) => setOrden_jja(e.target.value)}
+          style={{
+            padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0',
+            fontSize: '0.85rem', background: '#fff', color: '#1e293b', cursor: 'pointer', fontFamily: 'inherit'
+          }}
+        >
+          <option value="reciente">Más reciente primero</option>
+          <option value="antiguo">Más antiguo primero</option>
+        </select>
+        {(fechaDesde_jja || fechaHasta_jja) && (
+          <button
+            onClick={() => { setFechaDesde_jja(''); setFechaHasta_jja('') }}
+            style={{
+              padding: '8px 14px', borderRadius: 10, border: '1px solid #e2e8f0',
+              fontSize: '0.82rem', background: '#fef2f2', color: '#ef4444', cursor: 'pointer',
+              fontWeight: 600, fontFamily: 'inherit'
+            }}
+          >
+            Limpiar fechas
+          </button>
+        )}
+      </div>
+
       {/* ── Resultados info ── */}
-      <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500, padding: '0 4px' }}>
-        {registrosFiltrados_jja.length} actividad{registrosFiltrados_jja.length !== 1 ? 'es' : ''} encontrada{registrosFiltrados_jja.length !== 1 ? 's' : ''}
+      <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500, padding: '0 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{registrosFiltrados_jja.length} actividad{registrosFiltrados_jja.length !== 1 ? 'es' : ''} encontrada{registrosFiltrados_jja.length !== 1 ? 's' : ''}</span>
+        {totalPaginas_jja > 1 && (
+          <span>Página {paginaActual_jja} de {totalPaginas_jja}</span>
+        )}
       </div>
 
       {/* ── Timeline ── */}
@@ -576,6 +661,86 @@ const AuditoriaPage_jja = () => {
           ))}
         </div>
       )}
+
+      {/* ── Paginación ── */}
+      {!cargando_jja && totalPaginas_jja > 1 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: '20px 0', marginTop: 8
+        }}>
+          <button
+            onClick={() => setPagina_jja(1)}
+            disabled={paginaActual_jja === 1}
+            style={{
+              ...estilos_jja.paginaBtn,
+              opacity: paginaActual_jja === 1 ? 0.4 : 1,
+              cursor: paginaActual_jja === 1 ? 'default' : 'pointer',
+            }}
+          >
+            «
+          </button>
+          <button
+            onClick={() => setPagina_jja(p => Math.max(1, p - 1))}
+            disabled={paginaActual_jja === 1}
+            style={{
+              ...estilos_jja.paginaBtn,
+              opacity: paginaActual_jja === 1 ? 0.4 : 1,
+              cursor: paginaActual_jja === 1 ? 'default' : 'pointer',
+            }}
+          >
+            ‹
+          </button>
+          {Array.from({ length: Math.min(5, totalPaginas_jja) }, (_, i) => {
+            let pg
+            if (totalPaginas_jja <= 5) {
+              pg = i + 1
+            } else if (paginaActual_jja <= 3) {
+              pg = i + 1
+            } else if (paginaActual_jja >= totalPaginas_jja - 2) {
+              pg = totalPaginas_jja - 4 + i
+            } else {
+              pg = paginaActual_jja - 2 + i
+            }
+            return (
+              <button
+                key={pg}
+                onClick={() => setPagina_jja(pg)}
+                style={{
+                  ...estilos_jja.paginaBtn,
+                  background: pg === paginaActual_jja ? '#6366f1' : '#fff',
+                  color: pg === paginaActual_jja ? '#fff' : '#475569',
+                  fontWeight: pg === paginaActual_jja ? 700 : 500,
+                  borderColor: pg === paginaActual_jja ? '#6366f1' : '#e2e8f0',
+                }}
+              >
+                {pg}
+              </button>
+            )
+          })}
+          <button
+            onClick={() => setPagina_jja(p => Math.min(totalPaginas_jja, p + 1))}
+            disabled={paginaActual_jja === totalPaginas_jja}
+            style={{
+              ...estilos_jja.paginaBtn,
+              opacity: paginaActual_jja === totalPaginas_jja ? 0.4 : 1,
+              cursor: paginaActual_jja === totalPaginas_jja ? 'default' : 'pointer',
+            }}
+          >
+            ›
+          </button>
+          <button
+            onClick={() => setPagina_jja(totalPaginas_jja)}
+            disabled={paginaActual_jja === totalPaginas_jja}
+            style={{
+              ...estilos_jja.paginaBtn,
+              opacity: paginaActual_jja === totalPaginas_jja ? 0.4 : 1,
+              cursor: paginaActual_jja === totalPaginas_jja ? 'default' : 'pointer',
+            }}
+          >
+            »
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -601,6 +766,14 @@ const estilos_jja = {
     border: '1px solid #f1f5f9',
     display: 'flex', alignItems: 'flex-start', gap: 16,
     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+  },
+  paginaBtn: {
+    width: 38, height: 38, borderRadius: 10,
+    border: '1px solid #e2e8f0', background: '#fff',
+    color: '#475569', fontSize: '0.88rem', fontWeight: 500,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', transition: 'all 0.2s',
+    fontFamily: 'inherit',
   },
 }
 

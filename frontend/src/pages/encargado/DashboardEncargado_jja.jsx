@@ -250,9 +250,9 @@ const DashboardEncargado_jja = () => {
                       <div className="mini-lista-izq-jja">
                         {/* Avatar del usuario con foto */}
                         {usuarioImg ? (
-                          <img src={usuarioImg} alt="Usuario" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+                          <img src={usuarioImg} alt="Usuario" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
                         ) : (
-                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreUsuario), width: 40, height: 40 }}>
+                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreUsuario), width: 44, height: 44 }}>
                             {nombreUsuario[0].toUpperCase()}
                           </div>
                         )}
@@ -260,7 +260,7 @@ const DashboardEncargado_jja = () => {
                           <div className="mini-lista-nombre-jja">{nombreUsuario}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                             {activoImg && (
-                              <img src={activoImg} alt="Activo" style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover' }} />
+                              <img src={activoImg} alt="Activo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain', background: '#f1f5f9' }} />
                             )}
                             <span className="mini-lista-detalle-jja">{nombreActivo}</span>
                           </div>
@@ -306,9 +306,9 @@ const DashboardEncargado_jja = () => {
                       <div className="mini-lista-izq-jja">
                         {/* Avatar del cliente */}
                         {clienteImg ? (
-                          <img src={clienteImg} alt="Cliente" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
+                          <img src={clienteImg} alt="Cliente" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--borde-jja)' }} />
                         ) : (
-                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreCliente), width: 40, height: 40 }}>
+                          <div className="mini-lista-avatar-jja" style={{ background: colorAvatar_jja(nombreCliente), width: 44, height: 44 }}>
                             {nombreCliente[0].toUpperCase()}
                           </div>
                         )}
@@ -316,7 +316,7 @@ const DashboardEncargado_jja = () => {
                           <div className="mini-lista-nombre-jja">{nombreCliente}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                             {activoImg && (
-                              <img src={activoImg} alt="Activo" style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover' }} />
+                              <img src={activoImg} alt="Activo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain', background: '#f1f5f9' }} />
                             )}
                             <span className="mini-lista-detalle-jja">{nombreActivo} · x{s.cantidad_jja || 1}</span>
                           </div>

@@ -12,7 +12,7 @@ import EmptyState_jja from '../../components/ui_jja/EmptyState_jja'
 import { useModal_jja } from '../../context/ModalContext_jja'
 import {
   IconoSolicitudes_jja, IconoCancelar_jja, IconoReloj_jja,
-  IconoCheck_jja, IconoCerrar_jja,
+  IconoCheck_jja, IconoCerrar_jja, IconoBuscar_jja,
 } from '../../components/ui_jja/Iconos_jja'
 
 // Helper para resolver URL de imagen de activo
@@ -54,6 +54,10 @@ const MisSolicitudesPage_jja = () => {
   const [cargando_jja, setCargando_jja] = useState(true)
   const [error_jja, setError_jja] = useState('')
   const [tabActivo_jja, setTabActivo_jja] = useState('todas')
+  const [busqueda_jja, setBusqueda_jja] = useState('')
+  const [fechaDesde_jja, setFechaDesde_jja] = useState('')
+  const [fechaHasta_jja, setFechaHasta_jja] = useState('')
+  const [orden_jja, setOrden_jja] = useState('reciente')
 
   // Modal cancelar
   const [modalCancelar_jja, setModalCancelar_jja] = useState(false)
@@ -76,13 +80,39 @@ const MisSolicitudesPage_jja = () => {
     finally { setCargando_jja(false) }
   }
 
-  // Filtrar por tab
+  // Filtrar por tab + búsqueda + fecha + orden
   const solicitudesFiltradas_jja = useMemo(() => {
-    if (tabActivo_jja === 'todas') return solicitudes_jja
-    if (tabActivo_jja === 'aprobada') return solicitudes_jja.filter(s => ['aprobada', 'aceptada', 'en_proceso'].includes(s.estado_jja))
-    if (tabActivo_jja === 'rechazada') return solicitudes_jja.filter(s => ['rechazada', 'cancelada', 'fallido'].includes(s.estado_jja))
-    return solicitudes_jja.filter(s => s.estado_jja === tabActivo_jja)
-  }, [solicitudes_jja, tabActivo_jja])
+    let lista = solicitudes_jja
+    if (tabActivo_jja === 'aprobada') lista = lista.filter(s => ['aprobada', 'aceptada', 'en_proceso'].includes(s.estado_jja))
+    else if (tabActivo_jja === 'rechazada') lista = lista.filter(s => ['rechazada', 'cancelada', 'fallido'].includes(s.estado_jja))
+    else if (tabActivo_jja !== 'todas') lista = lista.filter(s => s.estado_jja === tabActivo_jja)
+
+    if (busqueda_jja.trim()) {
+      const term = busqueda_jja.toLowerCase()
+      lista = lista.filter(s =>
+        (s.producto_nombre || s.activo_nombre || '').toLowerCase().includes(term) ||
+        (s.observaciones_jja || '').toLowerCase().includes(term)
+      )
+    }
+    if (fechaDesde_jja) {
+      const desde = new Date(fechaDesde_jja); desde.setHours(0, 0, 0, 0)
+      lista = lista.filter(s => s.fecha_solicitud_jja && new Date(s.fecha_solicitud_jja) >= desde)
+    }
+    if (fechaHasta_jja) {
+      const hasta = new Date(fechaHasta_jja); hasta.setHours(23, 59, 59, 999)
+      lista = lista.filter(s => s.fecha_solicitud_jja && new Date(s.fecha_solicitud_jja) <= hasta)
+    }
+    lista = [...lista].sort((a, b) => {
+      const fA = new Date(a.fecha_solicitud_jja || 0)
+      const fB = new Date(b.fecha_solicitud_jja || 0)
+      if (orden_jja === 'reciente') return fB - fA
+      if (orden_jja === 'antiguo') return fA - fB
+      if (orden_jja === 'nombre_asc') return (a.producto_nombre || '').localeCompare(b.producto_nombre || '')
+      if (orden_jja === 'nombre_desc') return (b.producto_nombre || '').localeCompare(a.producto_nombre || '')
+      return 0
+    })
+    return lista
+  }, [solicitudes_jja, tabActivo_jja, busqueda_jja, fechaDesde_jja, fechaHasta_jja, orden_jja])
 
   // Contar por estado
   const conteos_jja = useMemo(() => ({
@@ -187,6 +217,62 @@ const MisSolicitudesPage_jja = () => {
             )}
           </button>
         ))}
+      </div>
+
+      {/* Filtros de búsqueda */}
+      <div className="filtros-busqueda-jja" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', margin: '16px 0' }}>
+        <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--texto-terciario-jja)', display: 'flex' }}>
+            <IconoBuscar_jja />
+          </span>
+          <input
+            type="text"
+            value={busqueda_jja}
+            onChange={(e) => setBusqueda_jja(e.target.value)}
+            placeholder="Buscar por nombre de activo..."
+            className="form-input-jja"
+            style={{ paddingLeft: 38, fontSize: '0.88rem' }}
+          />
+        </div>
+        <input
+          type="date"
+          value={fechaDesde_jja}
+          onChange={(e) => setFechaDesde_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem' }}
+          title="Desde fecha"
+        />
+        <input
+          type="date"
+          value={fechaHasta_jja}
+          onChange={(e) => setFechaHasta_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem' }}
+          title="Hasta fecha"
+        />
+        <select
+          value={orden_jja}
+          onChange={(e) => setOrden_jja(e.target.value)}
+          className="form-input-jja"
+          style={{ width: 'auto', fontSize: '0.85rem', cursor: 'pointer' }}
+        >
+          <option value="reciente">Más reciente</option>
+          <option value="antiguo">Más antiguo</option>
+          <option value="nombre_asc">Nombre A-Z</option>
+          <option value="nombre_desc">Nombre Z-A</option>
+        </select>
+        {(busqueda_jja || fechaDesde_jja || fechaHasta_jja) && (
+          <button
+            onClick={() => { setBusqueda_jja(''); setFechaDesde_jja(''); setFechaHasta_jja('') }}
+            className="btn-jja btn-ghost-jja"
+            style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+          >
+            Limpiar
+          </button>
+        )}
+        <span style={{ fontSize: '0.82rem', color: 'var(--texto-terciario-jja)', marginLeft: 'auto' }}>
+          {solicitudesFiltradas_jja.length} resultado{solicitudesFiltradas_jja.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Lista de solicitudes */}
