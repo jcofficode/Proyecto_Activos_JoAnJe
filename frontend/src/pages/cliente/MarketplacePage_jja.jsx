@@ -215,9 +215,6 @@ const MarketplacePage_jja = () => {
             <option value="disponible">Disponibles primero</option>
           </select>
         </div>
-        <span className="marketplace-contador-jja">
-          {productosFiltrados_jja.length} activo{productosFiltrados_jja.length !== 1 ? 's' : ''} disponible{productosFiltrados_jja.length !== 1 ? 's' : ''}
-        </span>
       </div>
 
       {/* Grid de productos */}

@@ -1422,6 +1422,49 @@ END", "Trigger: TR_HISTORIAL_PRESTAMO_DEVOLUCION_jja (registro automático)", $c
             mostrar_jja('ok', '✅', "Encargado demo creado — <code>encargado@demo.com</code> · <code>Encargado2026!</code>");
         } catch (PDOException $ex_jja) { mostrar_jja('err', '❌', 'Error al crear usuarios demo: ' . $ex_jja->getMessage()); }
 
+        // ── Carga masiva de activos educativos ──────────────────
+        try {
+            $activos_seed_jja = [
+                ['Laptop Dell Latitude 5540', 'QR-LAP-001', 'NFC-LAP-001', 'Laptop', 'Sala de Informática A', 'Laptop Dell Latitude 5540, Intel Core i5, 16GB RAM, 512GB SSD. Uso académico para docentes y estudiantes.'],
+                ['Laptop HP ProBook 450 G10', 'QR-LAP-002', 'NFC-LAP-002', 'Laptop', 'Sala de Informática B', 'Laptop HP ProBook 450 G10, Intel Core i7, 16GB RAM, 256GB SSD. Asignada a laboratorio de programación.'],
+                ['Videobeam Epson PowerLite X49', 'QR-VID-001', 'NFC-VID-001', 'Videobeam', 'Almacén Audiovisual', 'Proyector Epson PowerLite X49, 3600 lúmenes, XGA. Para presentaciones en aulas y auditorios.'],
+                ['Videobeam ViewSonic PA503S', 'QR-VID-002', 'NFC-VID-002', 'Videobeam', 'Almacén Audiovisual', 'Proyector ViewSonic PA503S, 3800 lúmenes, SVGA. Uso en conferencias y defensas de tesis.'],
+                ['Tablet Samsung Galaxy Tab A9', 'QR-TAB-001', 'NFC-TAB-001', 'Tablet', 'Biblioteca Central', 'Tablet Samsung Galaxy Tab A9, 64GB, WiFi. Disponible para consulta digital en biblioteca.'],
+                ['Tablet Lenovo Tab M10 Plus', 'QR-TAB-002', 'NFC-TAB-002', 'Tablet', 'Laboratorio de Idiomas', 'Tablet Lenovo Tab M10 Plus, 128GB. Herramienta de apoyo para clases de idiomas.'],
+                ['Cámara Canon EOS Rebel T7', 'QR-CAM-001', 'NFC-CAM-001', 'Cámara', 'Departamento de Comunicación', 'Cámara réflex Canon EOS Rebel T7, 24.1 MP, lente 18-55mm. Para cobertura de eventos institucionales.'],
+                ['Cámara Sony Alpha a6400', 'QR-CAM-002', 'NFC-CAM-002', 'Cámara', 'Departamento de Comunicación', 'Cámara mirrorless Sony a6400, 24.2 MP, video 4K. Producción audiovisual académica.'],
+                ['Computadora HP ProDesk 400 G7', 'QR-COM-001', 'NFC-COM-001', 'Computadora', 'Laboratorio de Cómputo 1', 'PC de escritorio HP ProDesk 400 G7, Intel Core i5, 8GB RAM, 1TB HDD. Estación de trabajo estudiantil.'],
+                ['Computadora Lenovo ThinkCentre M70q', 'QR-COM-002', 'NFC-COM-002', 'Computadora', 'Laboratorio de Cómputo 2', 'Mini PC Lenovo ThinkCentre M70q, Intel Core i3, 8GB RAM, 256GB SSD. Equipo compacto para aulas.'],
+                ['Proyector Multimedia Epson EB-992F', 'QR-PRO-001', 'NFC-PRO-001', 'Proyector', 'Auditorio Principal', 'Proyector Epson EB-992F, Full HD, 4000 lúmenes, WiFi integrado. Instalado en auditorio principal.'],
+                ['Pendrive Kingston DataTraveler 64GB', 'QR-PEN-001', 'NFC-PEN-001', 'Pendrive', 'Recepción Biblioteca', 'Pendrive Kingston DataTraveler Exodia 64GB USB 3.2. Préstamo rápido para transferencia de archivos.'],
+                ['Pendrive SanDisk Ultra 128GB', 'QR-PEN-002', 'NFC-PEN-002', 'Pendrive', 'Recepción Biblioteca', 'Pendrive SanDisk Ultra 128GB USB 3.0. Uso académico para respaldo de proyectos.'],
+                ['Libro: Fundamentos de Programación', 'QR-LIB-001', NULL, 'Libro', 'Biblioteca Central - Estante T3', 'Fundamentos de Programación, 4ta edición. Autor: Luis Joyanes Aguilar. ISBN: 978-8448161118.'],
+                ['CD Tesis: Ingeniería de Sistemas 2025', 'QR-CDT-001', NULL, 'CD de Tesis', 'Archivo de Tesis - Gaveta 12', 'Compilado de trabajos de grado de Ingeniería de Sistemas, promoción 2025. Formato PDF en disco.'],
+            ];
+
+            $insertados_jja = 0;
+            foreach ($activos_seed_jja as $activo_jja) {
+                $stmt_activo_jja = $pdo_jja->prepare("
+                    INSERT IGNORE INTO `activos_jja` (`nombre_jja`,`codigo_qr_jja`,`codigo_nfc_jja`,`id_tipo_jja`,`ubicacion_jja`,`descripcion_jja`,`publicado_jja`,`estado_jja`)
+                    SELECT :nombre, :qr, :nfc,
+                        (SELECT `id_tipo_jja` FROM `tipos_activos_jja` WHERE `nombre_tipo_jja` = :tipo LIMIT 1),
+                        :ubicacion, :descripcion, 1, 'disponible'
+                    WHERE NOT EXISTS (SELECT 1 FROM `activos_jja` WHERE `codigo_qr_jja` = :qr2)
+                ");
+                $stmt_activo_jja->execute([
+                    ':nombre'      => $activo_jja[0],
+                    ':qr'          => $activo_jja[1],
+                    ':nfc'         => $activo_jja[2],
+                    ':tipo'        => $activo_jja[3],
+                    ':ubicacion'   => $activo_jja[4],
+                    ':descripcion' => $activo_jja[5],
+                    ':qr2'         => $activo_jja[1],
+                ]);
+                if ($stmt_activo_jja->rowCount() > 0) $insertados_jja++;
+            }
+            mostrar_jja('ok', '✅', "Activos educativos insertados: <strong>{$insertados_jja}</strong> de " . count($activos_seed_jja) . " — todos en estado <code>disponible</code> y publicados en marketplace.");
+        } catch (PDOException $ex_jja) { mostrar_jja('err', '❌', 'Error al insertar activos educativos: ' . $ex_jja->getMessage()); }
+
         cierre_seccion_jja();
 
         // ══════════════════════════════════════════════════════
