@@ -1,6 +1,6 @@
 // ============================================================
 // InventarioPage_jja.jsx — Gestion de Inventario de Activos
-// Con codigos QR/NFC visibles y generacion de QR
+// Con codigos QR visibles y generacion de QR
 // Sistema JoAnJe Coders — Sufijo: _jja
 // ============================================================
 import React, { useState, useEffect } from 'react'
@@ -44,7 +44,7 @@ const InventarioPage_jja = () => {
   const [editando_jja, setEditando_jja] = useState(null)
   const [form_jja, setForm_jja] = useState({
     nombre: '', id_tipo: '', ubicacion: '', descripcion: '',
-    publicado: false, codigo_nfc: '',
+    publicado: false,
   })
   const [guardando_jja, setGuardando_jja] = useState(false)
 
@@ -114,7 +114,7 @@ const InventarioPage_jja = () => {
       }
     },
     {
-      clave: 'codigo_qr_jja', titulo: 'QR / NFC', ancho: 200, sortable: false, render: (val, fila) => (
+      clave: 'codigo_qr_jja', titulo: 'Código QR', ancho: 200, sortable: false, render: (val, fila) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Mini QR */}
           <img
@@ -126,12 +126,6 @@ const InventarioPage_jja = () => {
             <div style={{ fontSize: '0.78rem', fontWeight: 600, fontFamily: 'monospace', color: 'var(--color-primario-jja)' }}>
               {val || '—'}
             </div>
-            {fila.codigo_nfc_jja && (
-              <div style={{ fontSize: '0.68rem', color: 'var(--texto-terciario-jja)', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36" /><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58" /><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8" /><path d="M16.37 2a20.16 20.16 0 0 1 0 20" /></svg>
-                NFC: {fila.codigo_nfc_jja}
-              </div>
-            )}
           </div>
         </div>
       )
@@ -152,7 +146,7 @@ const InventarioPage_jja = () => {
   // ── Handlers de CRUD ──────────────────────────────────────
   const abrirCrear = () => {
     setEditando_jja(null)
-    setForm_jja({ nombre: '', id_tipo: '', ubicacion: '', descripcion: '', publicado: false, codigo_nfc: '' })
+    setForm_jja({ nombre: '', id_tipo: '', ubicacion: '', descripcion: '', publicado: false })
     setImagenFichero_jja(null)
     setImagenPrevia_jja(null)
     setModalVisible_jja(true)
@@ -167,7 +161,6 @@ const InventarioPage_jja = () => {
       ubicacion: fila.ubicacion_jja || '',
       descripcion: fila.descripcion_jja || '',
       publicado: !!fila.publicado_jja,
-      codigo_nfc: fila.codigo_nfc_jja || '',
     })
     setImagenFichero_jja(null)
     setImagenPrevia_jja(Array.isArray(fila.imagenes_jja) && fila.imagenes_jja.length > 0 ? fila.imagenes_jja[0] : null)
@@ -188,7 +181,6 @@ const InventarioPage_jja = () => {
         ubicacion: form_jja.ubicacion,
         descripcion: form_jja.descripcion,
         publicado: form_jja.publicado ? 1 : 0,
-        codigo_nfc: form_jja.codigo_nfc || null,
       }
       let idActivo = editando_jja?.id_activo_jja;
       if (editando_jja) {
@@ -287,7 +279,7 @@ const InventarioPage_jja = () => {
       <div className="pagina-header-jja">
         <div>
           <h1 className="pagina-titulo-jja">Inventario de Activos</h1>
-          <p className="pagina-subtitulo-jja">Gestion completa del inventario institucional con codigos QR y NFC</p>
+          <p className="pagina-subtitulo-jja">Gestion completa del inventario institucional con codigos QR</p>
         </div>
         <div className="pagina-acciones-jja">
           <BotonAccion_jja variante="primario" icono={<IconoPlus_jja />} onClick={abrirCrear}>
@@ -300,7 +292,7 @@ const InventarioPage_jja = () => {
         columnas={columnas}
         datos={activosFiltrados_jja}
         cargando={cargando_jja}
-        placeholderBusqueda="Buscar activo por nombre, codigo QR, NFC o tipo..."
+        placeholderBusqueda="Buscar activo por nombre, codigo QR o tipo..."
         filtros={
           <select
             className="datatable-filtro-select-jja"
@@ -320,7 +312,7 @@ const InventarioPage_jja = () => {
           const bloqueado = ESTADOS_BLOQUEADOS.includes(fila.estado_jja)
           return (
             <>
-              <button className="datatable-accion-btn-jja ver-jja" title="Ver QR / NFC" onClick={() => abrirDetalle(fila)}><IconoQR_jja /></button>
+              <button className="datatable-accion-btn-jja ver-jja" title="Ver QR" onClick={() => abrirDetalle(fila)}><IconoQR_jja /></button>
               <button
                 className={`datatable-accion-btn-jja editar-jja`}
                 title={bloqueado ? 'No se puede editar: activo en prestamo' : 'Editar'}
@@ -415,14 +407,14 @@ const InventarioPage_jja = () => {
           </div>
         </div>
 
-        {/* Seccion QR / NFC */}
+        {/* Seccion QR */}
         <div style={{ background: 'var(--bg-principal-jja)', borderRadius: 'var(--border-radius-sm-jja)', padding: 16, margin: '12px 0' }}>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--texto-primario-jja)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <IconoQR_jja style={{ fontSize: '1rem' }} /> Identificacion QR / NFC
+            <IconoQR_jja style={{ fontSize: '1rem' }} /> Identificacion QR
           </div>
 
           {editando_jja ? (
-            <div style={{ marginBottom: 12 }}>
+            <div>
               <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--texto-secundario-jja)', marginBottom: 4 }}>Codigo QR (generado automaticamente)</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <img
@@ -439,20 +431,11 @@ const InventarioPage_jja = () => {
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: '0.78rem', color: 'var(--texto-secundario-jja)', background: 'var(--color-info-bg-jja)', padding: '8px 12px', borderRadius: 6, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--texto-secundario-jja)', background: 'var(--color-info-bg-jja)', padding: '8px 12px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
               <IconoQR_jja style={{ fontSize: '0.95rem', color: 'var(--color-info-jja)' }} />
               <span>El codigo QR se generara automaticamente al crear el activo (formato: ACTV-XXXXXXXX)</span>
             </div>
           )}
-
-          <FormGroup_jja
-            label="Codigo NFC (opcional)"
-            nombre="codigo_nfc"
-            valor={form_jja.codigo_nfc}
-            onChange={handleCambioForm}
-            placeholder="Ej: NFC-A1B2C3D4 o ID de etiqueta NFC"
-            helper="Introduce el ID de la etiqueta NFC si el activo tiene una"
-          />
         </div>
 
         <div className="form-grupo-jja">
@@ -463,10 +446,10 @@ const InventarioPage_jja = () => {
         </div>
       </ActionModal_jja>
 
-      {/* Modal Detalle QR/NFC */}
+      {/* Modal Detalle QR */}
       <ActionModal_jja
         visible={detalleVisible_jja}
-        titulo="Codigo QR / NFC del Activo"
+        titulo="Codigo QR del Activo"
         onCerrar={() => setDetalleVisible_jja(false)}
         sinFooter
         ancho="440px"
@@ -498,19 +481,7 @@ const InventarioPage_jja = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--texto-terciario-jja)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Codigo NFC</div>
-              {activoDetalle_jja.codigo_nfc_jja ? (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#00838f', background: '#e0f7fa', padding: '6px 16px', borderRadius: 6 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36" /><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58" /><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8" /><path d="M16.37 2a20.16 20.16 0 0 1 0 20" /></svg>
-                  {activoDetalle_jja.codigo_nfc_jja}
-                </div>
-              ) : (
-                <div style={{ fontSize: '0.85rem', color: 'var(--texto-terciario-jja)' }}>Sin etiqueta NFC asignada</div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
               <BotonAccion_jja
                 variante="primario"
                 icono={<IconoExportar_jja />}
