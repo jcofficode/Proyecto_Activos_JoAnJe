@@ -233,7 +233,7 @@ const Dashboard_jja = () => {
             <span className="card-titulo-jja">
               <IconoPrestamo_jja style={{ fontSize: '1.1rem' }} /> Últimos Préstamos del Día
             </span>
-            <a className="card-link-jja" onClick={() => navigate('/sistema/solicitudes')} style={{ cursor: 'pointer' }}>
+            <a className="card-link-jja" onClick={() => navigate('/sistema/prestamos')} style={{ cursor: 'pointer' }}>
               Ver todos <IconoChevronDer_jja />
             </a>
           </div>
