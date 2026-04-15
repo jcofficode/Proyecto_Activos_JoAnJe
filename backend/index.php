@@ -14,16 +14,23 @@ $dotenv_jja->load();
 // ── 3. Autoloader de clases propias (Core/Controllers/Models/Services) ──
 require_once __DIR__ . '/Core/Autoloader_jja.php';
 
-// ── 4. CORS ──────────────────────────────────────────────────
-$corsOrigin_jja = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
-// Validar que el origen de la petición sea uno de los permitidos
-$origenesPerm_jja = array_map('trim', explode(',', $corsOrigin_jja));
+// ── 4. CORS (Versión Dinámica para Datos Móviles y WiFi) ────────
 $originHeader_jja = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (!in_array($originHeader_jja, $origenesPerm_jja, true)) {
-    $originHeader_jja = $origenesPerm_jja[0]; // fallback al primer origen configurado
-}
 
-header("Access-Control-Allow-Origin: {$originHeader_jja}");
+// En desarrollo, permitimos el origen que venga para evitar bloqueos por IP
+if ($_ENV['APP_ENV'] === 'development') {
+    header("Access-Control-Allow-Origin: $originHeader_jja");
+} else {
+    // Lógica original de producción: Validar contra lista blanca
+    $corsOrigin_jja = $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173';
+    $origenesPerm_jja = array_map('trim', explode(',', $corsOrigin_jja));
+    
+    if (in_array($originHeader_jja, $origenesPerm_jja, true)) {
+        header("Access-Control-Allow-Origin: $originHeader_jja");
+    } else {
+        header("Access-Control-Allow-Origin: {$origenesPerm_jja[0]}");
+    }
+}
 
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
