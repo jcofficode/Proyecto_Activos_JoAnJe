@@ -146,7 +146,7 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     $this->responder_jja(false, null, 'Subruta no reconocida.', 404);
                 if (empty($estado))
                     $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
-                if (!in_array($estado, ['en_proceso', 'aprobada', 'rechazada', 'cancelada'], true))
+                if (!in_array($estado, ['pendiente', 'en_proceso', 'aprobada', 'rechazada', 'cancelada'], true))
                     $this->responder_jja(false, null, 'Estado invalido.', 400);
 
                 $tipo = strtolower(trim($body['tipo'] ?? 'activo'));
@@ -180,8 +180,14 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 }
 
                 if ($estado === 'en_proceso' || $estado === 'aprobada') {
+                    // Asegurar que el activo este en 'en_proceso_prestamo' para que el QR pueda confirmar la entrega
+                    $activoModel = new ActivoModel_jja();
+                    $activoModel->actualizarEstado_jja((int)$solAct['id_activo_jja'], 'en_proceso_prestamo');
                     $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' ha sido aprobada. Puedes pasar a retirarlo.";
                     $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
+                }
+                else if ($estado === 'pendiente') {
+                    // Revertir a pendiente (cancelar modal QR): no tocar notificaciones ni el activo
                 }
                 else {
                     // Rechazada o cancelada: revertir estado del activo a 'disponible'

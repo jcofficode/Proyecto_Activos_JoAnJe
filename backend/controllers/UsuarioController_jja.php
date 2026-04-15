@@ -9,12 +9,10 @@
 class UsuarioController_jja extends Controller_jja
 {
     private UsuarioModel_jja $modelo_jja;
-    private CorreoService_jja $correo_jja;
 
     public function __construct()
     {
         $this->modelo_jja = new UsuarioModel_jja();
-        $this->correo_jja = new CorreoService_jja();
     }
 
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
@@ -127,13 +125,12 @@ class UsuarioController_jja extends Controller_jja
         if (!is_numeric($body_jja['id_rol']) || (int)$body_jja['id_rol'] < 1)
             $this->responder_jja(false, null, 'El campo id_rol debe ser un numero entero positivo.', 400);
 
-        // Generar codigo temporal alfanumerico (8 chars)
-        $chars_jja = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        $codigo_jja = '';
-        for ($i = 0; $i < 8; $i++) {
-            $codigo_jja .= $chars_jja[random_int(0, strlen($chars_jja) - 1)];
+        // Usar la contrasena temporal que escribio el administrador en el formulario
+        $claveTemporal_jja = $body_jja['contrasena'] ?? '';
+        if (!is_string($claveTemporal_jja) || strlen($claveTemporal_jja) < 6) {
+            $this->responder_jja(false, null, 'La contrasena temporal debe tener al menos 6 caracteres.', 400);
         }
-        $hash_jja = password_hash($codigo_jja, PASSWORD_BCRYPT, ['cost' => 12]);
+        $hash_jja = password_hash($claveTemporal_jja, PASSWORD_BCRYPT, ['cost' => 12]);
 
         try {
             $res_jja = $this->modelo_jja->crear_jja(
@@ -144,7 +141,8 @@ class UsuarioController_jja extends Controller_jja
                 isset($body_jja['telefono']) ? trim($body_jja['telefono']) : null,
                 $hash_jja,
                 null,
-                (int)$body_jja['id_rol']
+                (int)$body_jja['id_rol'],
+                1
             );
         }
         catch (PDOException $e_jja) {
@@ -152,18 +150,9 @@ class UsuarioController_jja extends Controller_jja
             $this->responder_jja(false, null, $msg_jja, 409);
         }
 
-        // Enviar correo con la clave temporal
-        $envio_jja = $this->correo_jja->enviarClaveTemporal_jja(
-            trim($body_jja['correo']),
-            trim($body_jja['nombre']),
-            $codigo_jja
-        );
-
         $this->responder_jja(true, [
             'id_usuario' => $res_jja['id_usuario_jja'] ?? null,
-            'correo_enviado' => $envio_jja['exito'],
-            'correo_mensaje' => $envio_jja['mensaje'],
-        ], 'Usuario creado. Se envio la clave temporal al correo.', 201);
+        ], 'Usuario creado. Debera cambiar su contrasena al iniciar sesion.', 201);
     }
 
     private function actualizar_jja(int $id_jja): void

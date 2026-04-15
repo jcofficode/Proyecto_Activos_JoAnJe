@@ -55,7 +55,7 @@ class SolicitudDevolucionController_jja extends Controller_jja
 
                 if (empty($estado))
                     $this->responder_jja(false, null, "El campo 'estado' es obligatorio.", 400);
-                if (!in_array($estado, ['en_proceso', 'aprobada', 'rechazada', 'cancelada'], true))
+                if (!in_array($estado, ['pendiente', 'en_proceso', 'aprobada', 'rechazada', 'cancelada'], true))
                     $this->responder_jja(false, null, 'Estado invalido.', 400);
 
                 $observaciones = trim($body['observaciones_jja'] ?? '');

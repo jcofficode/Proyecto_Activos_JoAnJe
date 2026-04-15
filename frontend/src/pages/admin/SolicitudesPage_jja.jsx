@@ -53,6 +53,7 @@ const SolicitudesPage_jja = () => {
     // Devolución
     idPrestamo: null, idSolicitudDevolucion: null,
   })
+  const [exitoQR_jja, setExitoQR_jja] = useState(false)
 
   useEffect(() => { cargarDatos_jja() }, [])
 
@@ -89,12 +90,14 @@ const SolicitudesPage_jja = () => {
         method: 'PATCH',
         body: JSON.stringify({ estado: 'en_proceso' }),
       })
+      setExitoQR_jja(false)
       setModalQR_jja({
-        visible: true,
+        visible: true, modo: 'entrega',
         idActivo: fila.id_activo_jja,
         idSolicitud: fila.id_solicitud_jja,
         idEncargado: usuario?.id || null,
         nombreActivo: fila.producto_nombre || fila.nombre_activo_jja || `Activo #${fila.id_activo_jja}`,
+        idPrestamo: null, idSolicitudDevolucion: null,
       })
     } catch (err) {
       toast_jja.error('Error al aprobar solicitud: ' + err.message)
@@ -108,6 +111,7 @@ const SolicitudesPage_jja = () => {
         method: 'PATCH',
         body: JSON.stringify({ estado: 'en_proceso' }),
       })
+      setExitoQR_jja(false)
       setModalQR_jja({
         visible: true, modo: 'devolucion',
         idActivo: fila.id_activo_jja || null,
@@ -119,6 +123,25 @@ const SolicitudesPage_jja = () => {
       })
     } catch (err) {
       toast_jja.error('Error al aprobar devolución: ' + err.message)
+    }
+  }
+
+  // ── Revertir estado a pendiente si el usuario cancela el modal QR ─
+  async function revertirEstadoPendiente_jja() {
+    try {
+      if (modalQR_jja.modo === 'devolucion' && modalQR_jja.idSolicitudDevolucion) {
+        await apiRequest(`/solicitudes-devolucion/${modalQR_jja.idSolicitudDevolucion}/estado`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado: 'pendiente' }),
+        })
+      } else if (modalQR_jja.modo === 'entrega' && modalQR_jja.idSolicitud) {
+        await apiRequest(`/solicitudes-prestamo/${modalQR_jja.idSolicitud}/estado`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado: 'pendiente' }),
+        })
+      }
+    } catch (err) {
+      console.error('No se pudo revertir el estado de la solicitud:', err)
     }
   }
 
@@ -173,6 +196,7 @@ const SolicitudesPage_jja = () => {
     } else {
       toast_jja.exito(`Entrega confirmada: el activo "${nombreActivo}" ha sido entregado exitosamente.`)
     }
+    setExitoQR_jja(true)
     setModalQR_jja({ visible: false, modo: 'entrega', idActivo: null, idSolicitud: null, idEncargado: null, nombreActivo: '', idPrestamo: null, idSolicitudDevolucion: null })
     cargarDatos_jja()
   }
@@ -407,7 +431,11 @@ const SolicitudesPage_jja = () => {
         idPrestamo_jja={modalQR_jja.idPrestamo}
         idSolicitudDevolucion_jja={modalQR_jja.idSolicitudDevolucion}
         onExito={manejarExitoQR_jja}
-        onCerrar={() => {
+        onCerrar={async () => {
+          if (!exitoQR_jja) {
+            await revertirEstadoPendiente_jja()
+          }
+          setExitoQR_jja(false)
           setModalQR_jja({ visible: false, modo: 'entrega', idActivo: null, idSolicitud: null, idEncargado: null, nombreActivo: '', idPrestamo: null, idSolicitudDevolucion: null })
           cargarDatos_jja()
         }}
