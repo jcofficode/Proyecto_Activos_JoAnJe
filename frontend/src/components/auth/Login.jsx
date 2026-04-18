@@ -132,11 +132,11 @@ const Login = ({ onLogin }) => {
             <h1 className="login-marca-titulo">Bienvenido a<br/>JoAnJe Coders</h1>
             <p className="login-marca-lema">
               Gestión inteligente de activos institucionales.<br/>
-              Controla, audita y optimiza tu inventario con precisión.
+              Seguimiento y préstamos de activos.
             </p>
             <div className="login-marca-firma">
               <span className="login-marca-punto"></span>
-              <span>Sistema de Control de Activos · 2026</span>
+              <span>Sistema de Préstamos de Activos · 2026</span>
             </div>
           </div>
 
