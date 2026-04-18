@@ -28,6 +28,13 @@ const traducirError_jja = (mensaje) => {
   return mensaje
 }
 
+// Credenciales de demostración
+const CREDENCIALES_DEMO_jja = [
+  { rol: 'Administrador', correo: 'admin@activoscontroljoanje.com', clave: 'JoAnJe2026!', color: 'admin' },
+  { rol: 'Encargado',     correo: 'encargado@demo.com',            clave: 'Encargado2026!', color: 'encargado' },
+  { rol: 'Cliente',       correo: 'cliente@demo.com',              clave: 'Cliente2026!', color: 'cliente' },
+]
+
 const Login = ({ onLogin }) => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +43,19 @@ const Login = ({ onLogin }) => {
     clave_jja: 'JoAnJe2026!'
   })
   const [estado_jja, setEstado_jja] = useState({ cargando: false, mensaje: '', tipo: '' })
+  const [copiado_jja, setCopiado_jja] = useState('')
+
+  const copiarAlPortapapeles_jja = async (valor, clave) => {
+    try {
+      await navigator.clipboard.writeText(valor)
+      setCopiado_jja(clave)
+      setTimeout(() => setCopiado_jja(''), 1400)
+    } catch { /* silenciar */ }
+  }
+
+  const rellenarCredenciales_jja = (c) => {
+    setFormulario_jja({ correo_jja: c.correo, clave_jja: c.clave })
+  }
 
   const manejarCambio_jja = (e) => {
     const { name, value } = e.target
@@ -155,6 +175,54 @@ const Login = ({ onLogin }) => {
           >
             ← Ir a Inicio
           </a>
+        </div>
+
+        {/* Credenciales de prueba */}
+        <div className="login-demo">
+          <div className="login-demo-encabezado">
+            <span className="login-demo-titulo">Credenciales de prueba</span>
+            <span className="login-demo-nota">Haz clic para autocompletar · copia con el ícono</span>
+          </div>
+          <div className="login-demo-grid">
+            {CREDENCIALES_DEMO_jja.map((c) => (
+              <div
+                key={c.rol}
+                className={`login-demo-tarjeta login-demo-${c.color}`}
+                onClick={() => rellenarCredenciales_jja(c)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') rellenarCredenciales_jja(c) }}
+              >
+                <span className="login-demo-rol">{c.rol}</span>
+                <div className="login-demo-campos">
+                  <button
+                    type="button"
+                    className="login-demo-chip"
+                    onClick={(e) => { e.stopPropagation(); copiarAlPortapapeles_jja(c.correo, c.rol + '-correo') }}
+                    title="Copiar correo"
+                  >
+                    <span className="login-demo-etiqueta">Correo</span>
+                    <span className="login-demo-valor">{c.correo}</span>
+                    <span className="login-demo-copiar">
+                      {copiado_jja === c.rol + '-correo' ? '✓' : '⧉'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="login-demo-chip"
+                    onClick={(e) => { e.stopPropagation(); copiarAlPortapapeles_jja(c.clave, c.rol + '-clave') }}
+                    title="Copiar contraseña"
+                  >
+                    <span className="login-demo-etiqueta">Contraseña</span>
+                    <span className="login-demo-valor">{c.clave}</span>
+                    <span className="login-demo-copiar">
+                      {copiado_jja === c.rol + '-clave' ? '✓' : '⧉'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
