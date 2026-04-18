@@ -17,6 +17,20 @@ import {
 } from '../../components/ui_jja/Iconos_jja'
 import ConfirmModal_jja from '../../components/ui_jja/ConfirmModal_jja'
 
+// ── Icono de inhabilitar (prohibido/círculo con barra) ──
+const IconoInhabilitar_jja = (props) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+  </svg>
+)
+const IconoHabilitar_jja = (props) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+)
+
 const ESTADO_COLORES = {
   disponible: '#10b981', prestado: '#3b82f6', mantenimiento: '#8b5cf6',
   dañado: '#ef4444', perdido: '#6b7280', en_proceso_prestamo: '#f59e0b'
@@ -57,6 +71,11 @@ const InventarioPage_jja = () => {
   // Modal Detalle QR
   const [detalleVisible_jja, setDetalleVisible_jja] = useState(false)
   const [activoDetalle_jja, setActivoDetalle_jja] = useState(null)
+
+  // Modal Inhabilitar/Habilitar
+  const [modalInhabilitar_jja, setModalInhabilitar_jja] = useState({ visible: false, fila: null })
+  const [motivoInhabilitar_jja, setMotivoInhabilitar_jja] = useState('dañado')
+  const [procesandoInhabilitar_jja, setProcesandoInhabilitar_jja] = useState(false)
 
   useEffect(() => { cargarDatos() }, [])
 
@@ -222,6 +241,33 @@ const InventarioPage_jja = () => {
 
   const handleCambioForm = (campo, valor) => setForm_jja(prev => ({ ...prev, [campo]: valor }))
 
+  // ── Inhabilitar / Habilitar activo ──
+  const abrirInhabilitar_jja = (fila) => {
+    if (ESTADOS_BLOQUEADOS.includes(fila.estado_jja)) return
+    const estaInhabilitado = ['dañado', 'perdido', 'mantenimiento'].includes(fila.estado_jja)
+    setMotivoInhabilitar_jja(estaInhabilitado ? 'disponible' : 'dañado')
+    setModalInhabilitar_jja({ visible: true, fila })
+  }
+
+  const ejecutarInhabilitar_jja = async () => {
+    const fila = modalInhabilitar_jja.fila
+    if (!fila) return
+    setProcesandoInhabilitar_jja(true)
+    try {
+      await apiRequest(`/activos/${fila.id_activo_jja}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: motivoInhabilitar_jja }),
+      })
+      const mensaje = motivoInhabilitar_jja === 'disponible'
+        ? 'Activo habilitado correctamente.'
+        : 'Activo inhabilitado correctamente.'
+      toast_jja.exito(mensaje)
+      setModalInhabilitar_jja({ visible: false, fila: null })
+      cargarDatos()
+    } catch (err) { toast_jja.error('Error: ' + err.message) }
+    finally { setProcesandoInhabilitar_jja(false) }
+  }
+
   // ── Handlers de Imagen (Drag & Drop) _jja ───────────────────
   const validarImagen_jja = (file) => {
     if (!file) return false;
@@ -310,6 +356,7 @@ const InventarioPage_jja = () => {
         }
         acciones={(fila) => {
           const bloqueado = ESTADOS_BLOQUEADOS.includes(fila.estado_jja)
+          const inhabilitado = ['dañado', 'perdido', 'mantenimiento'].includes(fila.estado_jja)
           return (
             <>
               <button className="datatable-accion-btn-jja ver-jja" title="Ver QR" onClick={() => abrirDetalle(fila)}><IconoQR_jja /></button>
@@ -319,6 +366,17 @@ const InventarioPage_jja = () => {
                 onClick={() => abrirEditar(fila)}
                 disabled={bloqueado}
               ><IconoEditar_jja /></button>
+              <button
+                className="datatable-accion-btn-jja"
+                style={{ color: inhabilitado ? '#10b981' : '#f59e0b' }}
+                title={bloqueado
+                  ? 'No se puede inhabilitar: activo en préstamo'
+                  : (inhabilitado ? 'Habilitar activo' : 'Inhabilitar activo (dañado/perdido)')}
+                onClick={() => abrirInhabilitar_jja(fila)}
+                disabled={bloqueado}
+              >
+                {inhabilitado ? <IconoHabilitar_jja /> : <IconoInhabilitar_jja />}
+              </button>
               <button
                 className={`datatable-accion-btn-jja eliminar-jja`}
                 title={bloqueado ? 'No se puede eliminar: activo en prestamo' : 'Eliminar'}
@@ -512,6 +570,48 @@ const InventarioPage_jja = () => {
         onConfirmar={ejecutarEliminar_jja}
         onCancelar={() => setConfirmarElim_jja({ visible: false, fila: null })}
       />
+
+      {/* Modal Inhabilitar/Habilitar */}
+      <ActionModal_jja
+        visible={modalInhabilitar_jja.visible}
+        titulo={
+          ['dañado', 'perdido', 'mantenimiento'].includes(modalInhabilitar_jja.fila?.estado_jja)
+            ? 'Habilitar activo'
+            : 'Inhabilitar activo'
+        }
+        onCerrar={() => setModalInhabilitar_jja({ visible: false, fila: null })}
+        onConfirmar={ejecutarInhabilitar_jja}
+        textoConfirmar={motivoInhabilitar_jja === 'disponible' ? 'Habilitar' : 'Inhabilitar'}
+        cargando={procesandoInhabilitar_jja}
+        variante={motivoInhabilitar_jja === 'disponible' ? 'primario' : 'peligro'}
+        ancho="460px"
+      >
+        {modalInhabilitar_jja.fila && (
+          <div>
+            <p style={{ marginTop: 0, color: 'var(--texto-secundario-jja)', fontSize: '0.9rem' }}>
+              Activo: <strong>{modalInhabilitar_jja.fila.nombre_jja}</strong>
+            </p>
+            <FormGroup_jja
+              label="Selecciona el nuevo estado"
+              nombre="motivo"
+              tipo="select"
+              valor={motivoInhabilitar_jja}
+              onChange={(_, v) => setMotivoInhabilitar_jja(v)}
+              opciones={[
+                { valor: 'disponible', etiqueta: 'Disponible (habilitar)' },
+                { valor: 'dañado', etiqueta: 'Dañado' },
+                { valor: 'perdido', etiqueta: 'Perdido' },
+                { valor: 'mantenimiento', etiqueta: 'En mantenimiento' },
+              ]}
+            />
+            <p style={{ fontSize: '0.82rem', color: 'var(--texto-terciario-jja)', marginBottom: 0 }}>
+              {motivoInhabilitar_jja === 'disponible'
+                ? 'El activo volverá a estar disponible y visible en el catálogo.'
+                : 'El activo no se mostrará en el catálogo del marketplace hasta que se vuelva a habilitar.'}
+            </p>
+          </div>
+        )}
+      </ActionModal_jja>
 
       {/* Modal Alerta de Tipo de Archivo _jja */}
       <ActionModal_jja

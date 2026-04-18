@@ -46,14 +46,14 @@ const MENU_ENCARGADO_JJA = [
   { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },
   { separador: true },
   { seccion: 'Marketplace' },
-  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
+  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Catálogo' },
   { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
   { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
 ]
 
 const MENU_CLIENTE_JJA = [
   { seccion: 'Menú Principal' },
-  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Marketplace' },
+  { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Catálogo' },
   { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
   { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
   { ruta: '/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },

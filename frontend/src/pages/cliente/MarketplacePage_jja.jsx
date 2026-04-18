@@ -49,10 +49,12 @@ const MarketplacePage_jja = () => {
         apiRequest('/activos'),
         apiRequest('/tipos-activos'),
       ])
-      // Solo activos publicados (Mostrar todos los estados para que el cliente sepa qué está prestado)
+      // Solo activos publicados y no inhabilitados (dañado / perdido / mantenimiento)
+      const ESTADOS_INHABILITADOS_jja = ['dañado', 'perdido', 'mantenimiento']
       const activos = extraerLista(activosResp)
       const publicados = activos.filter(a =>
-        a.publicado_jja || a.publicado_jja === 1
+        (a.publicado_jja || a.publicado_jja === 1) &&
+        !ESTADOS_INHABILITADOS_jja.includes(a.estado_jja)
       )
       setProductos_jja(publicados)
       setTipos_jja(extraerLista(tiposResp))
@@ -172,7 +174,7 @@ const MarketplacePage_jja = () => {
       {/* Header */}
       <div className="pagina-header-jja">
         <div>
-          <h1 className="pagina-titulo-jja">Marketplace</h1>
+          <h1 className="pagina-titulo-jja">Catálogo de Activos</h1>
           <p className="pagina-subtitulo-jja">Explora y solicita activos disponibles para préstamo</p>
         </div>
       </div>

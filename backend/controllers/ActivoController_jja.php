@@ -12,8 +12,8 @@ class ActivoController_jja extends Controller_jja
     private AuditoriaModel_jja $auditoria_jja;
     private ?object $payload_jja = null;
 
-    // Estados validos del activo
-    private const ESTADOS_VALIDOS = ['disponible', 'en_proceso_prestamo', 'en_reparacion', 'perdido'];
+    // Estados validos del activo (ENUM en DB)
+    private const ESTADOS_VALIDOS = ['disponible', 'en_proceso_prestamo', 'mantenimiento', 'dañado', 'perdido'];
 
     public function __construct()
     {

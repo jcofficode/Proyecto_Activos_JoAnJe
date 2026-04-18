@@ -23,9 +23,9 @@ class ConfirmarEntregaController_jja extends Controller_jja
             $this->responderHtml_jja(405, false, 'Método no permitido.');
         }
 
-        $idSolicitud_jja = isset($_GET['id_solicitud']) ? (int)$_GET['id_solicitud'] : 0;
-        $idActivo_jja    = isset($_GET['id_activo'])    ? (int)$_GET['id_activo']    : 0;
-        $idEncargado_jja = isset($_GET['id_encargado']) ? (int)$_GET['id_encargado'] : 0;
+        $idSolicitud_jja = isset($_GET['id_solicitud']) ? (int) $_GET['id_solicitud'] : 0;
+        $idActivo_jja = isset($_GET['id_activo']) ? (int) $_GET['id_activo'] : 0;
+        $idEncargado_jja = isset($_GET['id_encargado']) ? (int) $_GET['id_encargado'] : 0;
 
         if ($idSolicitud_jja <= 0 || $idActivo_jja <= 0) {
             $this->responderHtml_jja(400, false, 'Parámetros inválidos. Se requieren id_solicitud e id_activo.');
@@ -46,7 +46,7 @@ class ConfirmarEntregaController_jja extends Controller_jja
             $this->responderHtml_jja(404, false, 'Solicitud no encontrada.');
         }
 
-        if ((int)$sol_jja['id_activo_jja'] !== $idActivo_jja) {
+        if ((int) $sol_jja['id_activo_jja'] !== $idActivo_jja) {
             $this->responderHtml_jja(409, false, 'El activo no coincide con la solicitud proporcionada.');
         }
 
@@ -74,7 +74,9 @@ class ConfirmarEntregaController_jja extends Controller_jja
         }
 
         if ($activo_jja['estado_jja'] !== 'en_proceso_prestamo') {
-            $this->responderHtml_jja(409, false,
+            $this->responderHtml_jja(
+                409,
+                false,
                 "El activo no está disponible para entrega (estado actual: {$activo_jja['estado_jja']})."
             );
         }
@@ -83,18 +85,24 @@ class ConfirmarEntregaController_jja extends Controller_jja
 
         // ── 3. Ejecutar checkout ─────────────────────────────────
         // Si no se recibe id_encargado válido, usar el id del cliente como fallback
-        $encargadoId_jja = $idEncargado_jja > 0 ? $idEncargado_jja : (int)$sol_jja['id_cliente_jja'];
+        $encargadoId_jja = $idEncargado_jja > 0 ? $idEncargado_jja : (int) $sol_jja['id_cliente_jja'];
 
         try {
             $prestamoModel_jja = new PrestamoModel_jja();
             $prestamoModel_jja->registrar_jja(
                 $idActivo_jja,
-                (int)$sol_jja['id_cliente_jja'],
+                (int) $sol_jja['id_cliente_jja'],
                 $encargadoId_jja,
                 'Entrega confirmada por escaneo QR desde teléfono'
             );
         } catch (\Throwable $e_jja) {
-            $this->responderHtml_jja(500, false, 'Error al registrar la entrega: ' . $e_jja->getMessage());
+            $msg_jja = $e_jja->getMessage();
+            if (preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $msg_jja, $m_jja)) {
+                $msg_jja = trim($m_jja[1]);
+            } else {
+                $msg_jja = 'No se pudo registrar la entrega. El usuario superó el límite de préstamos simultáneos para este tipo de activo.';
+            }
+            $this->responderHtml_jja(409, false, $msg_jja);
         }
 
         // Marcar la solicitud como aprobada
@@ -106,8 +114,8 @@ class ConfirmarEntregaController_jja extends Controller_jja
         try {
             $pusher_jja = new PusherService_jja();
             $pusher_jja->emitir_jja('prestamos_jja', 'entrega_confirmada_jja', [
-                'id_solicitud'  => $idSolicitud_jja,
-                'id_activo'     => $idActivo_jja,
+                'id_solicitud' => $idSolicitud_jja,
+                'id_activo' => $idActivo_jja,
                 'nombre_activo' => $nombreActivo_jja,
             ]);
         } catch (\Throwable $e_jja) {
@@ -125,10 +133,10 @@ class ConfirmarEntregaController_jja extends Controller_jja
         http_response_code($codigo_jja);
         header('Content-Type: text/html; charset=utf-8');
 
-        $icono_jja  = $exito_jja ? '✅' : '❌';
+        $icono_jja = $exito_jja ? '✅' : '❌';
         $titulo_jja = $exito_jja ? 'Entrega Confirmada' : 'Error';
-        $color_jja  = $exito_jja ? '#10b981' : '#ef4444';
-        $msg_seg    = htmlspecialchars($mensaje_jja, ENT_QUOTES, 'UTF-8');
+        $color_jja = $exito_jja ? '#10b981' : '#ef4444';
+        $msg_seg = htmlspecialchars($mensaje_jja, ENT_QUOTES, 'UTF-8');
 
         echo <<<HTML
 <!DOCTYPE html>

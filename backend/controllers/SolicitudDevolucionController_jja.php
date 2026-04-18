@@ -10,12 +10,14 @@ class SolicitudDevolucionController_jja extends Controller_jja
     private SolicitudDevolucionModel_jja $modelo_jja;
     private PrestamoModel_jja $prestamo_jja;
     private NotificacionModel_jja $notificacion_jja;
+    private AuditoriaModel_jja $auditoria_jja;
 
     public function __construct()
     {
         $this->modelo_jja = new SolicitudDevolucionModel_jja();
         $this->prestamo_jja = new PrestamoModel_jja();
         $this->notificacion_jja = new NotificacionModel_jja();
+        $this->auditoria_jja = new AuditoriaModel_jja();
     }
 
     public function manejar_jja(string $metodo_jja, array $segmentos_jja): void
@@ -99,6 +101,38 @@ class SolicitudDevolucionController_jja extends Controller_jja
                     $mensaje = "Tu solicitud de devolución para el préstamo #{$sol['id_prestamo_jja']} fue rechazada.";
                     if ($observaciones) $mensaje .= " Motivo: " . $observaciones;
                     $this->notificacion_jja->crear_jja((int)$sol['id_usuario_solicitante_jja'], 'informativo', $mensaje, (int)$sol['id_prestamo_jja']);
+                }
+
+                // ── Auditoría: aprobaciones/rechazos/cancelaciones de solicitud de devolución
+                try {
+                    $solicitanteNombre = trim(($sol['solicitante_nombre'] ?? '') . ' ' . ($sol['solicitante_apellido'] ?? ''));
+                    $responsableNombre = $payload->nombre ?? ('Usuario #' . ($payload->id ?? '0'));
+                    $activoNombre = $sol['activo_nombre'] ?? ('activo #' . ($sol['id_activo_jja'] ?? 0));
+                    $idPrestamo = (int)$sol['id_prestamo_jja'];
+                    $descripcion = null;
+                    if ($estado === 'en_proceso' || $estado === 'aprobada') {
+                        $descripcion = "{$responsableNombre} aprobó la solicitud de devolución del préstamo #{$idPrestamo} (activo \"{$activoNombre}\") del cliente {$solicitanteNombre}.";
+                    } elseif ($estado === 'rechazada') {
+                        $descripcion = "{$responsableNombre} rechazó la solicitud de devolución del préstamo #{$idPrestamo} (activo \"{$activoNombre}\") del cliente {$solicitanteNombre}.";
+                        if ($observaciones !== '') $descripcion .= " Motivo: {$observaciones}";
+                    } elseif ($estado === 'cancelada') {
+                        $descripcion = "{$responsableNombre} canceló la solicitud de devolución del préstamo #{$idPrestamo} (activo \"{$activoNombre}\").";
+                    }
+                    if ($descripcion !== null) {
+                        $this->auditoria_jja->registrar_jja(
+                            'solicitudes_devolucion_jja',
+                            (int)$id,
+                            'UPDATE',
+                            'estado_jja',
+                            $sol['estado_jja'],
+                            $estado,
+                            (int)($payload->id ?? 0),
+                            null,
+                            $descripcion
+                        );
+                    }
+                } catch (\Throwable $eAud) {
+                    error_log('[Auditoria] solicitud devolucion: ' . $eAud->getMessage());
                 }
 
                 $this->responder_jja(true, null, 'Estado de solicitud actualizado.');

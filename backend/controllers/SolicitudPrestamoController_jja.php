@@ -9,12 +9,14 @@ class SolicitudPrestamoController_jja extends Controller_jja
     private SolicitudPrestamoModel_jja $modelo_jja;
     private ProductoModel_jja $producto_jja;
     private NotificacionModel_jja $notificacion_jja;
+    private AuditoriaModel_jja $auditoria_jja;
 
     public function __construct()
     {
         $this->modelo_jja = new SolicitudPrestamoModel_jja();
         $this->producto_jja = new ProductoModel_jja();
         $this->notificacion_jja = new NotificacionModel_jja();
+        $this->auditoria_jja = new AuditoriaModel_jja();
     }
 
     // Helper para parsear imagenes JSON del activo
@@ -203,6 +205,38 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 }
 
                 $actModel->actualizarEstadoYObs_jja((int)$id, $estado, $nuevaObs);
+
+                // ── Auditoría: aprobaciones/rechazos/cancelaciones de solicitud de préstamo
+                try {
+                    $clienteNombreCompleto = trim(($solAct['cliente_nombre'] ?? '') . ' ' . ($solAct['cliente_apellido'] ?? ''));
+                    $responsableNombre = $payload->nombre ?? ('Usuario #' . ($payload->id ?? '0'));
+                    $activoNombre = $solAct['activo_nombre'] ?? ('activo #' . $solAct['id_activo_jja']);
+                    $descripcion = null;
+                    if ($estado === 'en_proceso' || $estado === 'aprobada') {
+                        $descripcion = "{$responsableNombre} aprobó la solicitud de préstamo del activo \"{$activoNombre}\" para el cliente {$clienteNombreCompleto}.";
+                    } elseif ($estado === 'rechazada') {
+                        $descripcion = "{$responsableNombre} rechazó la solicitud de préstamo del activo \"{$activoNombre}\" para el cliente {$clienteNombreCompleto}.";
+                        if ($observaciones !== '') $descripcion .= " Motivo: {$observaciones}";
+                    } elseif ($estado === 'cancelada') {
+                        $descripcion = "{$responsableNombre} canceló la solicitud de préstamo del activo \"{$activoNombre}\" (cliente {$clienteNombreCompleto}).";
+                    }
+                    if ($descripcion !== null) {
+                        $this->auditoria_jja->registrar_jja(
+                            'solicitudes_prestamo_activos_jja',
+                            (int)$id,
+                            'UPDATE',
+                            'estado_jja',
+                            $solAct['estado_jja'],
+                            $estado,
+                            (int)($payload->id ?? 0),
+                            null,
+                            $descripcion
+                        );
+                    }
+                } catch (\Throwable $eAud) {
+                    error_log('[Auditoria] solicitud prestamo: ' . $eAud->getMessage());
+                }
+
                 $this->responder_jja(true, null, 'Estado actualizado.');
                 break;
 

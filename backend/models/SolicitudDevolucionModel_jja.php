@@ -22,10 +22,12 @@ class SolicitudDevolucionModel_jja extends Model_jja
     public function buscarPorId_jja(int $id_jja): ?array
     {
         $sql = "SELECT s.*, p.id_usuario_jja AS prestamo_usuario, p.id_encargado_jja AS prestamo_encargado,
-                       a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes, p.id_activo_jja
+                       a.nombre_jja AS activo_nombre, a.imagenes_jja AS activo_imagenes, p.id_activo_jja,
+                       u.nombre_jja AS solicitante_nombre, u.apellido_jja AS solicitante_apellido
                 FROM solicitudes_devolucion_jja s
                 JOIN prestamos_jja p ON s.id_prestamo_jja = p.id_prestamo_jja
                 JOIN activos_jja a ON p.id_activo_jja = a.id_activo_jja
+                JOIN usuarios_jja u ON s.id_usuario_solicitante_jja = u.id_usuario_jja
                 WHERE s.id_solicitud_devolucion_jja = :id LIMIT 1";
         $stmt = $this->db_jja->prepare($sql);
         $stmt->execute([':id' => $id_jja]);
