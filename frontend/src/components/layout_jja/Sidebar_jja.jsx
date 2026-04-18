@@ -45,7 +45,7 @@ const MENU_ENCARGADO_JJA = [
   { ruta: '/sistema/lista-negra', icono: <IconoSancion_jja />, label: 'Lista Negra' },
   { ruta: '/sistema/notificaciones', icono: <IconoNotificacion_jja />, label: 'Notificaciones', badgeKey: 'notificaciones' },
   { separador: true },
-  { seccion: 'Marketplace' },
+  { seccion: 'GESTIÓN PERSONAL' },
   { ruta: '/marketplace', icono: <IconoMarketplace_jja />, label: 'Catálogo' },
   { ruta: '/mis-solicitudes', icono: <IconoSolicitudes_jja />, label: 'Mis Solicitudes' },
   { ruta: '/mis-prestamos', icono: <IconoPrestamo_jja />, label: 'Mis Préstamos' },
