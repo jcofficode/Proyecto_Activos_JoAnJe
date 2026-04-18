@@ -1,25 +1,20 @@
 <?php
 // ============================================================
 // controllers/SolicitudPrestamoController_jja.php
-// Admin/encargado: listar solicitudes de producto y aprobar/rechazar
+// Admin/encargado/cliente: listar y gestionar solicitudes de prestamo de activos
 // ============================================================
 
 class SolicitudPrestamoController_jja extends Controller_jja
 {
-    private SolicitudPrestamoModel_jja $modelo_jja;
-    private ProductoModel_jja $producto_jja;
     private NotificacionModel_jja $notificacion_jja;
     private AuditoriaModel_jja $auditoria_jja;
 
     public function __construct()
     {
-        $this->modelo_jja = new SolicitudPrestamoModel_jja();
-        $this->producto_jja = new ProductoModel_jja();
         $this->notificacion_jja = new NotificacionModel_jja();
         $this->auditoria_jja = new AuditoriaModel_jja();
     }
 
-    // Helper para parsear imagenes JSON del activo
     private function parseImagenes_jja(?string $json): array
     {
         if (empty($json)) return [];
@@ -35,14 +30,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
 
         switch ($metodo_jja) {
             case 'GET':
-                // Consultas por cliente: permitir que un cliente vea SOLO sus propias solicitudes,
-                // mientras que admin/encargado pueden ver las de cualquier cliente.
                 if ($id === 'cliente' && isset($segmentos_jja[1])) {
                     $idCliente = $segmentos_jja[1];
                     if (!$this->validarId_jja($idCliente))
                         $this->responder_jja(false, null, 'ID invalido.', 400);
 
-                    // Obtener solicitudes de activos y devoluciones del cliente y combinarlas
                     $actModel = new SolicitudPrestamoActivoModel_jja();
                     $actList = $actModel->listarPorCliente_jja((int)$idCliente);
                     $mappedAct = array_map(function ($a) {
@@ -87,7 +79,6 @@ class SolicitudPrestamoController_jja extends Controller_jja
 
                     $combined = array_merge($mappedAct, $mappedDev);
 
-                    // Si es cliente, solo puede ver su propio id
                     if (Middleware_jja::esRolUsuario($payload->rol ?? '')) {
                         if ((int)$payload->id !== (int)$idCliente)
                             $this->responder_jja(false, null, 'No tienes permiso para ver otras solicitudes.', 403);
@@ -95,7 +86,6 @@ class SolicitudPrestamoController_jja extends Controller_jja
                         return;
                     }
 
-                    // Admin/encargado pueden ver las solicitudes del cliente
                     Middleware_jja::autorizar_jja($payload, [Middleware_jja::ROL_ADMIN, Middleware_jja::ROL_ENCARGADO]);
                     $this->responder_jja(true, $combined, 'Solicitudes del cliente.');
                     return;
@@ -105,11 +95,11 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 if ($id !== null) {
                     if (!$this->validarId_jja($id))
                         $this->responder_jja(false, null, 'ID invalido.', 400);
-                    $res = $this->modelo_jja->buscarPorId_jja((int)$id);
+                    $actModel = new SolicitudPrestamoActivoModel_jja();
+                    $res = $actModel->buscarPorId_jja((int)$id);
                     $res ? $this->responder_jja(true, $res, 'Solicitud encontrada.') : $this->responder_jja(false, null, 'No encontrada.', 404);
                 }
                 else {
-                    // Cargar solicitudes de activos y mapear a forma común
                     $actModel = new SolicitudPrestamoActivoModel_jja();
                     $resActivos = $actModel->listarTodas_jja();
                     $mappedAct = array_map(function ($a) {
@@ -151,10 +141,8 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 if (!in_array($estado, ['pendiente', 'en_proceso', 'aprobada', 'rechazada', 'cancelada'], true))
                     $this->responder_jja(false, null, 'Estado invalido.', 400);
 
-                $tipo = strtolower(trim($body['tipo'] ?? 'activo'));
                 $observaciones = trim($body['observaciones_jja'] ?? '');
 
-                // Procesar solicitud de activo
                 $actModel = new SolicitudPrestamoActivoModel_jja();
                 $solAct = $actModel->buscarPorId_jja((int)$id);
                 if (!$solAct) {
@@ -162,7 +150,6 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     return;
                 }
 
-                // Validar permiso de cancelación para el cliente
                 if ($estado === 'cancelada' && Middleware_jja::esRolUsuario($payload->rol ?? '')) {
                     if ((int)$solAct['id_cliente_jja'] !== (int)$payload->id) {
                         $this->responder_jja(false, null, 'No puedes cancelar una solicitud que no es tuya.', 403);
@@ -174,7 +161,6 @@ class SolicitudPrestamoController_jja extends Controller_jja
                     }
                 }
 
-                // Concatenar observaciones si aplica
                 $obsAnterior = $solAct['observaciones_jja'] ?? '';
                 $nuevaObs = $obsAnterior;
                 if ($estado === 'rechazada' && $observaciones !== '') {
@@ -182,17 +168,15 @@ class SolicitudPrestamoController_jja extends Controller_jja
                 }
 
                 if ($estado === 'en_proceso' || $estado === 'aprobada') {
-                    // Asegurar que el activo este en 'en_proceso_prestamo' para que el QR pueda confirmar la entrega
                     $activoModel = new ActivoModel_jja();
                     $activoModel->actualizarEstado_jja((int)$solAct['id_activo_jja'], 'en_proceso_prestamo');
                     $mensaje = "Tu solicitud para el activo '{$solAct['activo_nombre']}' ha sido aprobada. Puedes pasar a retirarlo.";
                     $this->notificacion_jja->crear_jja((int)$solAct['id_cliente_jja'], 'informativo', $mensaje, null);
                 }
                 else if ($estado === 'pendiente') {
-                    // Revertir a pendiente (cancelar modal QR): no tocar notificaciones ni el activo
+                    // Revertir a pendiente: no tocar notificaciones ni el activo
                 }
                 else {
-                    // Rechazada o cancelada: revertir estado del activo a 'disponible'
                     $activoModel = new ActivoModel_jja();
                     $activoModel->actualizarEstado_jja((int)$solAct['id_activo_jja'], 'disponible');
 
@@ -206,7 +190,6 @@ class SolicitudPrestamoController_jja extends Controller_jja
 
                 $actModel->actualizarEstadoYObs_jja((int)$id, $estado, $nuevaObs);
 
-                // ── Auditoría: aprobaciones/rechazos/cancelaciones de solicitud de préstamo
                 try {
                     $clienteNombreCompleto = trim(($solAct['cliente_nombre'] ?? '') . ' ' . ($solAct['cliente_apellido'] ?? ''));
                     $responsableNombre = $payload->nombre ?? ('Usuario #' . ($payload->id ?? '0'));

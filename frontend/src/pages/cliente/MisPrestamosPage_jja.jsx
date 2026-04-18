@@ -60,48 +60,26 @@ const MisPrestamosPage_jja = () => {
       const myId = me.datos?.id_usuario_jja || me.id_usuario_jja || me.datos?.id || me.id
       if (!myId) throw new Error('No se pudo determinar tu usuario')
 
-      const [prestamosResp, prestamosProductosResp] = await Promise.allSettled([
-        apiRequest(`/prestamos/usuario/${myId}`),
-        apiRequest(`/prestamos-productos/usuario/${myId}`),
-      ])
+      const prestamosResp = await apiRequest(`/prestamos/usuario/${myId}`)
+      const prestamos = Array.isArray(prestamosResp)
+        ? prestamosResp
+        : (prestamosResp?.prestamos && Array.isArray(prestamosResp.prestamos))
+          ? prestamosResp.prestamos
+          : (Array.isArray(prestamosResp?.datos) ? prestamosResp.datos : [])
 
-      const prestamos = extraerPrestamos(prestamosResp)
-      const prestamosProd = extraerPrestamos(prestamosProductosResp)
-
-      // Normalizar y combinar
-      const combinados = [
-        ...prestamos.map(p => ({
-          tipo: 'activo',
-          id: p.id_prestamo_jja,
-          nombre: p.nombre_activo_jja || p.activo_nombre_jja || p.nombre_jja || `Activo #${p.id_activo_jja}`,
-          estado: p.estado_prestamo_jja,
-          fechaPrestamo: p.fecha_prestamo_jja,
-          fechaDevolucion: p.fecha_devolucion_jja || p.fecha_limite_jja,
-          raw: p,
-        })),
-        ...prestamosProd.map(pp => ({
-          tipo: 'producto',
-          id: pp.id_prestamo_producto_jja,
-          nombre: pp.producto_nombre || `Producto #${pp.id_producto_jja}`,
-          estado: pp.estado_jja,
-          fechaPrestamo: pp.fecha_prestamo_jja,
-          fechaDevolucion: pp.fecha_devolucion_jja,
-          raw: pp,
-        })),
-      ].sort((a, b) => new Date(b.fechaPrestamo) - new Date(a.fechaPrestamo))
+      const combinados = prestamos.map(p => ({
+        tipo: 'activo',
+        id: p.id_prestamo_jja,
+        nombre: p.nombre_activo_jja || p.activo_nombre_jja || p.nombre_jja || `Activo #${p.id_activo_jja}`,
+        estado: p.estado_prestamo_jja,
+        fechaPrestamo: p.fecha_prestamo_jja,
+        fechaDevolucion: p.fecha_devolucion_jja || p.fecha_limite_jja,
+        raw: p,
+      })).sort((a, b) => new Date(b.fechaPrestamo) - new Date(a.fechaPrestamo))
 
       setPrestamos_jja(combinados)
     } catch (err) { console.error(err) }
     finally { setCargando_jja(false) }
-  }
-
-  function extraerPrestamos(r) {
-    if (r.status !== 'fulfilled') return []
-    const d = r.value
-    if (Array.isArray(d)) return d
-    if (d?.prestamos && Array.isArray(d.prestamos)) return d.prestamos
-    if (d?.datos && Array.isArray(d.datos)) return d.datos
-    return []
   }
 
   // Calcular estado vencimiento
@@ -162,10 +140,7 @@ const MisPrestamosPage_jja = () => {
     if (!prestamoDevolucion_jja) return
     setEnviando_jja(true)
     try {
-      const endpoint = prestamoDevolucion_jja.tipo === 'activo'
-        ? `/prestamos/${prestamoDevolucion_jja.id}/solicitud-devolucion`
-        : `/prestamos-productos/${prestamoDevolucion_jja.id}/solicitud-devolucion`
-      await apiRequest(endpoint, {
+      await apiRequest(`/prestamos/${prestamoDevolucion_jja.id}/solicitud-devolucion`, {
         method: 'POST',
         body: JSON.stringify({ observaciones: observacionesDevolucion_jja || 'Solicitud de devolución' })
       })

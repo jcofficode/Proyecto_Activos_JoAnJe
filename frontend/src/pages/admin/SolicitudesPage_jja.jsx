@@ -38,7 +38,6 @@ const SolicitudesPage_jja = () => {
   const [filtroEstado_jja, setFiltroEstado_jja] = useState('')
   const [solicitudes_jja, setSolicitudes_jja] = useState([])
   const [devoluciones_jja, setDevoluciones_jja] = useState([])
-  const [devolucionesProd_jja, setDevolucionesProd_jja] = useState([])
   const [cargando_jja, setCargando_jja] = useState(true)
   const toast_jja = useToast_jja()
 
@@ -60,14 +59,12 @@ const SolicitudesPage_jja = () => {
   async function cargarDatos_jja() {
     setCargando_jja(true)
     try {
-      const [solResp, devResp, devProdResp] = await Promise.allSettled([
+      const [solResp, devResp] = await Promise.allSettled([
         apiRequest('/solicitudes-prestamo'),
         apiRequest('/solicitudes-devolucion'),
-        apiRequest('/solicitudes-devolucion-productos'),
       ])
       setSolicitudes_jja(extraer_jja(solResp))
       setDevoluciones_jja(extraer_jja(devResp))
-      setDevolucionesProd_jja(extraer_jja(devProdResp))
     } catch (err) {
       console.error(err)
       toast_jja.error('Error al cargar las solicitudes.')
@@ -171,7 +168,6 @@ const SolicitudesPage_jja = () => {
           const endpoints = {
             prestamos: `/solicitudes-prestamo/${id}/estado`,
             devoluciones: `/solicitudes-devolucion/${id}/estado`,
-            devolucionesProd: `/solicitudes-devolucion-productos/${id}/estado`,
           }
           await apiRequest(endpoints[tipo], {
             method: 'PATCH',
@@ -337,14 +333,14 @@ const SolicitudesPage_jja = () => {
   ]
 
   // Filtrar por estado seleccionado
-  const datosBase_jja = tabActivo_jja === 'prestamos' ? solicitudes_jja : tabActivo_jja === 'devoluciones' ? devoluciones_jja : devolucionesProd_jja
+  const datosBase_jja = tabActivo_jja === 'prestamos' ? solicitudes_jja : devoluciones_jja
   const datosActivos_jja = useMemo(() => {
     if (!filtroEstado_jja) return datosBase_jja
     return datosBase_jja.filter(d => (d.estado_jja || '').toLowerCase() === filtroEstado_jja)
   }, [datosBase_jja, filtroEstado_jja])
   const colsActivas_jja = tabActivo_jja === 'prestamos' ? colsSolicitudes_jja : colsDevoluciones_jja
 
-  const keyId_jja = tabActivo_jja === 'prestamos' ? 'id_solicitud_jja' : tabActivo_jja === 'devoluciones' ? 'id_solicitud_devolucion_jja' : 'id_solicitud_devolucion_producto_jja'
+  const keyId_jja = tabActivo_jja === 'prestamos' ? 'id_solicitud_jja' : 'id_solicitud_devolucion_jja'
 
   return (
     <div>

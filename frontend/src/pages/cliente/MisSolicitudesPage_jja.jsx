@@ -135,8 +135,6 @@ const MisSolicitudesPage_jja = () => {
       let endpoint = `/solicitudes-prestamo/${solicitudCancelar_jja.id_solicitud_jja}/estado`
       if (solicitudCancelar_jja.tipo_jja === 'devolucion') {
         endpoint = `/solicitudes-devolucion/${solicitudCancelar_jja.id_solicitud_jja}/estado`
-      } else if (solicitudCancelar_jja.tipo_jja === 'devolucionProd') {
-        endpoint = `/solicitudes-devolucion-productos/${solicitudCancelar_jja.id_solicitud_jja}/estado`
       }
 
       await apiRequest(endpoint, {

@@ -21,10 +21,6 @@ const TABLA_NOMBRES_jja = {
   'solicitudes_devolucion_jja': 'Solicitudes de Devolucion',
   'tokens_invalidos_jja': 'Sesiones',
   'auditoria_jja': 'Auditoria',
-  'productos_jja': 'Productos',
-  'categorias_jja': 'Categorias',
-  'ofertas_jja': 'Ofertas',
-  'transacciones_jja': 'Transacciones',
 }
 
 // ── Campos a nombres legibles ──
