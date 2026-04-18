@@ -117,113 +117,129 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="login-pagina">
-      {/* Decoración geométrica */}
-      <div className="login-deco deco-1" aria-hidden="true"></div>
-      <div className="login-deco deco-2" aria-hidden="true"></div>
+      <div className="login-split">
 
-      <div className="login-tarjeta">
+        {/* ── Panel lateral decorativo ── */}
+        <aside className="login-panel-marca" aria-hidden="true">
+          <div className="login-marca-deco login-marca-deco-1"></div>
+          <div className="login-marca-deco login-marca-deco-2"></div>
+          <div className="login-marca-deco login-marca-deco-3"></div>
 
-        {/* Logo */}
-        <div className="login-logo">
-          <img src={imagenlogo_jja} alt="JoAnJe Coders" style={{ height: '70px', objectFit: 'contain' }} />
-        </div>
-
-        <h2 className="login-titulo">Acceso al Sistema</h2>
-        <p className="login-subtitulo">Ingresa con tu correo y contraseña</p>
-
-        <form onSubmit={manejarEnvio_jja}>
-
-          <div className="login-grupo">
-            <label className="login-label">Correo electrónico</label>
-            <input
-              type="email" name="correo_jja" value={formulario_jja.correo_jja}
-              onChange={manejarCambio_jja} placeholder="tu@email.com"
-              required disabled={estado_jja.cargando}
-              className="login-input"
-            />
-          </div>
-
-          <div className="login-grupo">
-            <label className="login-label">Contraseña</label>
-            <input
-              type="password" name="clave_jja" value={formulario_jja.clave_jja}
-              onChange={manejarCambio_jja} placeholder="••••••••"
-              required disabled={estado_jja.cargando}
-              className="login-input"
-            />
-          </div>
-
-          {estado_jja.mensaje && (
-            <div className={`login-mensaje login-msg-${estado_jja.tipo}`}>
-              {estado_jja.mensaje}
+          <div className="login-marca-contenido">
+            <div className="login-marca-logo">
+              <img src={imagenlogo_jja} alt="JoAnJe Coders" />
             </div>
-          )}
-
-          <button
-            type="submit" disabled={estado_jja.cargando}
-            className="login-boton"
-          >
-            {estado_jja.cargando ? 'Verificando...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <a
-            href="/"
-            onClick={(e) => { e.preventDefault(); navigate('/') }}
-            className="login-volver"
-          >
-            ← Ir a Inicio
-          </a>
-        </div>
-
-        {/* Credenciales de prueba */}
-        <div className="login-demo">
-          <div className="login-demo-encabezado">
-            <span className="login-demo-titulo">Credenciales de prueba</span>
-            <span className="login-demo-nota">Haz clic para autocompletar · copia con el ícono</span>
+            <h1 className="login-marca-titulo">Bienvenido a<br/>JoAnJe Coders</h1>
+            <p className="login-marca-lema">
+              Gestión inteligente de activos institucionales.<br/>
+              Controla, audita y optimiza tu inventario con precisión.
+            </p>
+            <div className="login-marca-firma">
+              <span className="login-marca-punto"></span>
+              <span>Sistema de Control de Activos · 2026</span>
+            </div>
           </div>
-          <div className="login-demo-grid">
-            {CREDENCIALES_DEMO_jja.map((c) => (
-              <div
-                key={c.rol}
-                className={`login-demo-tarjeta login-demo-${c.color}`}
-                onClick={() => rellenarCredenciales_jja(c)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') rellenarCredenciales_jja(c) }}
-              >
-                <span className="login-demo-rol">{c.rol}</span>
-                <div className="login-demo-campos">
-                  <button
-                    type="button"
-                    className="login-demo-chip"
-                    onClick={(e) => { e.stopPropagation(); copiarAlPortapapeles_jja(c.correo, c.rol + '-correo') }}
-                    title="Copiar correo"
-                  >
-                    <span className="login-demo-etiqueta">Correo</span>
-                    <span className="login-demo-valor">{c.correo}</span>
-                    <span className="login-demo-copiar">
-                      {copiado_jja === c.rol + '-correo' ? '✓' : '⧉'}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="login-demo-chip"
-                    onClick={(e) => { e.stopPropagation(); copiarAlPortapapeles_jja(c.clave, c.rol + '-clave') }}
-                    title="Copiar contraseña"
-                  >
-                    <span className="login-demo-etiqueta">Contraseña</span>
-                    <span className="login-demo-valor">{c.clave}</span>
-                    <span className="login-demo-copiar">
-                      {copiado_jja === c.rol + '-clave' ? '✓' : '⧉'}
-                    </span>
-                  </button>
-                </div>
+
+          <svg className="login-marca-ondas" viewBox="0 0 120 800" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M60,0 C20,200 100,400 60,800 L120,800 L120,0 Z" fill="rgba(255,255,255,0.08)" />
+            <path d="M80,0 C40,200 120,400 80,800 L120,800 L120,0 Z" fill="rgba(255,255,255,0.12)" />
+            <path d="M100,0 C60,200 140,400 100,800 L120,800 L120,0 Z" fill="rgba(255,255,255,0.16)" />
+          </svg>
+        </aside>
+
+        {/* ── Panel principal (formulario) ── */}
+        <section className="login-panel-form">
+          <div className="login-form-wrapper">
+
+            <div className="login-form-encabezado">
+              <h2 className="login-titulo">Acceso al Sistema</h2>
+              <p className="login-subtitulo">Ingresa con tu correo y contraseña para continuar</p>
+            </div>
+
+                <form onSubmit={manejarEnvio_jja}>
+
+              <div className="login-grupo">
+                <label className="login-label">Correo electrónico</label>
+                <input
+                  type="email" name="correo_jja" value={formulario_jja.correo_jja}
+                  onChange={manejarCambio_jja} placeholder="tu@email.com"
+                  required disabled={estado_jja.cargando}
+                  className="login-input"
+                />
               </div>
-            ))}
+
+              <div className="login-grupo">
+                <label className="login-label">Contraseña</label>
+                <input
+                  type="password" name="clave_jja" value={formulario_jja.clave_jja}
+                  onChange={manejarCambio_jja} placeholder="••••••••"
+                  required disabled={estado_jja.cargando}
+                  className="login-input"
+                />
+              </div>
+
+              {estado_jja.mensaje && (
+                <div className={`login-mensaje login-msg-${estado_jja.tipo}`}>
+                  {estado_jja.mensaje}
+                </div>
+              )}
+
+              <button
+                type="submit" disabled={estado_jja.cargando}
+                className="login-boton"
+              >
+                {estado_jja.cargando ? 'Verificando...' : 'Iniciar Sesión'}
+              </button>
+            </form>
+
+            <div className="login-footer">
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); navigate('/') }}
+                className="login-volver"
+              >
+                ← Ir a Inicio
+              </a>
+            </div>
+
+            {/* Credenciales de prueba — lista compacta */}
+            <div className="login-demo">
+              <span className="login-demo-titulo">Credenciales de prueba</span>
+              <ul className="login-demo-lista">
+                {CREDENCIALES_DEMO_jja.map((c) => (
+                  <li key={c.rol} className="login-demo-fila">
+                    <button
+                      type="button"
+                      className={`login-demo-rol login-demo-${c.color}`}
+                      onClick={() => rellenarCredenciales_jja(c)}
+                      title="Autocompletar formulario"
+                    >
+                      {c.rol}
+                    </button>
+                    <span className="login-demo-correo" title={c.correo}>{c.correo}</span>
+                    <button
+                      type="button"
+                      className={`login-demo-icono ${copiado_jja === c.rol + '-correo' ? 'copiado' : ''}`}
+                      onClick={() => copiarAlPortapapeles_jja(c.correo, c.rol + '-correo')}
+                      title="Copiar correo"
+                    >
+                      {copiado_jja === c.rol + '-correo' ? '✓' : '⧉'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`login-demo-icono ${copiado_jja === c.rol + '-clave' ? 'copiado' : ''}`}
+                      onClick={() => copiarAlPortapapeles_jja(c.clave, c.rol + '-clave')}
+                      title="Copiar contraseña"
+                    >
+                      {copiado_jja === c.rol + '-clave' ? '✓' : '🔒'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )
