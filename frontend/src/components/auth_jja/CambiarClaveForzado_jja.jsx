@@ -6,10 +6,11 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL_JC } from '../../api.config.js'
 import useAuth_jja from '../../hooks/useAuth_jja'
+import imagenlogo_jja from '../../assets/JoanjeCoders.png'
 
 const CambiarClaveForzado_jja = () => {
   const navigate = useNavigate()
-  const { token, logout, login } = useAuth_jja()
+  const { token, logout } = useAuth_jja()
   const [formulario, setFormulario] = useState({
     nueva_contrasena: '',
     confirmar_contrasena: ''
@@ -22,7 +23,7 @@ const CambiarClaveForzado_jja = () => {
 
   const manejarEnvio = async (e) => {
     e.preventDefault()
-    
+
     if (formulario.nueva_contrasena !== formulario.confirmar_contrasena) {
       return setEstado({ cargando: false, mensaje: 'Las contraseñas no coinciden.', tipo: 'error' })
     }
@@ -47,9 +48,6 @@ const CambiarClaveForzado_jja = () => {
 
       if (data.exito) {
         setEstado({ cargando: false, mensaje: '✅ Contraseña actualizada correctamente. Redirigiendo...', tipo: 'exito' })
-        
-        // En lugar de hacer logout, podríamos refetch o simplemente redirigir a login
-        // Lo más seguro es obligar a iniciar sesión con la nueva clave para renovar el JWT
         setTimeout(() => {
           logout()
           navigate('/login')
@@ -58,20 +56,23 @@ const CambiarClaveForzado_jja = () => {
         setEstado({ cargando: false, mensaje: data.mensaje || 'Error al cambiar la contraseña.', tipo: 'error' })
       }
     } catch (error) {
-       setEstado({ cargando: false, mensaje: 'Error de red. Verifica tu conexión.', tipo: 'error' })
+      setEstado({ cargando: false, mensaje: 'Error de red. Verifica tu conexión.', tipo: 'error' })
     }
   }
 
   return (
     <div className="login-pagina">
-      <div className="login-deco deco-1" aria-hidden="true"></div>
-      <div className="login-deco deco-2" aria-hidden="true"></div>
+      <div className="cambiar-clave-tarjeta">
+        <div className="cambiar-clave-logo">
+          <img src={imagenlogo_jja} alt="JoAnJe Coders" />
+        </div>
 
-      <div className="login-tarjeta" style={{ maxWidth: '450px' }}>
-        <h2 className="login-titulo">¡Bienvenido al Sistema!</h2>
-        <p className="login-subtitulo" style={{ color: '#4b5563', marginBottom: '24px' }}>
-          Como es tu primer ingreso con una <strong>clave temporal</strong>, por tu seguridad debes establecer una nueva contraseña permanente.
-        </p>
+        <div className="cambiar-clave-encabezado">
+          <h2 className="login-titulo">¡Bienvenido al Sistema!</h2>
+          <p className="login-subtitulo">
+            Como es tu primer ingreso con una <strong>clave temporal</strong>, por tu seguridad debes establecer una nueva contraseña permanente.
+          </p>
+        </div>
 
         <form onSubmit={manejarEnvio}>
           <div className="login-grupo">
@@ -105,10 +106,11 @@ const CambiarClaveForzado_jja = () => {
           </button>
         </form>
 
-        <div className="login-footer" style={{ marginTop: '20px' }}>
-          <button 
-             onClick={() => { logout(); navigate('/login') }}
-             style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' }}
+        <div className="login-footer">
+          <button
+            type="button"
+            onClick={() => { logout(); navigate('/login') }}
+            className="cambiar-clave-salir"
           >
             Cancelar y salir
           </button>

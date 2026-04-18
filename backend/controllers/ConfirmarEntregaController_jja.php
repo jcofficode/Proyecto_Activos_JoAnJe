@@ -100,7 +100,7 @@ class ConfirmarEntregaController_jja extends Controller_jja
             if (preg_match('/SQLSTATE\[45000\][^:]*: \d+ (.+)/', $msg_jja, $m_jja)) {
                 $msg_jja = trim($m_jja[1]);
             } else {
-                $msg_jja = 'No se pudo registrar la entrega. El usuario superó el límite de préstamos simultáneos para este tipo de activo.';
+                $msg_jja = 'No se pudo registrar la solicitud de préstamo. El usuario superó el límite de préstamos simultáneos para este tipo de activo.';
             }
             $this->responderHtml_jja(409, false, $msg_jja);
         }

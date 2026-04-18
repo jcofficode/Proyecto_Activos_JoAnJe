@@ -255,6 +255,30 @@ const SolicitudesPage_jja = () => {
     },
     { clave: 'cantidad_jja', titulo: 'Cant.', render: (v) => <span style={{ fontWeight: 600, color: 'var(--color-primario-jja)' }}>x{v || 1}</span> },
     {
+      clave: 'observaciones_jja', titulo: 'Motivo del Cliente', render: (v) => {
+        const texto = (v || '').split('|')[0].trim()
+        if (!texto) return <span style={{ color: 'var(--texto-terciario-jja)', fontSize: '0.8rem' }}>—</span>
+        return (
+          <span
+            title={texto}
+            style={{
+              fontSize: '0.82rem',
+              maxWidth: 200,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              lineHeight: 1.35,
+              whiteSpace: 'normal',
+              color: 'var(--texto-secundario-jja)'
+            }}
+          >
+            {texto}
+          </span>
+        )
+      }
+    },
+    {
       clave: 'fecha_solicitud_jja', titulo: 'Fecha / Hora', render: (v) => {
         const fh = formatFechaHora(v)
         if (fh === '—') return '—'
