@@ -39,8 +39,8 @@ const Login = ({ onLogin }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const [formulario_jja, setFormulario_jja] = useState({
-    correo_jja: 'admin@activoscontroljoanje.com',
-    clave_jja: 'JoAnJe2026!'
+    correo_jja: '',
+    clave_jja: ''
   })
   const [estado_jja, setEstado_jja] = useState({ cargando: false, mensaje: '', tipo: '' })
   const [copiado_jja, setCopiado_jja] = useState('')

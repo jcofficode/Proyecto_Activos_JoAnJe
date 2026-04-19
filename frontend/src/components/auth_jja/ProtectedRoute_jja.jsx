@@ -34,8 +34,8 @@ const ProtectedRoute_jja = ({ children, rolesPermitidos = [], redireccion = '/lo
 
   // Si hay roles permitidos, verificar
   if (rolesPermitidos.length > 0 && !rolesPermitidos.includes(usuario?.rol)) {
-    // Redirigir según rol
-    if (usuario?.rol === 'cliente') {
+    // Redirigir según rol — cualquier rol desconocido va a marketplace como cliente
+    if (usuario?.rol === 'cliente' || !['administrador', 'encargado'].includes(usuario?.rol)) {
       return <Navigate to="/marketplace" replace />
     }
     return <Navigate to="/sistema/dashboard" replace />
